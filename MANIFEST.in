@@ -1,0 +1,2 @@
+recursive-include spaciblo *.txt *.html
+prune spaciblo/media/asset

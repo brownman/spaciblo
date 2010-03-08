@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block style%}
+#content li { list-style: square outside; margin: 0 0 10px 15px; }
+#content li strong { font-weight: bold; margin-bottom: 5px; }
+#content h2 { margin-top: 15px; }
+{% endblock %}
+
+{% block content%}
+<h1>A Toolkit for Social Spaces on the Web</h1>
+
+<h2>The spaces are:</h2>
+<ul class="feature-list">
+   <li>
+      <strong>Social:</strong>
+      meet and chat with other people
+   </li>
+   <li>
+      <strong>Web based:</strong>
+      instant on with no installation
+   </li>
+</ul>
+
+<h2>The tools are:</h2>
+<ul class="feature-list">
+   <li>
+      <strong>Open:</strong>
+      freely licensed and developed
+   </li>
+   <li>
+      <strong>Standards based:</strong>
+      welcome home, webheads
+   </li>
+</ul>
+
+{% if request.user.is_authenticated %}
+<h2>Example Spaces:</h2>
+<ul>
+{% for space in spaces %}
+	<li><a href="{{ space.get_absolute_url }}">{{ space.name }}</a></li>
+{% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

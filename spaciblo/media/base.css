@@ -1,0 +1,35 @@
+@import url("reset.css");
+
+body {
+		font-family: Arial, sans-serif;
+		margin: 0.5em;
+		width: 820px;
+		font-size: 1em;
+		line-height: 1.4em;
+}
+a { color: #007; }
+
+#header h2 { font-size: 2em; line-height: 1em; }
+
+h1, h2, h3, h4 { 
+	font-family: Arial Rounded MT Bold, Arial, sans-serif; 
+	font-weight: bold;
+	margin: 0 0 0.5em 0;
+}
+h1 { font-size: 1.6em; }
+h2 { font-size: 1.2em; }
+h3 { font-size: 1em; }
+
+h1 a, h2 a { text-decoration: none;}
+h1 a:hover, h2 a:hover { text-decoration: underline;}
+
+p { margin-bottom: 0.5em; }
+
+ul { margin-bottom: 1em; }
+
+blockquote { margin: 0px 10px; font-style: italic; }
+
+#content { margin-top: 10px; }
+
+#top-nav { float: right; }
+#top-nav a { text-decoration: none; color: #007; }

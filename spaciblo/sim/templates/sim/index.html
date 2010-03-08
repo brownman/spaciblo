@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block style%}
+ul { margin-bottom: 2em; }
+{% endblock %}
+
+{% block content%}
+	<h1>{{ sim_pool }}: {{ sim_pool.stateToString }}</h1>
+
+	<h2>Simulators:</h2>
+	<ul class="simulator-list">
+	{% for sim in sim_pool.simulators %}
+		<li>{{ sim }}</li>
+	{% endfor %}
+	</ul>
+
+	<h2>Comet connections:</h2>
+	<ul class="connection-list">
+	{% for connection in comet_server.connections %}
+		<li>{{ connection }}</li>
+	{% endfor %}
+	</ul>
+{% endblock %}

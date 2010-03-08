@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block style%}
+.space-viewer {
+	width: 800px;
+}
+.sv-renderer {
+	background-color: #FFF;
+	border: solid 1px #000;
+	width: 800px;
+	height: 300px;
+}
+.sv-message-panel {
+	margin: 5px 0px;
+	padding: 5px 5px;
+	width: 788px;
+	height: 150px;
+	border: solid 1px #345;
+	overflow: auto;
+}
+#key-catcher { width: 0px; height: 0px; z-index: -10; position: relative; top: 30px; left: 30px;}
+.user-message{
+	margin: 0 0 5px 0;
+}
+.space-viewer input[type='text'] { width: 745px; }
+.space-viewer input [type='submit'] { width: 40px; }
+{% endblock %}
+
+{% block sub-head %}
+<script src="{{ MEDIA_URL }}webglu/external/Sylvester.src.js"></script>
+<script src="{{ MEDIA_URL }}webglu/src/gameglu.js"></script>
+<script src="{{ MEDIA_URL }}webglu/src/webglu.js"></script>
+
+<script src="{% url sim.views.spaciblo_js %}"></script>
+{% endblock %}
+
+{% block script %}
+
+var space_client = null;
+var sv_canvas = null;
+var input_manager = null;
+
+function initialize(){
+	space_client = new Spaciblo.SpaceClient({{ space.id }});
+	space_client.open_handler = handle_client_open;
+	space_client.close_handler = handle_client_close;
+	space_client.authentication_handler = handle_client_auth;
+	space_client.join_space_handler = handle_join_space;
+	space_client.user_message_handler = user_message_handler;
+	space_client.suggest_render_handler = function() {};
+	space_client.open();
+}
+
+function handle_client_open(){
+	space_client.authenticate();
+}
+
+function handle_client_close(){
+	sv_canvas.close();
+}
+
+function handle_client_auth(successful){
+	if(!successful){
+		console.log("Could not auth.");
+		return;
+	}
+	space_client.joinSpace();
+}
+
+function handle_join_space(successful){
+	if(!successful){
+		console.log("Could not join the space.");
+		return;
+	}
+	sv_canvas = new SpacibloRenderer.Canvas('sv-canvas', space_client.scene, space_client.username);
+	space_client.addAvatar("0,0,0", Spaciblo.defaultOrientation);
+	setupInput();
+	setInterval(tick, 25);
+}
+
+function setupInput(){
+	input_manager = new SpacibloInput.InputManager(space_client);
+	input_manager.add_event_source($("#key-catcher"));
+	$("#key-catcher").focus();
+	$("#sv-canvas").click(function(event){ $("#key-catcher").focus(); });
+	$("#key-catcher").keypress(function(event){
+		if(event.keyCode == 13){ $("#command-input").focus(); }
+	});
+	$("#key-catcher").keydown(function(event){
+		if(event.keyCode == 191){
+			$("#command-input").focus();
+			$("#command-input").value = "/";
+		}
+	});
+	$("#command-input").keydown(function(event){
+		if(event.keyCode == 27 /* escape */) $("#key-catcher").focus();
+	});
+}
+
+function tick() {
+	sv_canvas.render();
+}
+
+function user_message_handler(username, message){
+	var messagePanel = document.getElementById('sv-message-panel');
+	messagePanel.innerHTML = '<div class="user-message"><span class="user-message-username">' + username + '</span>: <span class="user-message-text">' + message + '</span></div>' + messagePanel.innerHTML;
+}
+
+function handle_command_input(){
+	var input = document.getElementById('command-input');
+	var value = input.value;
+	input.value = "";
+	
+	if(value == "/close"){
+		space_client.close();
+		return;
+	} else if (value == "/scene"){
+	   console.dir(space_client.scene);
+	} else if(value.length > 0){
+		space_client.sendUserMessage(value);
+	}
+	
+	$("#key-catcher").focus();
+}
+
+$(document).ready(initialize);
+{% endblock %}
+
+{% block content%}
+<input type="text" id="key-catcher" size="1" />
+<div id="sv-1" class="space-viewer">
+	<canvas id="sv-canvas" class="sv-renderer" width="800" height="300"></canvas>
+	<div id="sv-message-panel" class="sv-message-panel">&nbsp;</div>
+	<form onsubmit="handle_command_input(); return false;">
+		<input type="text" id="command-input" name="command-input" /><input type="submit" name="send" value="send" />
+	</form>
+</div>
+{% endblock %}

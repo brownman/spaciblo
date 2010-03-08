@@ -1,0 +1,4 @@
+*.pyc
+build
+Spaciblo.egg-info
+dist

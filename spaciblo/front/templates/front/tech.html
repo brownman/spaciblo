@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block sub-title %}Tech | {% endblock %}
+
+{% block style%}
+#content p { margin: 0 0 5px 10px; }
+#content h2 { margin-top: 20px; font-size: 1.4em; }
+#content h3 { margin-top: 20px; }
+#content li { list-style: square outside; margin: 0 0 10px 15px; }
+#content li strong { font-weight: bold; margin-bottom: 5px; display: block; }
+#content { margin-bottom: 20px; }
+{% endblock %}
+
+{% block content%}
+<h1>Tech:</h1>
+
+<p>Web browsers and servers have evolved to the point where they provide the infrastructure for social 3D spaces.</p>
+<p>The Spacibl&#333; project uses these evolving standards as the basis for all of our tools.</p>
+<p>Listed below are the tools under development and their relevant standards.</p>
+
+<h2>In the browser:</h2>
+
+<p>Spacibl&#333; tools run in browsers which are embracing the new wave of web standards.</p>
+<p>These browsers include <a href="http://www.mozilla.com/firefox/">Firefox</a> and <a href="http://www.apple.com/safari/">Safari</a>.</p>
+
+<h3>User</h3>
+<p>A <a href="http://en.wikipedia.org/wiki/JavaScript">JavaScript</a> object representing a user's preferences (e.g. key bindings).</p>
+<p>It also provides a handler for motion and chat gestures.</p>
+
+<h3>Message transport</h3>
+<p>A JavaScript object managing <a href="http://dev.w3.org/html5/websockets/">WebSocket</a> based channels to servers.</p>
+<p>It also handles serialization and deserialization of events to and from <a href="http://www.json.org/">JSON</a>.</p>
+
+<h3>Simulation model</h3>
+<p>A JavaScript model of the <a href="{% url front.views.about %}#concepts">various elements</a> of a space: templates, things, portals, etc.</p>
+<p>It also manages the loading and unloading of data such as <a href="http://en.wikipedia.org/wiki/Obj">Obj</a> geometry, textures, and animations.</p>
+
+<h3>Simulation loop</h3>
+<p>A JavaScript object which manages space events, updates the model, and communicates with servers.</p>
+<p>It uses <a href="http://www.whatwg.org/specs/web-workers/current-work/">Web Workers</a> to provide dynamic, non-blocking user interfaces.</p>
+
+<h3>3D element</h3>
+<p>A JavaScript object which uses <a href="http://www.khronos.org/webgl/">WebGL</a> to render a visual representation of the simulation model.</p>
+<p>It also exposes a 3D picking API.</p>
+
+<h3>2D elements</h3>
+<p>A section of the page which is given over to HTML based UIs provided by things in spaces.</p>
+<p>Things are full fledged web applications with URLs, templates, views, and persistent data.</p>
+
+<h3>Debug</h3>
+<p>Loggers, inspectors, and testing tools for browser-side development.</p>
+
+
+<h2>On the web server:</h2>
+
+<p>Spacibl&#333; services are web stack agnostic but blatantly <a href="http://gettingreal.37signals.com/ch04_Make_Opinionated_Software.php">opinionated</a>.</p>
+<p>The reference implementation uses the <a href="http://httpd.apache.org/">Apache web server</a> and <a href="http://www.djangoproject.com/">Django</a>.</p>
+
+<h3>User accounts</h3>
+<p>Secure authentication and <a href="http://openid.net/">OpenID</a> based identification.</p>
+   
+<h3>Profiles</h3>
+<p>Contact info, body editing, and input preferences.</p>
+
+<h3>Simulation manager</h3>
+<p>The controller which runs space simulations as they are needed.</p>
+   
+<h3>Simulation model</h3>
+<p>A graph of things which represent a space.</p>
+<p>It also wraps a geometry graph for collision detection.</p>
+
+<h3>Simulator</h3>
+<p>The clock, event loop, interpolators, thing API with <a href="http://www.webhooks.org/">webhooks</a>, and scripting engine for a space.</p>
+<p>It also controls the physics engine.</p>
+
+<h3>Message service</h3>
+<p>The server side of the WebSockets based communication channels.</p>
+	
+<h3>Static resource service</h3>
+<p>Serves the geometry, texture, skeleton, and animation files which make up templates.</p>
+
+<h3>API</h3>
+<p>A flexible library enabling <a href="http://en.wikipedia.org/wiki/Representational_State_Transfer">RESTful</a> services for the accounts, profiles and simulators.</p>
+
+<h3>Third party application support</h3>
+<p><a href="http://oauth.net/">OAuth</a> controlled, rate limited APIs for connecting remote clients and services.</p>
+	
+<h2>Dev tools:</h2>
+
+<h3>Documentation</h3>
+<p>Tutorials and APIs docs, protocols definitions, and example code.</p> 
+
+<h3>Distribution</h3>
+<p>A public source repository, a five minute checkout to boot process, online demos, and a public EC2 image.</p>
+
+<h3>Art assets</h3>
+<p>Creative commons licensed models, templates, and spaces.</p>
+	
+<h3>Application bridges</h3>
+<p>Scripts and examples for moving Spacibl&#333; compatible content to and from third party editing applications.</p>
+
+{% endblock %}

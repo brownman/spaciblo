@@ -1,0 +1,10 @@
+{% extends "!layout.html" %}
+{% block rootrellink %}
+    <li><a href="http://spaciblo.org/">Spaciblo</a> &raquo;</li>
+    {{ super() }}
+{% endblock %}
+
+{%- set theme_nosidebar = true %}
+
+{%- block relbar2 %}{% endblock %}
+{%- block footer %}{% endblock %}
