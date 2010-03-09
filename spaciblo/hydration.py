@@ -185,14 +185,17 @@ ImageFieldFile.HydrationMeta = ImageHydrationMeta
 #User.APIMeta = UserAPIMeta
 
 def dehydrate_to_list_xml(input_list, start=None, end=None, xml_header=True, list_name=None):
+	"""Use the XMLHydration class to create an element with children dehydrated from the input_list"""
 	if xml_header: return XMLHydration().dehydrate_to_list(input_list, start, end, list_name)
 	return XMLHydration().dehydrate_to_list_doc(input_list, start, end, list_name).documentElement.toprettyxml()
 	
 def dehydrate_to_xml(source, xml_header=True):
+	"""Use the XMLHydration class to dehydrate the source to XML"""
 	if xml_header: return XMLHydration().dehydrate(source)
 	return XMLHydration().dehydrate_to_doc(source).documentElement.toprettyxml()
 	
 def hydrate_from_xml(source, data):
+	"""This is mostly unimplemented, but it will attempt to set the source's attributes using attributes from the XML root element"""
 	return XMLHydration().hydrate(source, data)
 
 # Copyright 2010 Trevor F. Smith (http://trevor.smith.name/) Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.

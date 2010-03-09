@@ -1,3 +1,4 @@
+"""Simulations and a simple pool."""
 import datetime
 import threading
 import Queue
@@ -11,6 +12,7 @@ from spaciblo.hydration import *
 DEFAULT_SIM_POOL = None
 
 class Simulator:
+	"""The class responsible for managing various aspects of Space simulation such as the event queue, run loop, and scene."""
 	initializing, ready, running, terminating, stopped = range(5)
 	possible_states = [ initializing, ready, running, terminating, stopped ]
 	
@@ -93,6 +95,7 @@ class SimulationThread(threading.Thread):
 			self.pool.remove_simulator(self.sim)
 
 class SimulatorPool():
+	"""A simple manager for space simulators."""
 	initializing, running, terminating, stopped = range(4)
 	possible_states = [initializing, running, terminating, stopped]
 

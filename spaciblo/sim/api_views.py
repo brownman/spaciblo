@@ -1,3 +1,4 @@
+"""The custom (non Ground based) API views.  User visible UI views are in the views module."""
 import datetime
 import calendar
 import pprint
@@ -24,6 +25,7 @@ from django.template.loader import render_to_string
 from models import *
 
 def template_asset(request, template_id, asset_key):
+	"""Redirect the request to this asset's file URL."""
 	template_asset = get_object_or_404(TemplateAsset, template__id=template_id, key=asset_key)
 	return HttpResponseRedirect(template_asset.asset.file.url)
 

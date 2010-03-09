@@ -14,6 +14,6 @@ setup(
 	author = "Trevor F. Smith",
 	description = "A web service for shared 3D spaces.",
 	license = "Apache License 2.0",
-	keywords = "3D simulator webgl",
+	keywords = "3D simulator webgl websockets",
 	url = "http://spaciblo.org/"
 )

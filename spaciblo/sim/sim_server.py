@@ -24,8 +24,8 @@ class WebSocketConnection:
 		self.outgoing_event_thread.start()
 
 	def handle_outgoing(self):
-		from hydration import dehydrate_to_xml
 		"""A loop which handles outgoing events.  Does not return until the connection closes."""
+		from hydration import dehydrate_to_xml
 		while not self.disconnected:
 			try:
 				event = self.outgoing_events.get(block=True, timeout=5)
@@ -122,6 +122,7 @@ class WebSocketConnection:
 		self.finish()
 
 	def user_from_session_key(self, session_key):
+		"""Returns a User object if it is associated with a session key, otherwise None"""
 		from django.conf import settings
 		from django.contrib.auth import SESSION_KEY, BACKEND_SESSION_KEY, load_backend
 		from django.contrib.auth.models import AnonymousUser
@@ -139,6 +140,7 @@ class WebSocketConnection:
 			
 				
 	def finish(self):
+		"""Clean up the connection, remove this connection from the sim pool, and send a UserExited event to the simulator"""
 		self.disconnected = True
 		print self.user, 'disconnected'
 		self.server.ws_connections.remove(self)
@@ -154,6 +156,7 @@ class WebSocketConnection:
 		return "Connection: %s user: %s space: %s" % (self.client_address, self.user, self.space_id)	
 
 class SimulationServer:
+	"""The handler of WebSockets based communications and creator of the sim pool."""
 	def __init__(self):
 		self.ws_server = WebSocketServer(self.ws_callback, port=settings.WEB_SOCKETS_PORT)
 		import sim.sim_pool
@@ -187,6 +190,7 @@ class SimulationServer:
 		pass
 
 def main():
+	"""Run the simulation server (usually from the command line)."""
 	try:
 		sim_server = SimulationServer()
 		sim_server.start()

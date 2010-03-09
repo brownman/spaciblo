@@ -4,20 +4,11 @@ from spaciblo.hydration import *
 from models import *
 
 """A set of objects which define the visual aspects of a 3D scene: position, orientation, motion, geometry, material, lighting...
-This code assumes a single thread game loop, so none of the classes defined in this module are thread safe."""
-
-"""
-<?xml version="1.0" ?>
-<scene background_color="0.2,0.2,0.8,1.0">
-	<thing id="0" orientation="1.0,0.0,0.0,0.0" position="0.0,10.0,0.0" scale="1.0" template="1">
-		<children>
-			<thing id="1" orientation="1,0,0,0" position="-137.82000764285695,-105.47677540071024,0" scale="1.0" user="1"/>
-		</children>
-	</thing>
-</scene>
+This code assumes a single thread game loop, so none of the classes defined in this module are thread safe.
 """
 
 class SceneNode:
+	"""The base class which all scene elements extend."""
 	def node_name(cls):
 		return cls.__name__
 	node_name = classmethod(node_name)

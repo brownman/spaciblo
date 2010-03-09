@@ -1,11 +1,11 @@
+"""A library for the service of WebSockets (http://dev.w3.org/html5/websockets/) based connections"""
 import socket
 import threading
 import sys
 import time
 
 class WebSocketServer(threading.Thread):
-	"""A library for the service of WebSockets (http://dev.w3.org/html5/websockets/) based connections"""
-	
+	"""The server class which accepts incoming connections, parses the WebSockets request headers, sends the WebSockets response headers, and then passes control of the socket to a callback."""
 	response_header_pattern = '''HTTP/1.1 101 Web Socket Protocol Handshake\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nWebSocket-Origin: %s\r\nWebSocket-Location: %s\r\nWebSocket-Protocol: %s'''
 
 	def __init__(self, client_handler, port, protocol='0.01'):
@@ -47,7 +47,6 @@ class WebSocketServer(threading.Thread):
 			threading.Thread(target = self.handle_socket, args = (t,)).start()
 
 if __name__ == "__main__":
-	
 	def client_handler(client_socket):
 		"""A little example which occasionally sends the time to the browser"""
 		import time, datetime

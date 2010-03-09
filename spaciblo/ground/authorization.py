@@ -1,8 +1,7 @@
 AUTHORIZATION_META_NAME = 'AuthorizationMeta'
 
-# This is not used yet.
-
 class Authorization:
+	"""This is not used yet and is mainly a placeholder"""
 	def __init__(self, create=False, read_all=False, read_own=False, update_all=False, update_own=False, delete_all=False, delete_own=False):
 		self.create = create
 		self.read_all = read_all

@@ -9,6 +9,7 @@ from sim.management import *
 from hydration import dehydrate_to_xml
 
 class Command(NoArgsCommand):
+	"""Loads the example templates and spaces."""
 	help = "Loads the example templates and spaces."
 
 	requires_model_validation = True
