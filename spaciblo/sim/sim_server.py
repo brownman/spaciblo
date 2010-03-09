@@ -24,16 +24,21 @@ class WebSocketConnection:
 		self.outgoing_event_thread.start()
 
 	def handle_outgoing(self):
+		from hydration import dehydrate_to_xml
 		"""A loop which handles outgoing events.  Does not return until the connection closes."""
 		while not self.disconnected:
 			try:
 				event = self.outgoing_events.get(block=True, timeout=5)
 			except Queue.Empty:
 				continue
-			self.client_socket.send('\x00')
-			self.client_socket.send(dehydrate_to_xml(event))
-			self.client_socket.send('\xff')
-		print "Exiting outgoing message loop"
+			#print 'Outgoing from queue: ', dehydrate_to_xml(event)
+			try:
+				self.client_socket.send('\x00')
+				self.client_socket.send(dehydrate_to_xml(event))
+				self.client_socket.send('\xff')
+			except (IOError):
+				#traceback.print_exc()
+				pass
 		
 	def pack_attributes(self, xml_element):
 		result = {}
@@ -43,9 +48,9 @@ class WebSocketConnection:
 
 	def handle_incoming(self):
 		"""A loop which handles incoming messages.  Does not return until the connection closes."""
-		import events
 		from spaciblo.hydration import dehydrate_to_xml
 		from sim.models import Space
+		import events
 
 		while not self.disconnected:
 			incoming_data = self.client_socket.recv(4096)
@@ -62,20 +67,21 @@ class WebSocketConnection:
 					break
 
 			if not event:
-				print "Could not read an event from the comet data: %s" % data
+				print "Could not read an event from the data: %s" % data
 				continue
 
 			if isinstance(event, events.AuthenticationRequest):
 				user = self.user_from_session_key(event.session_id)
 				if user.is_authenticated():
-					print "Comet authed: %s" % user.username
+					print "Authed: %s" % user.username
 					self.user = user
 					response_event = events.AuthenticationResponse(True, user.username)
 				else:
-					print "Comet auth failure with session id %s" % event.session_id
+					print "Auth failure with session id %s" % event.session_id
 					response_event = events.AuthenticationResponse(False)
 			elif isinstance(event, events.JoinSpaceRequest):
 				if not self.user:
+					print 'Attemped unauthed join space'
 					response_event = events.JoinSpaceResponse(event.space_id)
 				else:
 					try:
@@ -89,11 +95,14 @@ class WebSocketConnection:
 								response_event.scene_doc = dehydrate_to_xml(scene)
 							except:
 								print "Could not log in: %s" % pprint.pformat(traceback.format_exc())
+						else:
+							print 'Attempted disallowed join space'
 						if space_member:
 							response_event.is_member = True
 							response_event.is_admin = space_member.is_admin
 							response_event.is_editor = space_member.is_editor
 					except:
+						traceback.print_exc()
 						response_event = events.JoinSpaceResponse(event.space_id)
 			elif self.space_id:
 				simulator = self.server.sim_pool.get_simulator(self.space_id)
@@ -101,15 +110,16 @@ class WebSocketConnection:
 					event.connection = self
 					simulator.event_queue.put(event)
 				else:
-					print "Got event for absent simulator %s" % event
+					print "Received an event for an absent simulator %s" % event
 			else:
-				print "Got unhandled event %s" % event
+				print "Received unhandled event %s" % event
 
 			if response_event:
 				#print 'Outgoing: ', dehydrate_to_xml(response_event)
 				self.client_socket.send('\x00')
 				self.client_socket.send(dehydrate_to_xml(response_event))
 				self.client_socket.send('\xff')
+		self.finish()
 
 	def user_from_session_key(self, session_key):
 		from django.conf import settings
@@ -130,34 +140,49 @@ class WebSocketConnection:
 				
 	def finish(self):
 		self.disconnected = True
-		print self.request, 'disconnected!'
-		self.server.connections.remove(self)
+		print self, 'disconnected'
+		self.server.ws_connections.remove(self)
 		# alert the space (if any) that this user has exited only if there are no other connections for that user and space
 		if self.space_id is None: return
-		for connection in self.server.connections:
+		for connection in self.server.ws_connections:
 			if self.user == connection.user and self.space_id == connection.space_id: return
 		sim = self.server.sim_pool.get_simulator(self.space_id)
-		if sim is not None: sim.event_queue.put(events.UserExited(self.space_id, self.user.username))
+		if sim is not None:
+			import events
+			sim.event_queue.put(events.UserExited(self.space_id, self.user.username))
 	def __unicode__(self):
-		return "CometConnection: %s user: %s space: %s" % (self.client_address, self.user, self.space_id)	
+		return "Connection: %s user: %s space: %s" % (self.client_address, self.user, self.space_id)	
 
 class SimulationServer:
 	def __init__(self):
 		self.ws_server = WebSocketServer(self.ws_callback, port=settings.WEB_SOCKETS_PORT)
 		import sim.sim_pool
 		self.sim_pool = sim.sim_pool.SimulatorPool(self)
-	
+		self.ws_connections = []
+		
 	def start(self):
 		self.sim_pool.start_all_spaces()
 		self.ws_server.start()
 
 	def send_space_event(self, space_id, event):
-		pass
+		for connection in self.get_client_connections(space_id):
+			connection.outgoing_events.put(event)
+
+	def get_client_connections(self, space_id):
+		#TODO keep a hashmap of space_id:connection[] for faster access
+		cons = []
+		for connection in self.ws_connections:
+			if connection.space_id == space_id: cons.append(connection)
+		return cons
 
 	def ws_callback(self, client_socket):
 		ws_connection = WebSocketConnection(client_socket, self)
-		ws_connection.handle_incoming()
-		
+		self.ws_connections.append(ws_connection)
+		try:
+			ws_connection.handle_incoming()
+		except (IOError):
+			ws_connection.finish()
+
 	def cleanup(self):
 		pass
 

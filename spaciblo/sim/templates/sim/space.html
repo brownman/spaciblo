@@ -8,7 +8,7 @@
 	background-color: #FFF;
 	border: solid 1px #000;
 	width: 800px;
-	height: 300px;
+	height: 200px;
 }
 .sv-message-panel {
 	margin: 5px 0px;
@@ -27,10 +27,9 @@
 {% endblock %}
 
 {% block sub-head %}
-<script src="{{ MEDIA_URL }}webglu/external/Sylvester.src.js"></script>
-<script src="{{ MEDIA_URL }}webglu/src/gameglu.js"></script>
-<script src="{{ MEDIA_URL }}webglu/src/webglu.js"></script>
-
+<script src="{{ MEDIA_URL}}webglu/external/Sylvester.src.js"></script>
+<script src="{{ MEDIA_URL}}webglu/src/gameglu.js"></script>
+<script src="{{ MEDIA_URL}}webglu/src/webglu.js"></script>
 <script src="{% url sim.views.spaciblo_js %}"></script>
 {% endblock %}
 
@@ -49,6 +48,8 @@ function initialize(){
 	space_client.user_message_handler = user_message_handler;
 	space_client.suggest_render_handler = function() {};
 	space_client.open();
+	
+	setupDummyCanvas();
 }
 
 function handle_client_open(){
@@ -56,7 +57,7 @@ function handle_client_open(){
 }
 
 function handle_client_close(){
-	sv_canvas.close();
+	if(sv_canvas != null) sv_canvas.close();
 }
 
 function handle_client_auth(successful){
@@ -72,7 +73,7 @@ function handle_join_space(successful){
 		console.log("Could not join the space.");
 		return;
 	}
-	sv_canvas = new SpacibloRenderer.Canvas('sv-canvas', space_client.scene, space_client.username);
+	//sv_canvas = new SpacibloRenderer.Canvas('canvas', space_client.scene, space_client.username);
 	space_client.addAvatar("0,0,0", Spaciblo.defaultOrientation);
 	setupInput();
 	setInterval(tick, 25);
@@ -98,7 +99,7 @@ function setupInput(){
 }
 
 function tick() {
-	sv_canvas.render();
+	//sv_canvas.render();
 }
 
 function user_message_handler(username, message){
@@ -123,13 +124,31 @@ function handle_command_input(){
 	$("#key-catcher").focus();
 }
 
+function setupDummyCanvas(){
+   if (!$W.initialize()) return false;
+
+   $W.GL.clearColor(0.9, 0.9, 0.9, 1.0);
+   $W.camera.setPosition(1,1,1);
+
+   var originLines = new $W.Object($W.GL.LINES);
+   originLines.vertexCount = 6;
+
+   var c = $W.constants.colors;
+   originLines.fillArray('vertex', [[-5,0,0], [5,0,0], [0,-5,0], [0,5,0], [0,0,-5], [0,0,5]]);
+   originLines.fillArray('color',  [c.RED,    c.RED,   c.GREEN,  c.GREEN, c.BLUE,   c.BLUE]);
+   $W.update();
+   $W.draw();  
+}
+
 $(document).ready(initialize);
+
 {% endblock %}
 
 {% block content%}
 <input type="text" id="key-catcher" size="1" />
 <div id="sv-1" class="space-viewer">
-	<canvas id="sv-canvas" class="sv-renderer" width="800" height="300"></canvas>
+   <span id='overlay'></span>
+	<canvas id="canvas" class="sv-renderer" width="800" height="300"></canvas>
 	<div id="sv-message-panel" class="sv-message-panel">&nbsp;</div>
 	<form onsubmit="handle_command_input(); return false;">
 		<input type="text" id="command-input" name="command-input" /><input type="submit" name="send" value="send" />

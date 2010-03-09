@@ -45,7 +45,7 @@ class Simulator:
 				self.pool.sim_server.send_space_event(self.space.id, Heartbeat())
 				continue
 
-			if isinstance(event, AddAvatarRequest):
+			if event.event_name() == 'AddAvatarRequest':
 				avatar = self.scene.thing.get_avatar(event.username)
 				if avatar is None:
 					thing = self.scene.add_avatar(User.objects.get(username=event.username), Position().hydrate(event.position), Orientation().hydrate(event.orientation))
@@ -53,17 +53,17 @@ class Simulator:
 				else:
 					print "Already have an avatar."
 
-			elif isinstance(event, UserExited):
+			elif event.event_name() == 'UserExited':
+				print 'user exited', event.username
 				for thing in self.scene.thing.list_things():
 					if thing.user is not None and thing.user.username == event.username:
 						self.scene.thing.remove_thing(thing)
 						self.pool.sim_server.send_space_event(self.space.id, ThingRemoved(self.space.id, thing.id))
-
-			elif isinstance(event, UserMessage):
+			elif event.event_name() == 'UserMessage':
 				if event.connection.user != None and event.username == event.connection.user.username:
 					self.pool.sim_server.send_space_event(self.space.id, event)
 
-			elif isinstance(event, AvatarMoveRequest):
+			elif event.event_name() == 'AvatarMoveRequest':
 				if event.connection.user != None and event.username == event.connection.user.username:
 					avatar = self.scene.thing.get_avatar(event.username)
 					if avatar == None:
@@ -74,7 +74,7 @@ class Simulator:
 						response = ThingMoved(self.space.id, avatar.id, avatar.position, avatar.orientation)
 						self.pool.sim_server.send_space_event(self.space.id, response)
 			else:
-				print "Unknown event: %s" % event
+				print "Unknown event: %s" % event.event_name()
 
 		print "Exiting %s %s"  % (self, datetime.datetime.now())
 

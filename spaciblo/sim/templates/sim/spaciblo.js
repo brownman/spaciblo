@@ -1,4 +1,13 @@
 
+// Ignores Firebug (http://www.getfirebug.com/) console calls for browsers without firebug
+if(!window.console || !console.firebug){
+    var names = ["log", "debug", "info", "warn", "error", "assert", "dir", "dirxml", "group", "groupEnd", "time", "timeEnd", "count", "trace", "profile", "profileEnd"];
+    window.console = {};
+    for (var i = 0; i < names.length; ++i){ 
+        window.console[names[i]] = function() {}
+    }
+}
+
 String.prototype.length_in_bytes = function() {
     return encodeURIComponent(this).replace(/%../g, 'x').length;
 };
@@ -261,7 +270,7 @@ SpacibloScene.Orientation.prototype.cleanRotation = function(rotation){ //in rad
 
 //
 //
-// Spaciblo CometClient
+// Spaciblo
 //
 //
 
@@ -367,6 +376,7 @@ Spaciblo.SpaceClient = function(space_id) {
 				self.suggest_render_handler();
 				break;
 			case 'thingmoved':
+				console.log(Spaciblo.serializeXML(event_xml.documentElement));
 				var thing = self.scene.thing.getThing(parseInt(spaciblo_event.thing_id));
 				thing.position.hydrate(spaciblo_event.position);
 				thing.orientation.hydrate(spaciblo_event.orientation);
@@ -559,6 +569,16 @@ Spaciblo.parseLocationParameters = function(){
 	return paramDict;
 }
 
+Spaciblo.loadShader = function(){
+	var xhr = null;
+	xhr = new XMLHttpRequest();
+	xhr.overrideMimeType("text/xml");
+	xhr.open("GET", path, false);
+	xhr.send(null);
+	var script = xhr.responseText;
+	window.eval(script);
+}
+
 Spaciblo.locationParameters = Spaciblo.parseLocationParameters();
 
 SpacibloInput = {}
@@ -580,6 +600,10 @@ SpacibloInput.InputManager = function(_space_client){
 	
 	self.handle_keydown = function(event){
 		var avatarThing = self.getAvatarThing();
+		if(avatarThing == null){
+			console.log('No avatar thing');
+			return;
+		}
 		switch(event.keyCode){
 			case 37: //left arrow
 			case 65: //a key
@@ -689,7 +713,7 @@ SpacibloRenderer.Canvas = function(_canvas_id, _scene, _username){
 		$W.update();
 		$W.draw();	
 	}
-	
+
 	self.close = function(){
 		// TODO make some indication that the connection has closed
 	}

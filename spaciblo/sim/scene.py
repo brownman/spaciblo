@@ -164,7 +164,8 @@ class Thing(SceneNode):
 		for thing in self.list_things():
 			if thing.user != None and thing.user.username == username: return thing
 		return None
-	def list_things(self, the_list=[]):
+	def list_things(self, the_list=None):
+		if the_list == None: the_list = []
 		the_list.append(self)
 		for thing in self.children: thing.list_things(the_list)
 		return the_list
@@ -210,7 +211,6 @@ class Scene(SceneNode):
 		self.thing = None
 		self.background_color = background_color
 		self.hydrate(minidom.parseString(space.scene_document).documentElement)
-		if self.thing == None: raise IOException('Could not parse the space scene document for a thing')
 	def add_avatar(self, user, position, orientation):
 		avatar_thing = Thing(self.thing.get_max_id() + 1, position=position, orientation=orientation, user=user)
 		self.thing.add_thing(avatar_thing)
