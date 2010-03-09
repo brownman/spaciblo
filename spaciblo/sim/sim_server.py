@@ -140,7 +140,7 @@ class WebSocketConnection:
 				
 	def finish(self):
 		self.disconnected = True
-		print self, 'disconnected'
+		print self.user, 'disconnected'
 		self.server.ws_connections.remove(self)
 		# alert the space (if any) that this user has exited only if there are no other connections for that user and space
 		if self.space_id is None: return

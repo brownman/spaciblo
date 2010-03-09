@@ -8,6 +8,7 @@ from models import *
 urlpatterns = patterns('',
 	(r'^spaciblo.js$', 'sim.views.spaciblo_js'),
 	(r'^space/(?P<id>[\d]+)/$', 'sim.views.space'),
+	(r'^space/(?P<id>[\d]+)/debug/$', 'sim.views.space_debug'),
     (r'^$', 'sim.views.index'),
 	(r'^scratch/', 'sim.views.scratch'),
 )

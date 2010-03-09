@@ -38,6 +38,11 @@ def space(request, id):
 	space = get_object_or_404(Space, pk=id)
 	return render_to_response('sim/space.html', { 'space':space }, context_instance=RequestContext(request))
 
+@staff_member_required
+def space_debug(request, id):
+	space = get_object_or_404(Space, pk=id)
+	return render_to_response('sim/space_debug.html', { 'space':space }, context_instance=RequestContext(request))
+
 def spaciblo_js(request):
 	return render_to_response('sim/spaciblo.js', {'events': events.SIM_EVENTS, 'scene_graph_classes': scene.SCENE_GRAPH_CLASSES }, context_instance=RequestContext(request), mimetype='application/javascript')
 

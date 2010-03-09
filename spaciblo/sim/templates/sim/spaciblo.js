@@ -1,6 +1,6 @@
 
 // Ignores Firebug (http://www.getfirebug.com/) console calls for browsers without firebug
-if(!window.console || !console.firebug){
+if(!window.console){
     var names = ["log", "debug", "info", "warn", "error", "assert", "dir", "dirxml", "group", "groupEnd", "time", "timeEnd", "count", "trace", "profile", "profileEnd"];
     window.console = {};
     for (var i = 0; i < names.length; ++i){ 
@@ -98,6 +98,16 @@ SpacibloScene.Thing.prototype.getThing = function(thing_id){
 		if(t != null) return t;
 	}
 	return null;
+}
+
+SpacibloScene.Thing.prototype.listThings = function(results){
+	if(!results) {
+		results = new Array();
+	}
+	results[results.length] = this;
+	for(var i=0; i < this.children.length; i++)
+		this.children[i].listThings(results);
+	return results
 }
 
 SpacibloScene.Thing.prototype.init = function(){
