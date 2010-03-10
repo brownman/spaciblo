@@ -86,7 +86,7 @@ class WebSocketConnection:
 							self.space_id = space.id
 							try:
 								scene = self.server.sim_pool.get_simulator(self.space_id).scene
-								response_event.scene_doc = Hydration.dehydration(scene)
+								response_event.scene_doc = Hydration.dehydrate(scene)
 							except:
 								print "Could not log in: %s" % pprint.pformat(traceback.format_exc())
 						else:

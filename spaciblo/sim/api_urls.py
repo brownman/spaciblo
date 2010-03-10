@@ -9,7 +9,7 @@ from models import *
 urlpatterns = patterns('',
 	(r'^space/$', 'ground.views.model_list', { 'model':Space }),
 	(r'^space/(?P<id>[\d]+)/$', 'ground.views.model', { 'model':Space }),
-	(r'^space/(?P<id>[\d]+)/scene/$', 'ground.views.model_attribute', { 'model':Space, 'attr_name':'scene_document', 'mimetype':'application/xml' }),
+	(r'^space/(?P<id>[\d]+)/scene/$', 'ground.views.model_attribute', { 'model':Space, 'attr_name':'scene_document', 'mimetype':'application/json' }),
 	(r'^template/$', 'ground.views.model_list', { 'model':Template }),
 	(r'^template/(?P<id>[\d]+)/$', 'ground.views.model', { 'model':Template }),
 	(r'^template/(?P<template_id>[\d]+)/asset/(?P<asset_key>[^/]+)$', 'sim.api_views.template_asset'),

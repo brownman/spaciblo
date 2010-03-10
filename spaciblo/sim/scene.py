@@ -180,7 +180,7 @@ class Thing(SceneNode):
 		if json_data.has_key('template'): self.template = Template.objects.get(pk=json_data['template'])
 		if json_data.has_key('children'):
 			for thing_element in json_data['children']:
-				child_thing = Thing(thing_element['id'])
+				child_thing = Thing(thing_element['attributes']['id'])
 				child_thing.hydrate(thing_element)
 				self.add_thing(child_thing)
 		#TODO hydrate the scale, motion, settings, lights, and user
@@ -203,9 +203,9 @@ class Scene(SceneNode):
 		self.thing.add_thing(avatar_thing)
 		return avatar_thing
 	def hydrate(self, json_data):
-		if json_data.has_key('Thing'):
-			self.thing = Thing(json_data['Thing']['id'])
-			self.thing.hydrate(json_data['Thing'])
+		if json_data.has_key('thing'):
+			self.thing = Thing(json_data['thing']['attributes']['id'])
+			self.thing.hydrate(json_data['thing'])
 		return self
 	class HydrationMeta:
 		attributes = ['background_color']

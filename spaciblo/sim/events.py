@@ -15,7 +15,7 @@ class SimEvent:
 		return cls.__name__
 	@classmethod
 	def tag_name(cls):
-		return cls.__name__.lower()
+		return cls.__name__
 		
 class AuthenticationRequest(SimEvent):
 	"""An authentication request from a new WebSocket connection."""

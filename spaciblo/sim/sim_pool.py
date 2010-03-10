@@ -52,10 +52,10 @@ class Simulator:
 					thing = self.scene.add_avatar(User.objects.get(username=event.username), Position().hydrate(event.position), Orientation().hydrate(event.orientation))
 					self.pool.sim_server.send_space_event(self.space.id, ThingAdded(self.space.id, event.username, thing.id, self.scene.thing.id, thing.position.__unicode__(), thing.orientation.__unicode__()))
 				else:
-					print "Already have an avatar."
+					print "Already have an avatar with id", avatar.id
 
 			elif event.event_name() == 'UserExited':
-				print 'user exited', event.username
+				print 'User exited', event.username
 				for thing in self.scene.thing.list_things():
 					if thing.user is not None and thing.user.username == event.username:
 						self.scene.thing.remove_thing(thing)

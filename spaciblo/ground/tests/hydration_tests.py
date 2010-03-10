@@ -29,7 +29,8 @@ class DummyDataTwo:
 class DummyIDClass:
 	def __init__(self):
 		self.id = 42
-
+		self.not_an_id = 'it is a string'
+		
 class DummyDataThree:
 	def __init__(self, some_value='not passed in'):
 		self.some_value = some_value
@@ -37,7 +38,8 @@ class DummyDataThree:
 		self.another_id_class = DummyIDClass()
 	class HydrationMeta:
 		attributes = ['some_value']
-		ref_attributes = ['id_class', ('another_id_class', 'better_name')]
+		ref_attributes = ['id_class']
+		ref_by_attributes = [('another_id_class', 'not_an_id')]
 		element_name = 'fantastico'
 
 class HydrationTest(TestCase):
@@ -57,6 +59,8 @@ class HydrationTest(TestCase):
 		self.failUnlessEqual(self.dd1.children[1].easy_string, dd1_parsed['children'][1]['attributes']['easy_string'])
 		
 		dd3_json = Hydration.dehydrate(self.dd3)
+		dd3_parsed = simplejson.loads(dd3_json)
+		self.failUnlessEqual(self.dd3.another_id_class.not_an_id, dd3_parsed['attributes']['another_id_class'])
 		another_dd3 = DummyDataThree()
 		Hydration.hydrate(another_dd3, dd3_json)
 		self.failUnlessEqual('uno', another_dd3.some_value)

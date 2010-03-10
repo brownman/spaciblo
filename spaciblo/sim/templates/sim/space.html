@@ -72,6 +72,8 @@ function handle_join_space(successful){
 	if(!successful){
 		console.log("Could not join the space.");
 		return;
+	} else {
+	   console.log("Joined the space.");
 	}
 	//sv_canvas = new SpacibloRenderer.Canvas('canvas', space_client.scene, space_client.username);
 	space_client.addAvatar("0,0,0", Spaciblo.defaultOrientation);

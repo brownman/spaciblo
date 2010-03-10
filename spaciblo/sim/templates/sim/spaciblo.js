@@ -28,8 +28,17 @@ SpacibloEvents.{{ event.event_name }} = function({% for attr in event.HydrationM
 	self.type = '{{ event.event_name }}';
 	{% for attr in event.HydrationMeta.attributes %}self.{{ attr }} = _{{ attr }};
 	{% endfor %}
+	
+	self.toJSON = function(){
+		var attrs = {};
+		for(var key in self){
+			if(key == 'type' || key == 'toJSON') continue;
+			attrs[key] = self[key];
+		}
+		var data = { 'type': self.type, 'attributes':attrs };
+		return JSON.stringify(data);
+	}
 }
-
 {% endfor %}
 
 /* these are the automatically generated Javascript objects for the spaciblo 3D scene */
@@ -138,39 +147,25 @@ SpacibloScene.Orientation.prototype.toString = function(){
 	return this.s + "," + this.x + "," + this.y + "," + this.z;
 }
 
-THIS IS WHERE I STOPPED
-
-SpacibloScene.parseSceneDocument = function(xmlDoc){
-	var sceneElement = xmlDoc.documentElement;
-	var scene = new SpacibloScene.Scene(new SpacibloScene.Color(sceneElement.attributes['background_color'].value));
-	for(var i=0; i < sceneElement.childNodes.length; i++){
-		if(sceneElement.childNodes[i].tagName == 'thing'){
-			scene.thing = SpacibloScene.parseThingElement(sceneElement.childNodes[i], this);
-		}
-	}
+SpacibloScene.parseSceneDocument = function(sceneDoc){
+	var sceneData = JSON.parse(sceneDoc);
+	var scene = new SpacibloScene.Scene(new SpacibloScene.Color(sceneData['attributes']['background_color']));
+	scene.thing = SpacibloScene.parseThingData(sceneData['thing'], null, this);
 	return scene;
 }
 
-SpacibloScene.parseThingElement = function(thingElement, scene){
-	var attrs = thingElement.attributes;
-	var thing = new SpacibloScene.Thing(attrs['id'].value, new SpacibloScene.Position(attrs['position'].value), new SpacibloScene.Orientation(attrs['orientation'].value), parseFloat(attrs['scale'].value));
-	if(attrs['user']){
-		var u = null;
+SpacibloScene.parseThingData = function(thingData, parent, scene){
+	var thing = new SpacibloScene.Thing(thingData['attributes']['id'], new SpacibloScene.Position(thingData['attributes']['position']), new SpacibloScene.Orientation(thingData['attributes']['orientation']), parseFloat(thingData['attributes']['scale']));
+	thing.parent = parent;
+	if(thingData['attributes']['user']){
 		if(scene.thing)
-			u = scene.thing.getUser(attrs['user'].value);
-		if(u == null)
-			u = new SpacibloScene.User(attrs['user'].value);
-		thing.user = u;
-		console.log('thing.user: ' + thing.user);
+			thing.user = scene.thing.getUser(thingData['attributes']['user']);
+		else
+			thing.user = new SpacibloScene.User(thingData['attributes']['user']);
 	}
-	for(var i=0; i < thingElement.childNodes.length; i++){
-		if(thingElement.childNodes[i].tagName == 'children'){
-			childrenElement = thingElement.childNodes[i];
-			for(var j=0; j < childrenElement.childNodes.length; j++){
-				if(childrenElement.childNodes[j].tagName == 'thing'){
-					thing.children[thing.children.length] = SpacibloScene.parseThingElement(childrenElement.childNodes[j], scene);
-				}
-			}
+	if(thingData['children']){
+		for(var i=0; i < thingData['children'].length; i++){
+			thing.children[thing.children.length] = SpacibloScene.parseThingData(thingData['children'][i], thing, scene);
 		}
 	}
 	return thing;
@@ -299,8 +294,8 @@ Spaciblo.WebSocketClient = function(_ws_port, _ws_host, _message_handler_functio
 	self.ws_host = _ws_host;
 	self.message_handler_function = _message_handler_function;
 	
-	self.onopen = function() { console.log('open'); }
-	self.onclose = function() { console.log('close'); }
+	self.onopen = function() { console.log('web socket opened'); }
+	self.onclose = function() { console.log('web socket closed'); }
 	self.onmessage = function(message) { 
 		self.message_handler_function(message.data);
 	}
@@ -348,15 +343,14 @@ Spaciblo.SpaceClient = function(space_id) {
 	self.close_handler = function(){}
 	
 	self.handle_message = function(message) {
-		event_xml = Spaciblo.parseXML(message);
-		spaciblo_event = Spaciblo.rehydrateEvent(event_xml)
-		switch(spaciblo_event.tagName) {
-			case 'heartbeat':
+		spaciblo_event = Spaciblo.rehydrateEvent(JSON.parse(message));
+		switch(spaciblo_event.type) {
+			case 'Heartbeat':
 				break;
-			case 'usermessage':
+			case 'UserMessage':
 				self.user_message_handler(spaciblo_event.username, spaciblo_event.message);
 				break;
-			case 'authenticationresponse':
+			case 'AuthenticationResponse':
 				if(spaciblo_event.authenticated){
 					self.username = spaciblo_event.username;
 				} else {
@@ -366,17 +360,20 @@ Spaciblo.SpaceClient = function(space_id) {
 				self.finished_auth = true;
 				self.authentication_handler(self.username != null);
 				break;
-			case 'joinspaceresponse':
+			case 'JoinSpaceResponse':
 				if(spaciblo_event.joined == true){
-					self.scene = SpacibloScene.parseSceneDocument(Spaciblo.parseXML(spaciblo_event.scene_doc));
+					self.scene = SpacibloScene.parseSceneDocument(spaciblo_event.scene_doc);
 				}		
 				self.finished_join = true;
 				self.join_space_handler(spaciblo_event.joined);
 				break;
-			case 'thingadded':
-				if(self.scene.thing.getThing(parseInt(spaciblo_event.thing_id)) != null) { break; }
+			case 'ThingAdded':
+				if(self.scene.thing.getThing(spaciblo_event.thing_id) != null) {
+					console.log("Tried to add a duplicate thing id: " + spaciblo_event.thing_id);
+					break;
+				}
 				var thing = new SpacibloScene.Thing(spaciblo_event.thing_id, new SpacibloScene.Position(spaciblo_event.position), new SpacibloScene.Orientation(spaciblo_event.orientation), parseFloat(spaciblo_event.scale));
-				thing.parent = self.scene.thing.getThing(parseInt(spaciblo_event.parent_id));
+				thing.parent = self.scene.thing.getThing(spaciblo_event.parent_id);
 				thing.parent.children[thing.parent.children.length] = thing;
 				if(spaciblo_event.username){
 					var user = self.scene.thing.getUser(spaciblo_event.username);
@@ -387,15 +384,14 @@ Spaciblo.SpaceClient = function(space_id) {
 				}
 				self.suggest_render_handler();
 				break;
-			case 'thingmoved':
-				console.log(Spaciblo.serializeXML(event_xml.documentElement));
-				var thing = self.scene.thing.getThing(parseInt(spaciblo_event.thing_id));
+			case 'ThingMoved':
+				var thing = self.scene.thing.getThing(spaciblo_event.thing_id);
 				thing.position.hydrate(spaciblo_event.position);
 				thing.orientation.hydrate(spaciblo_event.orientation);
 				self.suggest_render_handler();
 				break;
 			default:
-				console.log("Received an unknown event: " + Spaciblo.serializeXML(event_xml.documentElement));
+				console.log("Received an unknown event: " + message);
 		}
 	}
 
@@ -408,7 +404,7 @@ Spaciblo.SpaceClient = function(space_id) {
 	}
 
 	self.sendEvent = function(event){
-		self.ws_client.send(Spaciblo.quickXMLString(event));
+		self.ws_client.send(event.toJSON());
 	}
 
 	self.authenticate = function() {
@@ -438,53 +434,34 @@ Spaciblo.SpaceClient = function(space_id) {
 	}
 	
 	self.__open = function(){
-		console.log('open');
+		console.log('Space client opened');
 		self.open_handler();
 	}
 	self.__close = function(){
-		console.log('close');
+		console.log('Space client closed');
 		self.close_handler();
 	}
 	
 }
 
-Spaciblo.rehydrateEvent = function(xmlDoc){
+Spaciblo.rehydrateEvent = function(jsonData){
 	event_func = null;
-	for(key in SpacibloEvents){
-		if(key.toLowerCase() == xmlDoc.documentElement.tagName){
+	for(var key in SpacibloEvents){
+		if(key == jsonData['type']){
 			event_func = SpacibloEvents[key];
 			break;
 		}
 	}
 	if(event_func == null){
-		console.log('Tried to rehydrate an unknown event: ' + xmlDoc.documentElement.tagName);
+		console.log('Tried to rehydrate an unknown event: ' + JSON.stringify(jsonData));
 		return null;
 	}
 	var spaciblo_event = new event_func(); // we'll just let all the parameters be undefined for the moment
-	var attributes = xmlDoc.documentElement.attributes;
-	for (var i = 0; i < attributes.length; i++){
-		if(attributes.item(i).value == "True"){
-			spaciblo_event[attributes.item(i).name] = true;
-		} else if (attributes.item(i).value == "False"){
-			spaciblo_event[attributes.item(i).name] = false;
-		} else {
-			spaciblo_event[attributes.item(i).name] = attributes.item(i).value;
-		}
+	var attributes = jsonData['attributes'];
+	for(var key in attributes){
+		spaciblo_event[key] = attributes[key];
 	}
 	return spaciblo_event;
-}
-
-Spaciblo.quickXMLString = function(dictionary){
-	return Spaciblo.serializeXML(Spaciblo.quickXML(dictionary).documentElement);
-}
-
-Spaciblo.quickXML = function(dictionary){
-	xml = Spaciblo.parseXML('<' + dictionary['tagName'] + '/>');
-	for(var i in dictionary){
-		if(i == 'tagName') continue;
-		xml.documentElement.setAttribute(i, dictionary[i])
-	}
-	return xml
 }
 
 Spaciblo.escapeHTML = function(xml){
@@ -497,58 +474,6 @@ Spaciblo.escapeHTML = function(xml){
 Spaciblo.unescapeHTML = function(xml){
     return xml.replace(/&apos;/g,"'").replace(/&quot;/g,"\"").replace(/&gt;/g,">").replace(/&lt;/g,"<").replace(/&amp;/g,"&");
 }
-
-
-Spaciblo.parseXML = function(xml) {
-	if (window.ActiveXObject) {
-		xmlDoc=new ActiveXObject("Microsoft.XMLDOM");
-		xmlDoc.async="false";
-		xmlDoc.loadXML(xml);
-		return xmlDoc;
-	} else if (document.implementation && document.implementation.createDocument) {
-		parser=new DOMParser();
-		xmlDoc=parser.parseFromString(xml, "text/xml");
-		return xmlDoc;
-	}
-}
-
-Spaciblo.serializeXML = function(xml){
-	var result = "<" + xml.tagName.toLowerCase();
-
-	var attributes = xml.attributes;
-	for (var i = 0; i < attributes.length; i++){
-		if(attributes.item(i).value == null || attributes.item(i).value == "null"){
-			continue;
-		}
-	   result += " " + attributes.item(i).name.toLowerCase() + "='" + Spaciblo.escapeHTML(attributes.item(i).value) + "'";
-	}
-	var hasText = (typeof xml.text != "undefined") && xml.text.length != 0;
-	
-	if(!hasText && xml.childNodes.length == 0){
-		result += " />";
-		
-		return result;
-	} else {
-		result += ">";
-	}
-
-	if(hasText){
-		result += xml.text;
-	}
-	
-	for(var i = 0; i < xml.childNodes.length; i++){
-		if(xml.childNodes[i].nodeType == 3){
-			if(!hasText){
-				result += Spaciblo.escapeHTML(xml.childNodes[i].nodeValue)
-			}
-			continue;
-		}
-		result += Spaciblo.serializeXML(xml.childNodes[i]);
-	}
-	result += "</" + xml.tagName.toLowerCase() + ">";
-	return result;
-}
-
 
 Spaciblo.getSessionCookie = function(){
  return Spaciblo.getCookie('sessionid');
@@ -581,17 +506,14 @@ Spaciblo.parseLocationParameters = function(){
 	return paramDict;
 }
 
-Spaciblo.loadShader = function(){
-	var xhr = null;
-	xhr = new XMLHttpRequest();
-	xhr.overrideMimeType("text/xml");
-	xhr.open("GET", path, false);
-	xhr.send(null);
-	var script = xhr.responseText;
-	window.eval(script);
-}
-
 Spaciblo.locationParameters = Spaciblo.parseLocationParameters();
+
+//
+//
+// SpacibloInput
+//
+//
+//
 
 SpacibloInput = {}
 

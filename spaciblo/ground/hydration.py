@@ -15,10 +15,11 @@ from django.contrib.auth.models import User
 
 hydration_meta_name = 'HydrationMeta'
 hydration_attributes_name = 'attributes' # simple attributes on the element
-hydration_reference_attributes_name  = 'ref_attributes' # names of members whose ids should be set as attributes or tuples of <member name, member attribute> who should be set as attribute, for example [('site', 'name')]
+hydration_reference_attributes_name  = 'ref_attributes' # names of members whose ids should be set as attributes or 
+hydration_reference_by_attributes_name  = 'ref_by_attributes' # tuples of <member name, member attribute> which should be set as an attribute, for example [('site', 'name')]
 hydration_nodes_name = 'nodes' # members which should be dehydrated and included as children
 hydration_text_node_name = 'text_node' # member which should be used as the text node
-hydration_element_name = 'element_name' # what the element should be named, defaults to __class__.__name__.lower()
+hydration_element_name = 'element_name' # what the element should be named, defaults to __class__.__name__
 
 class HydrationError(Exception): pass
 
@@ -65,6 +66,12 @@ class Hydration:
 		}
 		return result
 
+	def prep_value(self, value):
+		if isinstance(value, StringType): return smart_unicode(value)
+		if isinstance(value, IntType) or isinstance(value, FloatType) or isinstance(value, LongType) or isinstance(value, BooleanType): return value
+		
+		return smart_unicode(value)
+
 	def get_element_name(self, source):
 		if hasattr(source, hydration_meta_name): 
 			meta = getattr(source, hydration_meta_name)
@@ -83,10 +90,10 @@ class Hydration:
 		if not hasattr(source, hydration_meta_name): # no HydrationMeta, so do the best we can
 			if isinstance(source, DictType):
 				attributes = {}
-				for (key, value) in source.items(): attributes[key] = smart_unicode(value)
+				for (key, value) in source.items(): attributes[key] = self.prep_value(value)
 				result['attributes'] = attributes
 			else:
-				text = smart_unicode(source)
+				text = self.prep_value(source)
 				if len(text.strip()) == 0: return None
 				result['value'] = text
 			return result
@@ -103,18 +110,13 @@ class Hydration:
 					value_string = '%s' % value
 					prepped_attributes[attribute] = value_string[1:len(value_string) - 1]
 				else:
-					value_text = smart_unicode(value)
-					if len(value_text.strip()) == 0: continue
-					prepped_attributes[attribute] = value_text
+					prepped_value = self.prep_value(value)
+					if len(str(prepped_value).strip()) == 0: continue
+					prepped_attributes[attribute] = prepped_value
 
 		if hasattr(meta, hydration_reference_attributes_name):
 			attributes = getattr(meta, hydration_reference_attributes_name)
 			for attribute in attributes:
-				if isinstance(attribute, TupleType):
-					final_attribute_name = attribute[1]
-					attribute = attribute[0]
-				else:
-					final_attribute_name = attribute
 				value = getattr(source, attribute)
 				if value is None: continue
 				if hasattr(value, 'id'):
@@ -123,7 +125,18 @@ class Hydration:
 					pk = getattr(value, 'pk')
 				else:
 					raise HydrationError('reference attribute %s has no id or pk attribute' % value)
-				prepped_attributes[final_attribute_name] = smart_unicode(pk)
+				prepped_attributes[attribute] = self.prep_value(pk)
+
+		if hasattr(meta, hydration_reference_by_attributes_name):
+			attributes = getattr(meta, hydration_reference_by_attributes_name)
+			for attribute in attributes:
+				if not isinstance(attribute, TupleType): raise HydrationError('Reference by attributes name values must be tuples')
+				attribute_name = attribute[0]
+				attribute_property = attribute[1]
+				value = getattr(source, attribute_name)
+				if value is None: continue
+				if not hasattr(value, attribute_property): raise HydrationError("Reference by attributes name property does not exist: %s - %s" % (attribute, attribute_property))
+				prepped_attributes[attribute_name] = self.prep_value(getattr(value,attribute_property))
 
 		if hasattr(meta, hydration_nodes_name):
 			nodes = getattr(meta, hydration_nodes_name)
@@ -150,7 +163,7 @@ class Hydration:
 				elif hasattr(data, hydration_meta_name):
 					result[node] = self.prep(data)
 				else:
-					data_string = smart_unicode(data)
+					data_string = self.prep_value(data)
 					if not data_string or len(data_string.strip()) == 0: continue
 					result[node] = data_string
 		

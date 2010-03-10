@@ -26,7 +26,7 @@ class Space(models.Model):
 	STATE_CHOICES = (('open', 'open'), ('admin_only', 'admin_only'), ('closed', 'closed'))
 	state = models.CharField(max_length=20, choices=STATE_CHOICES, default='admin_only', blank=False, null=False)
 	max_guests = models.IntegerField(blank=False, null=False, default=0)
-	scene_document = models.TextField(blank=False, null=False, default='{"type":"Scene", "thing":{"type":"Thing", "id":"0"} }')
+	scene_document = models.TextField(blank=False, null=False, default='{"type":"Scene", "thing":{"type":"Thing", "id":"0" } }')
 
 	objects = SpaceManager()
 
