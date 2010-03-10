@@ -7,7 +7,6 @@ from time import sleep
 from models import *
 from events import *
 from scene import *
-from spaciblo.hydration import *
 
 DEFAULT_SIM_POOL = None
 

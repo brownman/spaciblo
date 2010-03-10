@@ -4,6 +4,9 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import *
 from django.core.files.storage import default_storage
 
+from scene import Scene
+from ground.hydration import Hydration
+
 class SpaceManager(models.Manager):
 	def get_membership(self, space, user):
 		"""Returns a tuple of the form (allow_entry, SpaceMember) where allow_entry is True or False and SpaceMember will be None if there's no SpaceMember record for this user and space"""
@@ -23,7 +26,7 @@ class Space(models.Model):
 	STATE_CHOICES = (('open', 'open'), ('admin_only', 'admin_only'), ('closed', 'closed'))
 	state = models.CharField(max_length=20, choices=STATE_CHOICES, default='admin_only', blank=False, null=False)
 	max_guests = models.IntegerField(blank=False, null=False, default=0)
-	scene_document = models.TextField(blank=False, null=False, default="<scene />")
+	scene_document = models.TextField(blank=False, null=False, default='{"type":"Scene", "thing":{"type":"Thing", "id":"0"} }')
 
 	objects = SpaceManager()
 

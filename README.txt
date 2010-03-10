@@ -22,6 +22,7 @@ To install you will need the following:
 - Django 1.1+
 - PostgreSQL 8.4+
 - South from Aeracode: http://south.aeracode.org/  (just use Trunk)
+- simplejson
 - git
 - A WebGL and WebSockets enabled browser: http://www.khronos.org/webgl/wiki/Getting_a_WebGL_Implementation
 

@@ -1,6 +1,5 @@
-import xml.dom.minidom as minidom
+import simplejson
 
-from spaciblo.hydration import *
 from models import *
 
 """A set of objects which define the visual aspects of a 3D scene: position, orientation, motion, geometry, material, lighting...
@@ -175,18 +174,15 @@ class Thing(SceneNode):
 		
 	def add_thing(self, thing):
 		self.children.append(thing)
-	def hydrate(self, element):
-		if element.attributes.has_key('position'): self.position.hydrate(element.attributes['position'].value)
-		if element.attributes.has_key('orientation'): self.orientation.hydrate(element.attributes['orientation'].value)
-		if element.attributes.has_key('template'): self.template = Template.objects.get(pk=int(element.attributes['template'].value))
-		
-		for child in element.childNodes:
-			if child.localName == 'children':
-				for thing_element in child.childNodes:
-					if thing_element.localName == 'thing':
-						child_thing = Thing(int(thing_element.attributes['id'].value))
-						child_thing.hydrate(thing_element)
-						self.add_thing(child_thing)
+	def hydrate(self, json_data):
+		if json_data.has_key('position'): self.position.hydrate(json_data['position'])
+		if json_data.has_key('orientation'): self.orientation.hydrate(json_data['orientation'])
+		if json_data.has_key('template'): self.template = Template.objects.get(pk=json_data['template'])
+		if json_data.has_key('children'):
+			for thing_element in json_data['children']:
+				child_thing = Thing(thing_element['id'])
+				child_thing.hydrate(thing_element)
+				self.add_thing(child_thing)
 		#TODO hydrate the scale, motion, settings, lights, and user
 
 	class HydrationMeta:
@@ -201,16 +197,15 @@ class Scene(SceneNode):
 		self.space = space
 		self.thing = None
 		self.background_color = background_color
-		self.hydrate(minidom.parseString(space.scene_document).documentElement)
+		self.hydrate(simplejson.loads(space.scene_document))
 	def add_avatar(self, user, position, orientation):
 		avatar_thing = Thing(self.thing.get_max_id() + 1, position=position, orientation=orientation, user=user)
 		self.thing.add_thing(avatar_thing)
 		return avatar_thing
-	def hydrate(self, element):
-		for child in element.childNodes:
-			if child.localName == 'thing':
-				self.thing = Thing(int(child.attributes['id'].value))
-				self.thing.hydrate(child)
+	def hydrate(self, json_data):
+		if json_data.has_key('Thing'):
+			self.thing = Thing(json_data['Thing']['id'])
+			self.thing.hydrate(json_data['Thing'])
 		return self
 	class HydrationMeta:
 		attributes = ['background_color']

@@ -5,8 +5,8 @@ import time, datetime
 import pprint, traceback
 import Queue
 import threading
+import simplejson
 
-import xml.dom.minidom as minidom
 from websocket import WebSocketServer
 
 class WebSocketConnection:
@@ -25,30 +25,24 @@ class WebSocketConnection:
 
 	def handle_outgoing(self):
 		"""A loop which handles outgoing events.  Does not return until the connection closes."""
-		from hydration import dehydrate_to_xml
+		from ground.hydration import Hydration
 		while not self.disconnected:
 			try:
 				event = self.outgoing_events.get(block=True, timeout=5)
 			except Queue.Empty:
 				continue
-			#print 'Outgoing from queue: ', dehydrate_to_xml(event)
+			#print 'Outgoing from queue: ', Hydration.dehydrate(event)
 			try:
 				self.client_socket.send('\x00')
-				self.client_socket.send(dehydrate_to_xml(event))
+				self.client_socket.send(Hydration.dehydrate(event))
 				self.client_socket.send('\xff')
 			except (IOError):
 				#traceback.print_exc()
 				pass
 		
-	def pack_attributes(self, xml_element):
-		result = {}
-		for key in xml_element.attributes.keys():
-			result[key] = xml_element.getAttribute(key)
-		return result
-
 	def handle_incoming(self):
 		"""A loop which handles incoming messages.  Does not return until the connection closes."""
-		from spaciblo.hydration import dehydrate_to_xml
+		from ground.hydration import Hydration
 		from sim.models import Space
 		import events
 
@@ -57,13 +51,13 @@ class WebSocketConnection:
 			if len(incoming_data) == 0: continue
 			incoming_data = incoming_data[1:len(incoming_data) - 1] # strip off the wrapper bytes
 			#print 'Incoming:', incoming_data
-			doc = minidom.parseString(incoming_data)
+			json_data = simplejson.loads(incoming_data)
 			event = None
 			response_event = None
 			for class_object in events.SIM_EVENTS:
-				if str(doc.documentElement.tagName) == str(class_object.__name__.lower()):
-					event = class_object(self.pack_attributes(doc.documentElement))
-					event.hydrate_from_xml(doc)
+				if json_data['type'] == str(class_object.__name__):
+					event = class_object(json_data['attributes'])
+					event.hydrate(incoming_data)
 					break
 
 			if not event:
@@ -92,7 +86,7 @@ class WebSocketConnection:
 							self.space_id = space.id
 							try:
 								scene = self.server.sim_pool.get_simulator(self.space_id).scene
-								response_event.scene_doc = dehydrate_to_xml(scene)
+								response_event.scene_doc = Hydration.dehydration(scene)
 							except:
 								print "Could not log in: %s" % pprint.pformat(traceback.format_exc())
 						else:
@@ -115,9 +109,9 @@ class WebSocketConnection:
 				print "Received unhandled event %s" % event
 
 			if response_event:
-				#print 'Outgoing: ', dehydrate_to_xml(response_event)
+				#print 'Outgoing: ', Hydration.dehydrate(response_event)
 				self.client_socket.send('\x00')
-				self.client_socket.send(dehydrate_to_xml(response_event))
+				self.client_socket.send(Hydration.dehydrate(response_event))
 				self.client_socket.send('\xff')
 		self.finish()
 

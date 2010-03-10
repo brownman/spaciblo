@@ -5,31 +5,15 @@
 
 {% block sub-head %}
 <script src="{{ MEDIA_URL }}spaciblo/jquery-1.3.js"></script>
-<script src="{{ MEDIA_URL }}spaciblo/sim/Orbited.js"></script>
-<script src="/sim/spaciblo-events.js"></script>
 <script src="{{ MEDIA_URL }}spaciblo/sim/spaciblo.js"></script>
 {% endblock %}
 
 {% block script %}
 
-$(document).ready(function(){
-	$.ajax({
-	    type: "GET",
-		url: "/api/sim/template/3/",
-		dataType: "xml",
-		success: function(xml) {
-			result_xml = xml;
-			$(xml).find('templateasset').each(function(){
- 				console.log($(this).attr('key'));
-			});
-		}
-	});
-});
 {% endblock %}
 
 {% block content%}
 <h1>Scratch</h1>
 
-<script type='text/javascript' src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script>
-
+  <div id="result"></div>
 {% endblock %}

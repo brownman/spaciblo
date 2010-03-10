@@ -22,10 +22,8 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.template.loader import render_to_string
 
 import sim_pool as sim_pool
-import comet as comet
 import events as events
 import scene as scene
-from spaciblo.hydration import *
 from spaciblo.sim.models import *
 
 def scratch(request):

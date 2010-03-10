@@ -25,7 +25,7 @@ SpacibloEvents = {}
 
 SpacibloEvents.{{ event.event_name }} = function({% for attr in event.HydrationMeta.attributes %}_{{ attr }}{% if not forloop.last %}, {% endif %}{% endfor %}){
 	var self = this;
-	self.tagName = '{{ event.tag_name }}';
+	self.type = '{{ event.event_name }}';
 	{% for attr in event.HydrationMeta.attributes %}self.{{ attr }} = _{{ attr }};
 	{% endfor %}
 }
@@ -137,6 +137,8 @@ SpacibloScene.Position.prototype.toString = function(){
 SpacibloScene.Orientation.prototype.toString = function(){
 	return this.s + "," + this.x + "," + this.y + "," + this.z;
 }
+
+THIS IS WHERE I STOPPED
 
 SpacibloScene.parseSceneDocument = function(xmlDoc){
 	var sceneElement = xmlDoc.documentElement;

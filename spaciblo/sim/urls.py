@@ -1,8 +1,5 @@
 from django.conf.urls.defaults import *
 
-from django_restapi.model_resource import Collection
-from django_restapi.responder import XMLResponder
-
 from models import *
 
 urlpatterns = patterns('',

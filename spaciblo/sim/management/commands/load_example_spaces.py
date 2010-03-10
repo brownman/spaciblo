@@ -6,7 +6,7 @@ from django.template.defaultfilters import slugify
 from django.core.management.base import NoArgsCommand, CommandError
 from django.core.files import File
 from sim.management import *
-from hydration import dehydrate_to_xml
+from ground.hydration import Hydration
 
 class Command(NoArgsCommand):
 	"""Loads the example templates and spaces."""
@@ -61,7 +61,7 @@ class Command(NoArgsCommand):
 			thing_id += 1
 		scene = Scene(space)
 		scene.thing = root_thing
-		space.scene_document = dehydrate_to_xml(scene)
+		space.scene_document = Hydration.dehydrate(scene)
 		space.save()
 		return space
 

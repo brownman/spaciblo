@@ -3,26 +3,19 @@ The hydration code assumes that these event objects have only string attributes 
 """
 
 import datetime
-import xml.dom.minidom as minidom
-
+from ground.hydration import Hydration
 
 class SimEvent:
 	"""The base class which all simulation events extend"""
-	def hydrate_from_xml(self, doc):
-		"""This default implementation assumes that the event has only string attributes."""
-		meta = self.HydrationMeta
-		if hasattr(meta, 'attributes'): self.set_string_attributes(getattr(meta, 'attributes'), doc)
+	def hydrate(self, json_string):
+		Hydration.hydrate(self, json_string)
 		return self
-	def set_string_attributes(self, attribute_names, doc):
-		"""Take all of the named attributes and assign them to self's similarly named attributes."""
-		for attribute_name in attribute_names:
-			setattr(self, attribute_name, smart_str(doc.documentElement.getAttribute(attribute_name)))
+	@classmethod
 	def event_name(cls):
 		return cls.__name__
-	event_name = classmethod(event_name)
+	@classmethod
 	def tag_name(cls):
 		return cls.__name__.lower()
-	tag_name = classmethod(tag_name)
 		
 class AuthenticationRequest(SimEvent):
 	"""An authentication request from a new WebSocket connection."""
