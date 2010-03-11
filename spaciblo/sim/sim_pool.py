@@ -32,6 +32,14 @@ class Simulator:
 	def __unicode__(self):
 		return "Simulator for %s" % self.space
 
+	def stop(self):
+		if self.state != Simulator.running:
+			print 'Tried to stop a simulator which is not running: ' % self.state
+			return
+		self.state = Simulator.terminating
+		self.should_run = False
+		self.state = Simulator.stopped
+
 	def run(self):
 		"""The simulation loop"""
 		if not self.state == Simulator.ready:
@@ -45,7 +53,11 @@ class Simulator:
 			except Queue.Empty:
 				self.pool.sim_server.send_space_event(self.space.id, Heartbeat())
 				continue
-
+			
+			if not self.should_run:
+				print 'Exiting the run loop for space %s' % self.space.name
+				return
+			
 			if event.event_name() == 'AddAvatarRequest':
 				avatar = self.scene.thing.get_avatar(event.username)
 				if avatar is None:
@@ -119,7 +131,13 @@ class SimulatorPool():
 		for space in Space.objects.all():
 			sim_thread = SimulationThread(self, space)
 			sim_thread.start()
-		
+
+	def stop_all_spaces(self):
+		self.state = SimulatorPool.terminating
+		for sim in self.simulators:
+			sim.stop()
+		self.state = SimulatorPool.stopped
+
 	def __unicode__(self):
 		return "Simulator Pool"
 

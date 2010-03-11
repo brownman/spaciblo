@@ -52,7 +52,7 @@ To install you will need the following:
 
 > # run the simulators (in another shell)
 > cd spaciblo/spaciblo
-> ./sim/sim_server.py
+> ./manage.py run_sim_server
 
 ## Using Spaciblo:
 

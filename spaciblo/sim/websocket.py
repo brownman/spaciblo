@@ -3,6 +3,61 @@ import socket
 import threading
 import sys
 import time
+import traceback
+
+def parse_request_header(header):
+	"""Breaks up the header lines of the WebSocket request into a dictionary"""
+	lines = [token.strip() for token in header.split('\r')[1:]]
+	result = {}
+	for line in lines:
+		if len(line) == 0: break
+		key, value = line.split(' ', 1)
+		result[key[:len(key) - 1]] = value
+	return result
+
+def receive_web_socket_message(socket):
+		message = []
+		data = socket.recv(4096)
+		while len(data) > 0:
+			message.append(data)
+			if data.endswith('\xff'): break
+			data = socket.recv(4096)
+		if len(message) == 0: return None
+		joined = ''.join(message)
+		return joined[1:len(joined) - 1]
+
+class WebSocketClient:
+	def __init__(self, host, port, origin, protocol='0.01'):
+		self.host = host
+		self.port = port
+		self.origin = origin
+		self.protocol = protocol
+		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.socket.connect((self.host, self.port))
+		self.socket.send(self.generate_request_headers())
+		self.response_headers = parse_request_header(self.socket.recv(4096))
+
+	def receive(self):
+		return receive_web_socket_message(self.socket)
+
+	def send(self, message):
+		self.socket.send('\x00')
+		self.socket.send(message)
+		self.socket.send('\xff')
+
+	def close(self):
+		self.socket.close()
+
+	def generate_request_headers(self):
+		headers = [
+			"GET / HTTP/1.1",
+			"Upgrade: WebSocket",
+			"Connection: Upgrade",
+			"Host: %s:%s" % (self.host, self.port),
+			"Origin: %s" % self.origin
+		]
+		return '%s\r\n\r\n' % '\r\n'.join(headers)
+
 
 class WebSocketServer(threading.Thread):
 	"""The server class which accepts incoming connections, parses the WebSockets request headers, sends the WebSockets response headers, and then passes control of the socket to a callback."""
@@ -13,25 +68,20 @@ class WebSocketServer(threading.Thread):
 		self.client_handler = client_handler
 		self.port = port
 		self.protocol = protocol
+		self.finish = False
 		self.sock = socket.socket()
+		self.sock.settimeout(2)
 		self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		self.sock.bind(('', self.port));
-		self.sock.listen(1);
+		self.sock.bind(('', self.port))
+		self.sock.listen(1)
 		threading.Thread.__init__(self)
 		
-	def parse_request_header(self, header):
-		"""Breaks up the header lines of the WebSocket request into a dictionary"""
-		lines = [token.strip() for token in header.split('\r')[1:]]
-		result = {}
-		for line in lines:
-			if len(line) == 0: break
-			key, value = line.split(' ', 1)
-			result[key[:len(key) - 1]] = value
-		return result
+
 		
 	def handle_socket(self, client_socket):
 		"""Sends the response headers and then hands the socket to the client_handler"""
-		request_headers = self.parse_request_header(client_socket.recv(4096))
+		raw_headers = client_socket.recv(4096)
+		request_headers = parse_request_header(raw_headers)
 		location_host = 'ws://%s/' % request_headers['Host']
 		origin_host = request_headers['Origin']
 		response_header = self.response_header_pattern % (origin_host, location_host, self.port)
@@ -39,20 +89,31 @@ class WebSocketServer(threading.Thread):
 		self.client_handler(client_socket)
 		client_socket.close()
 
-	def start(self):
+	def stop(self):
+		self.finish = True
+		self.sock.close()
+
+	def run(self):
 		"""Spawn a thread to handle each incoming web socket request"""
 		#TODO don't spawn a thread to handle each incoming web socket request
-		while True:
-			t,p = self.sock.accept();
-			threading.Thread(target = self.handle_socket, args = (t,)).start()
-
+		while not self.finish:
+			try:
+				client_socket,p = self.sock.accept()
+				if self.finish:	return
+				client_socket.setblocking(1)
+				threading.Thread(target = self.handle_socket, args = (client_socket,)).start()
+			except (socket.timeout):
+				if self.finish: return
+				
 if __name__ == "__main__":
 	def client_handler(client_socket):
 		"""A little example which occasionally sends the time to the browser"""
 		import time, datetime
 		while True:
 			message = 'time: %s' % datetime.datetime.now()
-			client_socket.send('\x00%s\xff' % message)
+			client_socket.send('\x00')
+			client_socket.send(message)
+			client_socket.send('\xff')
 			time.sleep(1)
 
 	server = WebSocketServer(client_handler, 9876)

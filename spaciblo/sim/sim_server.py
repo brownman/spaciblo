@@ -7,7 +7,10 @@ import Queue
 import threading
 import simplejson
 
-from websocket import WebSocketServer
+import settings
+import sim_pool
+import events
+from websocket import WebSocketServer, receive_web_socket_message
 
 class WebSocketConnection:
 	"""Maintains state and an outgoing event queue for a WebSockets connection"""
@@ -47,9 +50,10 @@ class WebSocketConnection:
 		import events
 
 		while not self.disconnected:
-			incoming_data = self.client_socket.recv(4096)
-			if len(incoming_data) == 0: continue
-			incoming_data = incoming_data[1:len(incoming_data) - 1] # strip off the wrapper bytes
+			incoming_data = receive_web_socket_message(self.client_socket)
+			if incoming_data == None: 
+				print 'incoming was None'
+				break
 			#print 'Incoming:', incoming_data
 			json_data = simplejson.loads(incoming_data)
 			event = None
@@ -144,7 +148,6 @@ class WebSocketConnection:
 			if self.user == connection.user and self.space_id == connection.space_id: return
 		sim = self.server.sim_pool.get_simulator(self.space_id)
 		if sim is not None:
-			import events
 			sim.event_queue.put(events.UserExited(self.space_id, self.user.username))
 	def __unicode__(self):
 		return "Connection: %s user: %s space: %s" % (self.client_address, self.user, self.space_id)	
@@ -153,13 +156,21 @@ class SimulationServer:
 	"""The handler of WebSockets based communications and creator of the sim pool."""
 	def __init__(self):
 		self.ws_server = WebSocketServer(self.ws_callback, port=settings.WEB_SOCKETS_PORT)
-		import sim.sim_pool
-		self.sim_pool = sim.sim_pool.SimulatorPool(self)
+		self.sim_pool = sim_pool.SimulatorPool(self)
 		self.ws_connections = []
 		
 	def start(self):
 		self.sim_pool.start_all_spaces()
 		self.ws_server.start()
+
+	def stop(self):
+		self.sim_pool.stop_all_spaces()
+		self.ws_server.stop()
+		for con in self.ws_connections:
+			try:
+				con.client_socket.shutdown(1)
+			except:
+				traceback.print_exc()
 
 	def send_space_event(self, space_id, event):
 		for connection in self.get_client_connections(space_id):
@@ -180,32 +191,5 @@ class SimulationServer:
 		except (IOError):
 			ws_connection.finish()
 
-	def cleanup(self):
-		pass
-
-def main():
-	"""Run the simulation server (usually from the command line)."""
-	try:
-		sim_server = SimulationServer()
-		sim_server.start()
-	except:
-		print 'Could not start the simulation server'
-		traceback.print_exc() 
-		sys.exit()
-		
-	try:
-		while True: time.sleep(100)
-	except (KeyboardInterrupt, SystemExit):
-		sim_server.cleanup()
-		sys.exit()
-
-if __name__ == '__main__':
-	from django.core.management import setup_environ
-	import settings
-	setup_environ(settings)
-	import sim.sim_pool
-	from django.contrib.sessions.backends.db import SessionStore
-	from django.contrib.auth.models import User
-	main()
 
 # Copyright 2010 Trevor F. Smith (http://trevor.smith.name/) Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
