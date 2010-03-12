@@ -11,7 +11,7 @@ The current code wrangler is Trevor F. Smith: http://trevor.smith.name/
 He can be reached via email at trevor at spaciblo dot org
 
 Project status: Not Even Alpha!
-The code is very early and is not currently recommended for use outside of development.
+The code is very early and is not currently recommended for use outside of development.  We are still laying down the infrastructure for web based simulation and there is 3D renderer.
 
 ## Installation:
 
