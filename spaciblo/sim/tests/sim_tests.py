@@ -13,7 +13,7 @@ from django.contrib.sessions.models import Session
 from sim.sim_server import *
 from sim.sim_client import *
 from sim.websocket import *
-from sim.models import Space
+from sim.models import Space, SpaceMember
 from sim.management.commands.load_example_spaces import Command
 import spaciblo.settings as settings
 
@@ -27,6 +27,7 @@ class SimTest(TransactionTestCase):
 		self.command = Command()
 		self.command.handle_noargs()
 		self.client = Client()
+		self.client2 = Client()
 		self.sim_server = SimulationServer()
 		self.sim_server.start()
 
@@ -35,6 +36,7 @@ class SimTest(TransactionTestCase):
 
 	def test_sim_setup(self):
 		self.client.login(username='trevor', password='1234')
+		self.client2.login(username='sarah', password='1234')
 
 		class EventHandler:
 			def __init__(self):
@@ -59,8 +61,30 @@ class SimTest(TransactionTestCase):
 		self.failUnless(sim_client.scene.thing)
 		self.failUnless(len(sim_client.scene.thing.children) > 0)
 		
+		event_handler2 = EventHandler()
+		sim_client2 = SimClient(self.client2.session.session_key, '127.0.0.1', self.sim_server.ws_server.port, '127.0.0.1:8000', event_handler=event_handler2.handle_event)
+		sim_client2.authenticate()
+		event = event_handler2.events.get(True, 10)
+		self.failUnless(event.authenticated)
+		
+		sim_client2.join_space(space.id)
+		event = event_handler2.events.get(True, 10)
+		self.failUnless(event.joined == False) # client 2 is not a member yet
+		user2 = User.objects.get(username='sarah')
+		space_member = SpaceMember.objects.create(space=space, member=user2)
+		sim_client2.join_space(space.id)
+		event = event_handler2.events.get(True, 10)
+		self.failUnless(event.joined == False)
+		space_member.is_admin = True
+		space_member.save()
+		sim_client2.join_space(space.id)
+		event = event_handler2.events.get(True, 10)
+		self.failUnless(event.joined)
+		
 		sim_client.add_user_thing()
 		event = event_handler.events.get(True, 10)
+		self.failUnless(event.thing_id)
+		event = event_handler2.events.get(True, 10)
 		self.failUnless(event.thing_id)
 
 		sim_client.close()
