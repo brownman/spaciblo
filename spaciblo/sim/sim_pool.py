@@ -103,7 +103,7 @@ class SimulationThread(threading.Thread):
 		finally:
 			self.pool.remove_simulator(self.sim)
 
-class SimulatorPool():
+class SimulatorPool:
 	"""A simple manager for space simulators."""
 	initializing, running, terminating, stopped = range(4)
 	possible_states = [initializing, running, terminating, stopped]
