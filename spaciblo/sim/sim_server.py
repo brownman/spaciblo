@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import sys
 import time, datetime
 import pprint, traceback
@@ -7,10 +5,15 @@ import Queue
 import threading
 import simplejson
 
-import settings
+from django.conf import settings
+from django.contrib.auth import SESSION_KEY, BACKEND_SESSION_KEY, load_backend
+from django.contrib.auth.models import AnonymousUser
+
 import sim_pool
 import events
 from websocket import WebSocketServer, receive_web_socket_message
+from ground.hydration import Hydration
+from sim.models import Space
 
 class WebSocketConnection:
 	"""Maintains state and an outgoing event queue for a WebSockets connection"""
@@ -28,7 +31,6 @@ class WebSocketConnection:
 
 	def handle_outgoing(self):
 		"""A loop which handles outgoing events.  Does not return until the connection closes."""
-		from ground.hydration import Hydration
 		while not self.disconnected:
 			try:
 				event = self.outgoing_events.get(block=True, timeout=5)
@@ -45,29 +47,17 @@ class WebSocketConnection:
 		
 	def handle_incoming(self):
 		"""A loop which handles incoming messages.  Does not return until the connection closes."""
-		from ground.hydration import Hydration
-		from sim.models import Space
-		import events
-
 		while not self.disconnected:
 			incoming_data = receive_web_socket_message(self.client_socket)
 			if incoming_data == None: 
-				print 'incoming was None'
 				break
 			#print 'Incoming:', incoming_data
-			json_data = simplejson.loads(incoming_data)
-			event = None
-			response_event = None
-			for class_object in events.SIM_EVENTS:
-				if json_data['type'] == str(class_object.__name__):
-					event = class_object(json_data['attributes'])
-					event.hydrate(incoming_data)
-					break
-
+			event = events.parse_event_json(incoming_data)
 			if not event:
 				print "Could not read an event from the data: %s" % data
 				continue
 
+			response_event = None
 			if isinstance(event, events.AuthenticationRequest):
 				user = self.user_from_session_key(event.session_id)
 				if user.is_authenticated():
@@ -121,19 +111,21 @@ class WebSocketConnection:
 
 	def user_from_session_key(self, session_key):
 		"""Returns a User object if it is associated with a session key, otherwise None"""
-		from django.conf import settings
-		from django.contrib.auth import SESSION_KEY, BACKEND_SESSION_KEY, load_backend
-		from django.contrib.auth.models import AnonymousUser
-		from django.contrib.sessions.models import Session
-
 		session_engine = __import__(settings.SESSION_ENGINE, {}, {}, [''])
 		session_wrapper = session_engine.SessionStore(session_key)
+
 		user_id = session_wrapper.get(SESSION_KEY)
-		if user_id == None: return AnonymousUser()
+		if user_id == None:
+			print 'user_id', user_id
+			return AnonymousUser()
 		backend = session_wrapper.get(BACKEND_SESSION_KEY)
-		if backend == None: session_wrapper.get(BACKEND_SESSION_KEY)
+		if backend == None:
+			print 'backend', backend
+			session_wrapper.get(BACKEND_SESSION_KEY)
 		auth_backend = load_backend(backend)
-		if auth_backend == None: return AnonymousUser()	
+		if auth_backend == None:
+			print 'auth_backend', auth_backend
+			return AnonymousUser()	
 		return auth_backend.get_user(user_id)
 			
 				
