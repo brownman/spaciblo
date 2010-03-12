@@ -119,6 +119,10 @@ SpacibloScene.Thing.prototype.listThings = function(results){
 	return results
 }
 
+SpacibloScene.Scene.prototype.init = function(){
+	this.assetManager = null; // to be assigned when the document is parsed
+}
+
 SpacibloScene.Thing.prototype.init = function(){
 	this.children = [];
 }
@@ -147,25 +151,29 @@ SpacibloScene.Orientation.prototype.toString = function(){
 	return this.s + "," + this.x + "," + this.y + "," + this.z;
 }
 
-SpacibloScene.parseSceneDocument = function(sceneDoc){
+SpacibloScene.parseSceneDocument = function(sceneDoc, assetManager){
 	var sceneData = JSON.parse(sceneDoc);
 	var scene = new SpacibloScene.Scene(new SpacibloScene.Color(sceneData['attributes']['background_color']));
-	scene.thing = SpacibloScene.parseThingData(sceneData['thing'], null, this);
+	scene.thing = SpacibloScene.parseThingData(sceneData['thing'], null, this, assetManager);
 	return scene;
 }
 
-SpacibloScene.parseThingData = function(thingData, parent, scene){
+SpacibloScene.parseThingData = function(thingData, parent, scene, assetManager){
 	var thing = new SpacibloScene.Thing(thingData['attributes']['id'], new SpacibloScene.Position(thingData['attributes']['position']), new SpacibloScene.Orientation(thingData['attributes']['orientation']), parseFloat(thingData['attributes']['scale']));
 	thing.parent = parent;
 	if(thingData['attributes']['user']){
 		if(scene.thing)
 			thing.user = scene.thing.getUser(thingData['attributes']['user']);
-		else
+		if(!thing.user)
 			thing.user = new SpacibloScene.User(thingData['attributes']['user']);
+	}
+	if(thingData['attributes']['template']){
+		thing.template = assetManager.getOrCreateTemplate(thingData['attributes']['template']);
+		console.log(thing.template);
 	}
 	if(thingData['children']){
 		for(var i=0; i < thingData['children'].length; i++){
-			thing.children[thing.children.length] = SpacibloScene.parseThingData(thingData['children'][i], thing, scene);
+			thing.children[thing.children.length] = SpacibloScene.parseThingData(thingData['children'][i], thing, scene, assetManager);
 		}
 	}
 	return thing;
@@ -331,7 +339,7 @@ Spaciblo.SpaceClient = function(space_id) {
 	self.finished_auth = false;
 	self.finished_join = false;
 	self.scene = null;
-	
+
 	// set these to receive callbacks on various events
 	self.open_handler = function() {}
 	self.close_handler = function(){}
@@ -339,8 +347,10 @@ Spaciblo.SpaceClient = function(space_id) {
 	self.join_space_handler = function(successful) {}
 	self.user_message_handler = function(username, message) {}
 	self.suggest_render_handler = function(){}
-	
 	self.close_handler = function(){}
+	self.handle_incoming_image = function(image, path){ }
+
+	self.assetManager = new Spaciblo.AssetManager(self.handle_incoming_image);
 	
 	self.handle_message = function(message) {
 		spaciblo_event = Spaciblo.rehydrateEvent(JSON.parse(message));
@@ -362,7 +372,8 @@ Spaciblo.SpaceClient = function(space_id) {
 				break;
 			case 'JoinSpaceResponse':
 				if(spaciblo_event.joined == true){
-					self.scene = SpacibloScene.parseSceneDocument(spaciblo_event.scene_doc);
+					self.scene = SpacibloScene.parseSceneDocument(spaciblo_event.scene_doc, self.assetManager);
+					self.scene.assetManager = self.assetManager;
 				}		
 				self.finished_join = true;
 				self.join_space_handler(spaciblo_event.joined);
@@ -395,7 +406,7 @@ Spaciblo.SpaceClient = function(space_id) {
 		}
 	}
 
-	self.ws_client = new Spaciblo.WebSocketClient(9876, '127.0.0.1', self.handle_message);
+	self.ws_client = new Spaciblo.WebSocketClient(9876, document.location.hostname, self.handle_message);
 
 	self.open = function() {
 		self.ws_client.onopen = self.__open;
@@ -442,6 +453,66 @@ Spaciblo.SpaceClient = function(space_id) {
 		self.close_handler();
 	}
 	
+}
+
+Spaciblo.Template = function(template_id){
+	var self = this;
+	self.template_id = template_id;
+	//TODO this is where we would have actual template data, loaded by the AssetManager
+}
+
+//
+//
+// AssetManager
+//
+//
+//
+
+Spaciblo.AssetManager = function(image_callback){
+	// This handles loading and unloading asset resources like images and geometry
+	var self = this;
+	self.image_callback = image_callback;
+	self.images = {};
+	self.templates = {}
+	
+	self.getOrCreateTemplate = function(template_id){
+		var template = self.getTemplate(template_id);
+		if(template) return template;
+		self.templates[template_id] = new Spaciblo.Template(template_id);
+		return self.templates[template_id];
+	}
+
+	self.getTemplate = function(template_id){
+		var template = self.templates[template_id];
+		if(!template) return null;
+		return template;
+	}
+	
+	self.imageLoaded = function(image, path){
+		self.images[path] = {'path':path, 'image':image};
+		self.image_callback(image, path);
+	}
+
+	self.imageErrored = function(path){
+		self.images[path] = {'path':path, 'image':null};
+		self.image_callback(null, path);
+	}
+	
+	self.getImage = function(path){
+		var image_info = self.images[path];
+		if(image_info) return image_info['image'];
+		return null;
+	}
+	
+	self.loadImage = function(path){
+		var image = self.getImage(path);
+		if(image) return image;
+		image = new Image();
+		image.onerror = function() { self.imageErrored(path); };
+		image.onload = function() {	self.imageLoaded(image, path); };
+		image.src = path;
+		return null;
+	}
 }
 
 Spaciblo.rehydrateEvent = function(jsonData){

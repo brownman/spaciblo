@@ -43,7 +43,22 @@ class Command(NoArgsCommand):
 		if not os.path.isfile(things_path):
 			print 'No things.csv in space %s, ignoring' % space_name
 			return None
-		space, created = Space.objects.get_or_create(name=space_name, slug=slugify(space_name))
+		properties_path = os.path.join(space_dir_path, SPACE_PROPERTIES_FILE_NAME)
+		if not os.path.isfile(properties_path):
+			print 'No %s in space %s, ignoring' % (SPACE_PROPERTIES_FILE_NAME, space_name)
+			return None
+		config = ConfigParser.ConfigParser()
+		config.readfp(open(properties_path))
+		if config.has_option(SPACE_INFO_SECTION, DEFAULT_BODY_OPTION):
+			body_name = config.get(SPACE_INFO_SECTION, DEFAULT_BODY_OPTION)
+		else:
+			print 'No %s option in %s.  Cannot create the space.' % (DEFAULT_BODY_OPTION, SPACE_PROPERTIES_FILE_NAME)
+			return None
+		if Template.objects.filter(name=body_name).count() != 1:
+			print 'An unknown template is specified for default-body: %s' % body_name
+			return None
+		body_template = Template.objects.get(name=body_name)
+		space, created = Space.objects.get_or_create(name=space_name, default_body=body_template, slug=slugify(space_name))
 		space.add_member(owner, is_admin=True, is_editor=True)
 		
 		things_reader = csv.reader(open(things_path))

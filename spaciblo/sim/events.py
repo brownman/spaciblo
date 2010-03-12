@@ -103,16 +103,17 @@ class ThingRemoved(SimEvent):
 
 class ThingAdded(SimEvent):
 	"""The simulator generates these to indicate that a Thing as been created."""
-	def __init__(self, space_id=None, username=None, thing_id=None, parent_id=None, position="0,0,0", orientation="1,0,0,0", scale=1.0):
+	def __init__(self, space_id=None, username=None, thing_id=None, template_id=None, parent_id=None, position="0,0,0", orientation="1,0,0,0", scale=1.0):
 		self.space_id = space_id
 		self.username = username
 		self.thing_id = thing_id
+		self.template_id = template_id
 		self.parent_id = parent_id
 		self.position = smart_str(position)
 		self.orientation = smart_str(orientation)
 		self.scale = scale
 	class HydrationMeta:
-		attributes = ['space_id', 'username', 'thing_id', 'parent_id', 'position', 'orientation', 'scale']
+		attributes = ['space_id', 'username', 'thing_id', 'template_id', 'parent_id', 'position', 'orientation', 'scale']
 
 class UserMessage(SimEvent):
 	"""A user generated chat message."""

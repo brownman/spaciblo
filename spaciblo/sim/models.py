@@ -27,7 +27,8 @@ class Space(models.Model):
 	state = models.CharField(max_length=20, choices=STATE_CHOICES, default='admin_only', blank=False, null=False)
 	max_guests = models.IntegerField(blank=False, null=False, default=0)
 	scene_document = models.TextField(blank=False, null=False, default='{"type":"Scene", "thing":{"type":"Thing", "attributes": { "id":"0" } } }')
-
+	default_body = models.ForeignKey("Template", blank=False, null=False)
+	
 	objects = SpaceManager()
 
 	class HydrationMeta:

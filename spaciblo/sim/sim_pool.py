@@ -60,7 +60,7 @@ class Simulator:
 				user_thing = self.scene.thing.get_user_thing(event.username)
 				if user_thing is None:
 					thing = self.scene.add_user_thing(User.objects.get(username=event.username), Position().hydrate(event.position), Orientation().hydrate(event.orientation))
-					self.pool.sim_server.send_space_event(self.space.id, ThingAdded(self.space.id, event.username, thing.id, self.scene.thing.id, thing.position.__unicode__(), thing.orientation.__unicode__()))
+					self.pool.sim_server.send_space_event(self.space.id, ThingAdded(self.space.id, event.username, thing.id, self.space.default_body.id, self.scene.thing.id, thing.position.__unicode__(), thing.orientation.__unicode__()))
 				else:
 					print "Already have a user thing with id", user_thing.id
 
@@ -70,6 +70,7 @@ class Simulator:
 					if thing.user is not None and thing.user.username == event.username:
 						self.scene.thing.remove_thing(thing)
 						self.pool.sim_server.send_space_event(self.space.id, ThingRemoved(self.space.id, thing.id))
+
 			elif event.event_name() == 'UserMessage':
 				if event.connection.user != None and event.username == event.connection.user.username:
 					self.pool.sim_server.send_space_event(self.space.id, event)

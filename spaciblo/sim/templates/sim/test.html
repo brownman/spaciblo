@@ -35,7 +35,43 @@ function runTests(){
       equals(color.red, 1);
       equals(color.green, 0.5);
       equals(color.blue, 0.1);
-      
+   });
+   
+   module("Asset Manager");
+   
+   test("load valid image", function(){
+      var testImagePath = "/media/spaciblo/Spaciblo-Logo.jpg"
+      var assetManager = new Spaciblo.AssetManager(function(image, path){
+         ok(image != null, "A valid image could not be loaded");
+         ok(path == testImagePath, "The image path was not valid: " + path);
+         ok(image == assetManager.getImage(testImagePath), "Could not get the already loaded image.");
+         ok(assetManager.images[path].image = image, "assetManager images had incorrect path");
+         start();
+      });
+      assetManager.loadImage(testImagePath);
+      stop();
+   });
+
+   test("load invalid image", function(){
+      var testImagePath = "/media/DoesNotExist.jpg"
+      var assetManager = new Spaciblo.AssetManager(function(image, path){
+         ok(image == null, "A invalid image should be null");
+         ok(path == testImagePath, "The image path was not valid: " + path);
+         ok(assetManager.getImage(testImagePath) == null, "Received non-null for invalid get_image: " + assetManager.getImage(testImagePath));
+         start();
+      });
+      assetManager.loadImage(testImagePath);
+      stop();
+   });
+   
+   test("load template", function(){
+      // right now the asset manager just creates them on demand, so let's test that
+      var assetManager = new Spaciblo.AssetManager(function(image, path){});
+      var template1 = assetManager.getTemplate(1);
+      ok(template1 == null, "Should not have a template at this point");
+      template1 = assetManager.getOrCreateTemplate(1);
+      ok(template1 != null, "Should have created a template.");
+      ok(template1 == assetManager.getOrCreateTemplate(1), "Should have returned the previously created template");
    });
 }
 

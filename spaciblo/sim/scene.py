@@ -1,6 +1,6 @@
 import simplejson
 
-from models import *
+from sim.models import *
 
 """A set of objects which define the visual aspects of a 3D scene: position, orientation, motion, geometry, material, lighting...
 This code assumes a single thread game loop, so none of the classes defined in this module are thread safe.
@@ -175,13 +175,14 @@ class Thing(SceneNode):
 				return True
 			if child.remove_thing(thing): return True
 		return False
-		
 	def add_thing(self, thing):
 		self.children.append(thing)
 	def hydrate(self, json_data):
-		if json_data.has_key('position'): self.position.hydrate(json_data['position'])
-		if json_data.has_key('orientation'): self.orientation.hydrate(json_data['orientation'])
-		if json_data.has_key('template'): self.template = Template.objects.get(pk=json_data['template'])
+		from sim.models import Template
+		if json_data.has_key('attributes'):
+			if json_data['attributes'].has_key('position'): self.position.hydrate(json_data['attributes']['position'])
+			if json_data['attributes'].has_key('orientation'): self.orientation.hydrate(json_data['attributes']['orientation'])
+			if json_data['attributes'].has_key('template'): self.template = Template.objects.get(pk=json_data['attributes']['template'])
 		if json_data.has_key('children'):
 			for thing_element in json_data['children']:
 				child_thing = Thing(thing_element['attributes']['id'])

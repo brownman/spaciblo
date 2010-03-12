@@ -5,9 +5,11 @@ TEMPLATE_DIR_PATH = os.path.join(EXAMPLE_DIR_PATH, 'template')
 SPACE_DIR_PATH = os.path.join(EXAMPLE_DIR_PATH, 'space')
 
 SPACE_TEMPLATE_FILE_NAME = 'things.csv'
+SPACE_PROPERTIES_FILE_NAME = "space.properties"
+SPACE_INFO_SECTION = "Space Info"
+DEFAULT_BODY_OPTION = "default-body"
 
 TEMPLATE_PROPERTIES_FILE_NAME = "template.properties"
-
 TEMPLATE_INFO_SECTION = "Template Info"
 TEMPLATE_NAME_OPTION = "template-name"
 
