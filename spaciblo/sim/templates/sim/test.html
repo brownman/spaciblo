@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{%block sub-title%}Tests | {% endblock %}
+
+{% block style%}
+{% endblock %}
+
+{% block sub-head %}
+<script src="{{ MEDIA_URL }}spaciblo/jquery-1.3.js"></script>
+<script src="{% url sim.views.spaciblo_js %}"></script>
+
+<link rel="stylesheet" href="{{ MEDIA_URL }}qunit/qunit.css" type="text/css" media="screen" />
+<script type="text/javascript" src="{{ MEDIA_URL }}qunit/qunit.js"></script>
+{% endblock %}
+
+{% block script %}
+
+function runTests(){
+   module("Events");
+   
+   test("serialization tests", function(){
+      var event = new SpacibloEvents.JoinSpaceRequest(32);
+      var event_json = event.toJSON()
+      var event_json_data = JSON.parse(event_json)
+      var parsed_event = Spaciblo.rehydrateEvent(event_json_data);
+      equals(event.space_id, parsed_event.space_id, 'Event space ids are not equal');
+
+      event = new SpacibloEvents.AuthenticationResponse('someone');
+      event_json = event.toJSON()
+      event_json_data = JSON.parse(event_json)
+      parsed_event = Spaciblo.rehydrateEvent(event_json_data);
+      equals(event.username, parsed_event.username, 'Event username are not equal');
+      
+      var color = new SpacibloScene.Color("1,0.5,0.1");
+      equals(color.red, 1);
+      equals(color.green, 0.5);
+      equals(color.blue, 0.1);
+      
+   });
+}
+
+$(document).ready(runTests);
+
+{% endblock %}
+
+{% block content%}
+<h1 id="qunit-header">QUnit example</h1>
+<h2 id="qunit-banner"></h2>
+<h2 id="qunit-userAgent"></h2>
+<ol id="qunit-tests"></ol>
+{% endblock %}

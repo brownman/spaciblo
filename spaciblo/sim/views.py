@@ -26,9 +26,6 @@ import events as events
 import scene as scene
 from spaciblo.sim.models import *
 
-def scratch(request):
-	return render_to_response('sim/scratch.html', {'sim_pool': sim_pool.DEFAULT_SIM_POOL }, context_instance=RequestContext(request))
-
 def index(request):
 	return render_to_response('sim/index.html', {'sim_pool': sim_pool.DEFAULT_SIM_POOL }, context_instance=RequestContext(request))
 
@@ -43,5 +40,12 @@ def space_debug(request, id):
 
 def spaciblo_js(request):
 	return render_to_response('sim/spaciblo.js', {'events': events.SIM_EVENTS, 'scene_graph_classes': scene.SCENE_GRAPH_CLASSES }, context_instance=RequestContext(request), mimetype='application/javascript')
+
+def scratch(request):
+	return render_to_response('sim/scratch.html', {'sim_pool': sim_pool.DEFAULT_SIM_POOL }, context_instance=RequestContext(request))
+
+def test(request):
+	if not settings.DEBUG: raise Http404
+	return render_to_response('sim/test.html', { }, context_instance=RequestContext(request))
 
 # Copyright 2010 Trevor F. Smith (http://trevor.smith.name/) Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
