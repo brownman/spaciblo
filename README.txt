@@ -32,7 +32,7 @@ To install you will need the following:
 > echo "create database spaciblo; grant all on database spaciblo to postgres;" | psql -U postgres
 
 > # get the code
-> git clone git@github.com:Spaciblo/spaciblo.git
+> git clone http://github.com/Spaciblo/spaciblo.git
 
 > # set up Django
 > cd spaciblo/spaciblo
