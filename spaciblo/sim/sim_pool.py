@@ -54,17 +54,15 @@ class Simulator:
 				self.pool.sim_server.send_space_event(self.space.id, Heartbeat())
 				continue
 			
-			if not self.should_run:
-				print 'Exiting the run loop for space %s' % self.space.name
-				return
+			if not self.should_run: return
 			
-			if event.event_name() == 'AddAvatarRequest':
-				avatar = self.scene.thing.get_avatar(event.username)
-				if avatar is None:
-					thing = self.scene.add_avatar(User.objects.get(username=event.username), Position().hydrate(event.position), Orientation().hydrate(event.orientation))
+			if event.event_name() == 'AddUserThingRequest':
+				user_thing = self.scene.thing.get_user_thing(event.username)
+				if user_thing is None:
+					thing = self.scene.add_user_thing(User.objects.get(username=event.username), Position().hydrate(event.position), Orientation().hydrate(event.orientation))
 					self.pool.sim_server.send_space_event(self.space.id, ThingAdded(self.space.id, event.username, thing.id, self.scene.thing.id, thing.position.__unicode__(), thing.orientation.__unicode__()))
 				else:
-					print "Already have an avatar with id", avatar.id
+					print "Already have a user thing with id", user_thing.id
 
 			elif event.event_name() == 'UserExited':
 				print 'User exited', event.username
@@ -76,15 +74,15 @@ class Simulator:
 				if event.connection.user != None and event.username == event.connection.user.username:
 					self.pool.sim_server.send_space_event(self.space.id, event)
 
-			elif event.event_name() == 'AvatarMoveRequest':
+			elif event.event_name() == 'UserMoveRequest':
 				if event.connection.user != None and event.username == event.connection.user.username:
-					avatar = self.scene.thing.get_avatar(event.username)
-					if avatar == None:
-						print "No such avatar: %s" % event.username
+					user_thing = self.scene.thing.get_user_thing(event.username)
+					if user_thing == None:
+						print "No such user thing: %s" % event.username
 					else:
-						avatar.position.hydrate(event.position)
-						avatar.orientation.hydrate(event.orientation)
-						response = ThingMoved(self.space.id, avatar.id, avatar.position, avatar.orientation)
+						user_thing.position.hydrate(event.position)
+						user_thing.orientation.hydrate(event.orientation)
+						response = ThingMoved(self.space.id, user_thing.id, user_thing.position, user_thing.orientation)
 						self.pool.sim_server.send_space_event(self.space.id, response)
 			else:
 				print "Unknown event: %s" % event.event_name()

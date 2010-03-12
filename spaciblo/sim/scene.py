@@ -149,10 +149,14 @@ class Thing(SceneNode):
 		self.parent = None
 		self.children = []
 
-		self.user = user # None if not an avatar
-	def get_avatar(self, username):
+		self.user = user # None if not an user's body
+	def get_user_thing(self, username):
 		for thing in self.list_things():
 			if thing.user != None and thing.user.username == username: return thing
+		return None
+	def get_thing(self, thing_id):
+		for thing in self.list_things():
+			if thing.id == thing_id: return thing
 		return None
 	def list_things(self, the_list=None):
 		if the_list == None: the_list = []
@@ -193,15 +197,16 @@ class Thing(SceneNode):
 
 class Scene(SceneNode):
 	"""A root thing and some global values which define the visual aspects of a 3D scene for a Space."""
-	def __init__(self, space, background_color=Color(0.2, 0.2, 0.8)):
+	def __init__(self, space=None, background_color=Color(0.2, 0.2, 0.8)):
 		self.space = space
 		self.thing = None
 		self.background_color = background_color
-		self.hydrate(simplejson.loads(space.scene_document))
-	def add_avatar(self, user, position, orientation):
-		avatar_thing = Thing(self.thing.get_max_id() + 1, position=position, orientation=orientation, user=user)
-		self.thing.add_thing(avatar_thing)
-		return avatar_thing
+		if space != None:
+			self.hydrate(simplejson.loads(space.scene_document))
+	def add_user_thing(self, user, position, orientation):
+		user_thing = Thing(self.thing.get_max_id() + 1, position=position, orientation=orientation, user=user)
+		self.thing.add_thing(user_thing)
+		return user_thing
 	def hydrate(self, json_data):
 		if json_data.has_key('thing'):
 			self.thing = Thing(json_data['thing']['attributes']['id'])

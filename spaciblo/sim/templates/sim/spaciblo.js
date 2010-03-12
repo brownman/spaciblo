@@ -418,10 +418,10 @@ Spaciblo.SpaceClient = function(space_id) {
 		self.sendEvent(new SpacibloEvents.JoinSpaceRequest(self.space_id));
 	}
 	
-	self.addAvatar = function(position, orientation) {
-		var avatarThing = self.scene.thing.getUserThing(self.username)
-		if(avatarThing == null){
-			self.sendEvent(new SpacibloEvents.AddAvatarRequest(self.space_id, self.username, position, orientation));
+	self.addUserThing = function(position, orientation) {
+		var userThing = self.scene.thing.getUserThing(self.username)
+		if(userThing == null){
+			self.sendEvent(new SpacibloEvents.AddUserThingRequest(self.space_id, self.username, position, orientation));
 		}
 	}
 	
@@ -520,51 +520,51 @@ SpacibloInput = {}
 SpacibloInput.InputManager = function(_space_client){
 	var self = this;
 	self.space_client = _space_client;
-	self.avatar_thing = null;
+	self.user_thing = null;
 	self.x_delta = 1;
 	self.y_delta = 1;
 	self.z_delta = 1;
 	self.y_rot_delta = Math.PI / 8.0;
-	self.getAvatarThing = function(){
-		if(self.avatar_thing == null){
-			self.avatar_thing = self.space_client.scene.thing.getUserThing(self.space_client.username);
+	self.getUserThing = function(){
+		if(self.user_thing == null){
+			self.user_thing = self.space_client.scene.thing.getUserThing(self.space_client.username);
 		}
-		return self.avatar_thing;
+		return self.user_thing;
 	}
 	
 	self.handle_keydown = function(event){
-		var avatarThing = self.getAvatarThing();
-		if(avatarThing == null){
-			console.log('No avatar thing');
+		var userThing = self.getUserThing();
+		if(userThing == null){
+			console.log('No user thing');
 			return;
 		}
 		switch(event.keyCode){
 			case 37: //left arrow
 			case 65: //a key
-				avatarThing.position.x -= self.x_delta;
+				userThing.position.x -= self.x_delta;
 				break;
 			case 38: //up arrow
 			case 87: //w key
-				avatarThing.position.z -= self.z_delta;
+				userThing.position.z -= self.z_delta;
 				break;
 			case 39: //right
 			case 68: //d key
-				avatarThing.position.x += self.x_delta;
+				userThing.position.x += self.x_delta;
 				break;
 			case 40: //down
 			case 83: //s key
-				avatarThing.position.z += self.z_delta;
+				userThing.position.z += self.z_delta;
 				break;
 			case 81: //q key
-				avatarThing.orientation.rotateEuler(0, self.y_rot_delta, 0);
+				userThing.orientation.rotateEuler(0, self.y_rot_delta, 0);
 				break;
 			case 69: //e key
-				avatarThing.orientation.rotateEuler(0, -1 * self.y_rot_delta, 0);
+				userThing.orientation.rotateEuler(0, -1 * self.y_rot_delta, 0);
 				break;
 			default:
 				return;
 		}
-		var event = new SpacibloEvents.AvatarMoveRequest(self.space_client.space_id, self.space_client.username, avatarThing.position.toString(), avatarThing.orientation.toString());
+		var event = new SpacibloEvents.UserThingMoveRequest(self.space_client.space_id, self.space_client.username, userThing.position.toString(), userThing.orientation.toString());
 		self.space_client.sendEvent(event);
 	}
 	
@@ -635,13 +635,13 @@ SpacibloRenderer.Canvas = function(_canvas_id, _scene, _username){
 	}
 
 	self.render = function() {
-		var avatarThing = self.scene.thing.getUserThing(self.username);
+		var userThing = self.scene.thing.getUserThing(self.username);
 		//TODO this is wrong
-		if(avatarThing != null){
-			$W.camera.setPosition(avatarThing.position.x, avatarThing.position.y, avatarThing.position.z);
-			$W.camera.setRotation([avatarThing.orientation.getEuler()[0], avatarThing.orientation.getEuler()[1], avatarThing.orientation.getEuler()[2]]);
+		if(userThing != null){
+			$W.camera.setPosition(userThing.position.x, userThing.position.y, userThing.position.z);
+			$W.camera.setRotation([userThing.orientation.getEuler()[0], userThing.orientation.getEuler()[1], userThing.orientation.getEuler()[2]]);
 		} else {
-			//console.log('no avatar thing');
+			//console.log('no user thing');
 		}
 		
 		$W.update();

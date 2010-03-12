@@ -13,7 +13,8 @@ from django.contrib.sessions.models import Session
 from sim.sim_server import *
 from sim.sim_client import *
 from sim.websocket import *
-
+from sim.models import Space
+from sim.management.commands.load_example_spaces import Command
 import spaciblo.settings as settings
 
 class SimTest(TransactionTestCase): 
@@ -23,6 +24,8 @@ class SimTest(TransactionTestCase):
 	fixtures = ['auth.json', 'sites.json']
 	
 	def setUp(self):
+		self.command = Command()
+		self.command.handle_noargs()
 		self.client = Client()
 		self.sim_server = SimulationServer()
 		self.sim_server.start()
@@ -33,10 +36,33 @@ class SimTest(TransactionTestCase):
 	def test_sim_setup(self):
 		self.client.login(username='trevor', password='1234')
 
-		client = SimClient(self.client.session.session_key, '127.0.0.1', self.sim_server.ws_server.port, '127.0.0.1:8000')
-		client.authenticate()
-		event = client.incoming_events.get(block=True, timeout=5)
+		class EventHandler:
+			def __init__(self):
+				self.events = Queue.Queue(-1)
+			def handle_event(self, event): self.events.put(event)
+		event_handler = EventHandler()
+
+		sim_client = SimClient(self.client.session.session_key, '127.0.0.1', self.sim_server.ws_server.port, '127.0.0.1:8000', event_handler=event_handler.handle_event)
+
+		sim_client.authenticate()
+		event = event_handler.events.get(True, 10)
 		self.failUnless(event.authenticated)
 		self.failUnlessEqual('trevor', event.username)
+		self.failUnlessEqual('trevor', sim_client.username)
+
+		space = Space.objects.all()[0]
+		sim_client.join_space(space.id)
+		event = event_handler.events.get(True, 10)
+		self.failUnlessEqual(space.id, event.space_id)
+		self.failUnless(event.joined)
+		self.failUnless(sim_client.scene)
+		self.failUnless(sim_client.scene.thing)
+		self.failUnless(len(sim_client.scene.thing.children) > 0)
+		
+		sim_client.add_user_thing()
+		event = event_handler.events.get(True, 10)
+		self.failUnless(event.thing_id)
+
+		sim_client.close()
 
 # Copyright 2010 Trevor F. Smith (http://trevor.smith.name/) Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.

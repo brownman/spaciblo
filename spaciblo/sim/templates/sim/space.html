@@ -76,7 +76,7 @@ function handle_join_space(successful){
 	   console.log("Joined the space.");
 	}
 	//sv_canvas = new SpacibloRenderer.Canvas('canvas', space_client.scene, space_client.username);
-	space_client.addAvatar("0,0,0", Spaciblo.defaultOrientation);
+	space_client.addUserThing("0,0,0", Spaciblo.defaultOrientation);
 	setupInput();
 	setInterval(tick, 25);
 }

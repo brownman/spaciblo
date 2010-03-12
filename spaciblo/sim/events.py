@@ -63,8 +63,8 @@ class UserExited(SimEvent):
 	class HydrationMeta:
 		attributes = ['space_id', 'username']
 
-class AddAvatarRequest(SimEvent):
-	"""A space client may send an AddAvatarRequest if they require a body in a space."""
+class AddUserThingRequest(SimEvent):
+	"""A space client may send an AddUserThingRequest if they require a body in a space."""
 	def __init__(self, space_id=None, username=None, position="0,0,0", orientation="1,0,0,0"):
 		self.space_id = space_id
 		self.username = username
@@ -73,7 +73,7 @@ class AddAvatarRequest(SimEvent):
 	class HydrationMeta:
 		attributes = ['space_id', 'username', 'position', 'orientation']
 
-class AvatarMoveRequest(SimEvent):
+class UserThingMoveRequest(SimEvent):
 	"""A space client sends this to indicate that the user has requested a motion."""
 	def __init__(self, space_id=None, username=None, position="0,0,0", orientation="1,0,0,0"):
 		self.space_id = space_id
@@ -95,7 +95,7 @@ class ThingMoved(SimEvent):
 
 class ThingRemoved(SimEvent):
 	"""The simulator generates these to indicate that a Thing has been destroyed."""
-	def __init__(self, space_id, thing_id):
+	def __init__(self, space_id=None, thing_id=None):
 		self.space_id = space_id
 		self.thing_id = thing_id
 	class HydrationMeta:
@@ -103,7 +103,7 @@ class ThingRemoved(SimEvent):
 
 class ThingAdded(SimEvent):
 	"""The simulator generates these to indicate that a Thing as been created."""
-	def __init__(self, space_id, username, thing_id, parent_id, position="0,0,0", orientation="1,0,0,0", scale=1.0):
+	def __init__(self, space_id=None, username=None, thing_id=None, parent_id=None, position="0,0,0", orientation="1,0,0,0", scale=1.0):
 		self.space_id = space_id
 		self.username = username
 		self.thing_id = thing_id
@@ -130,7 +130,7 @@ class Heartbeat(SimEvent):
 	class HydrationMeta:
 		attributes = ['time']
 
-SIM_EVENTS = [Heartbeat, UserMessage, ThingMoved, AuthenticationRequest, AuthenticationResponse, JoinSpaceRequest, JoinSpaceResponse, AvatarMoveRequest, AddAvatarRequest, ThingAdded, ThingRemoved]
+SIM_EVENTS = [Heartbeat, UserMessage, ThingMoved, AuthenticationRequest, AuthenticationResponse, JoinSpaceRequest, JoinSpaceResponse, UserThingMoveRequest, AddUserThingRequest, ThingAdded, ThingRemoved]
 
 def parse_event_json(json_string):
 	json_data = simplejson.loads(json_string)
