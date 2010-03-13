@@ -4,6 +4,21 @@ NOTE: These data structures use 0-based indexing (like the rest of python), even
 
 """
 
+class Loader:
+	def prep_line(self, line):
+		if len(line.strip()) == 0: return None
+		if line[0] == '#': return None
+		if line.count('#') == 0: return line
+		return line.split('#', 1)[0].strip()
+
+	def inner_parse(self, input):
+		for line in input.split('\n'):
+			line = self.prep_line(line)
+			if not line: continue
+			tokens = line.split(' ')
+			if not self.PARSE_FUNCTIONS.has_key(tokens[0].lower()): continue
+			self.PARSE_FUNCTIONS[tokens[0].lower()](tokens)
+
 class ObjMaterial:	
 	def __init__(self, name, specular=[0.5,0.5,0.5], ambient=[0.5,0.5,0.5], diffuse=[0.5,0.5,0.5], alpha=1.0, phong_specular=1, illumination=2, ambient_map=None, diffuse_map=None, specular_map=None, alpha_map=None, bump_map=None):
 		self.name = name
@@ -32,7 +47,7 @@ class MtlLib:
 	class HydrationMeta:
 		nodes = ['materials']
 
-class MtlLibLoader:
+class MtlLibLoader(Loader):
 	def __init__(self):
 		self.lib = None
 		self.material = None
@@ -59,12 +74,7 @@ class MtlLibLoader:
 		self.lib = MtlLib()
 		self.material = None
 
-		for line in input.split('\n'):
-			if (line.strip()) == 0: continue
-			tokens = line.split(' ')
-			if len(tokens) == 0: continue
-			if not self.PARSE_FUNCTIONS.has_key(tokens[0].lower()): continue
-			self.PARSE_FUNCTIONS[tokens[0].lower()](tokens)
+		self.inner_parse(input)
 
 		if self.material: self.lib.materials.append(self.material)
 
@@ -122,7 +132,7 @@ class Obj:
 	class HydrationMeta:
 		raw_nodes = ['vertices', 'normals', 'uvs', 'faces', 'object_groups', 'polygon_groups', 'material_groups', 'smoothing_groups']
 
-class ObjLoader:
+class ObjLoader(Loader):
 	def __init__(self):
 		self.PARSE_FUNCTIONS = {
 			'v':self.parse_v,
@@ -144,12 +154,7 @@ class ObjLoader:
 		self.material_group = None
 		self.smoothing_group = None
 
-		for line in input.split('\n'):
-			if (line.strip()) == 0: continue
-			tokens = line.split(' ')
-			if len(tokens) == 0: continue
-			if not self.PARSE_FUNCTIONS.has_key(tokens[0].lower()): continue
-			self.PARSE_FUNCTIONS[tokens[0].lower()](tokens)
+		self.inner_parse(input)
 			
 		# Close any open groups
 		if self.material_group:
