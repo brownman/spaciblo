@@ -29,15 +29,7 @@ SpacibloEvents.{{ event.event_name }} = function({% for attr in event.HydrationM
 	{% for attr in event.HydrationMeta.attributes %}self.{{ attr }} = _{{ attr }};
 	{% endfor %}
 	
-	self.toJSON = function(){
-		var attrs = {};
-		for(var key in self){
-			if(key == 'type' || key == 'toJSON') continue;
-			attrs[key] = self[key];
-		}
-		var data = { 'type': self.type, 'attributes':attrs };
-		return JSON.stringify(data);
-	}
+	self.toJSON = function(){ return Spaciblo.stringify(self); }
 }
 {% endfor %}
 
@@ -169,7 +161,6 @@ SpacibloScene.parseThingData = function(thingData, parent, scene, assetManager){
 	}
 	if(thingData['attributes']['template']){
 		thing.template = assetManager.getOrCreateTemplate(thingData['attributes']['template']);
-		console.log(thing.template);
 	}
 	if(thingData['children']){
 		for(var i=0; i < thingData['children'].length; i++){
@@ -282,6 +273,15 @@ SpacibloScene.Orientation.prototype.cleanRotation = function(rotation){ //in rad
 	return rotation.toFixed(4);
 }
 
+//
+//
+// Models
+//
+//
+SpacibloModels = {}
+{% for model in models %}
+{% include "sim/model_js.frag" %}
+{% endfor %}
 
 //
 //
@@ -290,6 +290,38 @@ SpacibloScene.Orientation.prototype.cleanRotation = function(rotation){ //in rad
 //
 
 Spaciblo = {}
+
+Spaciblo.stringify = function(hydrateObj){
+	var attrs = {};
+	for(var key in hydrateObj){
+		if(key == 'type' || key == 'toJSON') continue;
+		attrs[key] = hydrateObj[key];
+	}
+	var data = { 'type': hydrateObj.type, 'attributes':attrs };
+	return JSON.stringify(data);
+}
+
+Spaciblo.rehydrateModel = function(jsonData, model){
+	if(!model){
+		model_func = null;
+		for(var key in SpacibloModels){
+			if(key == jsonData['type']){
+				model_func = SpacibloModels[key];
+				break;
+			}
+		}
+		if(model_func == null){
+			console.log('Tried to rehydrate an unknown model: ' + JSON.stringify(jsonData));
+			return null;
+		}
+		model = new model_func();
+	}
+	
+	var attributes = jsonData['attributes'];
+	if(!attributes) return model;
+	for(var key in attributes) model[key] = attributes[key];
+	return model;
+}
 
 Spaciblo.defaultOrientation = "1,0,0,0";
 Spaciblo.defaultPosition = "20,20,0";
@@ -348,9 +380,10 @@ Spaciblo.SpaceClient = function(space_id) {
 	self.user_message_handler = function(username, message) {}
 	self.suggest_render_handler = function(){}
 	self.close_handler = function(){}
-	self.handle_incoming_image = function(image, path){ }
+	self.handleIncomingImage = function(image, path){ }
+	self.handleIncomingTemplate = function(template){ console.log('template arrived'); }
 
-	self.assetManager = new Spaciblo.AssetManager(self.handle_incoming_image);
+	self.assetManager = new Spaciblo.AssetManager(self.handleIncomingImage, self.handleIncomingTemplate);
 	
 	self.handle_message = function(message) {
 		spaciblo_event = Spaciblo.rehydrateEvent(JSON.parse(message));
@@ -455,12 +488,6 @@ Spaciblo.SpaceClient = function(space_id) {
 	
 }
 
-Spaciblo.Template = function(template_id){
-	var self = this;
-	self.template_id = template_id;
-	//TODO this is where we would have actual template data, loaded by the AssetManager
-}
-
 //
 //
 // AssetManager
@@ -468,17 +495,24 @@ Spaciblo.Template = function(template_id){
 //
 //
 
-Spaciblo.AssetManager = function(image_callback){
+Spaciblo.AssetManager = function(imageCallback, templateCallback){
 	// This handles loading and unloading asset resources like images and geometry
 	var self = this;
-	self.image_callback = image_callback;
+	self.imageCallback = imageCallback;
+	self.templateCallback = templateCallback;
 	self.images = {};
 	self.templates = {}
 	
 	self.getOrCreateTemplate = function(template_id){
 		var template = self.getTemplate(template_id);
 		if(template) return template;
-		self.templates[template_id] = new Spaciblo.Template(template_id);
+		self.templates[template_id] = new SpacibloModels.Template(template_id);
+		$.ajax({ 
+			type: "GET",
+			url: "/api/sim/template/" + template_id,
+			dataType: "json",
+			success: self.templateLoaded
+		});
 		return self.templates[template_id];
 	}
 
@@ -488,14 +522,35 @@ Spaciblo.AssetManager = function(image_callback){
 		return template;
 	}
 	
+	self.templateLoaded = function(jsonData){
+		var template = self.getTemplate(jsonData['attributes']['id']);
+		if(!template){
+			console.log("Received template data for an unloaded template: " + jsonData['attributes']['id']);
+			return;
+		}
+		Spaciblo.rehydrateModel(jsonData, template);
+		template.assets = []
+		if(jsonData['templateassets']){
+			for(var i=0; i < jsonData['templateassets'].length; i++){
+				template.assets[i] = new SpacibloModels.TemplateAsset();
+				Spaciblo.rehydrateModel(jsonData['templateassets'][i], template.assets[i]);
+				if(template.assets[i].asset == 'texture'){
+					self.loadImage('/api/sim/template/' + template.id + '/asset/' + template.assets[i].key);
+				}
+			}
+		}
+		self.templateCallback(template);
+	}
+	
 	self.imageLoaded = function(image, path){
 		self.images[path] = {'path':path, 'image':image};
-		self.image_callback(image, path);
+		self.imageCallback(image, path);
+		console.log('loaded ' + path);
 	}
 
 	self.imageErrored = function(path){
 		self.images[path] = {'path':path, 'image':null};
-		self.image_callback(null, path);
+		self.imageCallback(null, path);
 	}
 	
 	self.getImage = function(path){

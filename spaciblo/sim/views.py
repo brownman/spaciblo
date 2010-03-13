@@ -24,6 +24,7 @@ from django.template.loader import render_to_string
 import sim_pool as sim_pool
 import events as events
 import scene as scene
+import spaciblo.sim.models as models
 from spaciblo.sim.models import *
 
 def index(request):
@@ -39,7 +40,7 @@ def space_debug(request, id):
 	return render_to_response('sim/space_debug.html', { 'space':space }, context_instance=RequestContext(request))
 
 def spaciblo_js(request):
-	return render_to_response('sim/spaciblo.js', {'events': events.SIM_EVENTS, 'scene_graph_classes': scene.SCENE_GRAPH_CLASSES }, context_instance=RequestContext(request), mimetype='application/javascript')
+	return render_to_response('sim/spaciblo.js', {'events': events.SIM_EVENTS, 'models':HYDRATE_MODELS, 'scene_graph_classes': scene.SCENE_GRAPH_CLASSES }, context_instance=RequestContext(request), mimetype='application/javascript')
 
 def scratch(request):
 	return render_to_response('sim/scratch.html', {'sim_pool': sim_pool.DEFAULT_SIM_POOL }, context_instance=RequestContext(request))

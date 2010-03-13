@@ -37,7 +37,6 @@ def model_list(request, model):
 def model(request, id, model):
 	"""Generates an XML representation of a model"""
 	instance = get_object_or_404(model, pk=id)
-	print dir(instance)
 	return HttpResponse(Hydration.dehydrate(instance), mimetype=mime_type(request))
 
 def model_attribute(request, id, model, attr_name, mimetype='text/plain'):

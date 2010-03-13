@@ -75,7 +75,7 @@ class Simulator:
 				if event.connection.user != None and event.username == event.connection.user.username:
 					self.pool.sim_server.send_space_event(self.space.id, event)
 
-			elif event.event_name() == 'UserMoveRequest':
+			elif event.event_name() == 'UserThingMoveRequest':
 				if event.connection.user != None and event.username == event.connection.user.username:
 					user_thing = self.scene.thing.get_user_thing(event.username)
 					if user_thing == None:

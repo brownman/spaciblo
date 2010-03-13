@@ -8,9 +8,9 @@ This code assumes a single thread game loop, so none of the classes defined in t
 
 class SceneNode:
 	"""The base class which all scene elements extend."""
+	@classmethod
 	def node_name(cls):
 		return cls.__name__
-	node_name = classmethod(node_name)
 
 
 class Color(SceneNode):

@@ -7,6 +7,15 @@ from django.core.files.storage import default_storage
 from scene import Scene
 from ground.hydration import Hydration
 
+class HydrateModel(models.Model):
+	
+	@classmethod
+	def type(cls):
+		return cls.__name__
+	
+	class Meta:
+		abstract = True
+
 class SpaceManager(models.Manager):
 	def get_membership(self, space, user):
 		"""Returns a tuple of the form (allow_entry, SpaceMember) where allow_entry is True or False and SpaceMember will be None if there's no SpaceMember record for this user and space"""
@@ -19,7 +28,7 @@ class SpaceManager(models.Manager):
 		if space.max_guests > 0: return (True, space_member) #TODO respect the guest limits
 		return (space_member != None, space_member)
 			
-class Space(models.Model):
+class Space(HydrateModel):
 	"""An n-dimensional cartesian space"""
 	name = models.CharField(max_length=1000)
 	slug = models.SlugField(max_length=1000)
@@ -48,7 +57,7 @@ class Space(models.Model):
 	def __unicode__(self):
 		return "Space #%s: %s" % (self.id, self.name)
 
-class SpaceMember(models.Model):
+class SpaceMember(HydrateModel):
 	"""A member of a space which can have admin or editor rights."""
 	space = models.ForeignKey(Space, blank=False, null=False)
 	member = models.ForeignKey(User, blank=False, null=False)
@@ -57,7 +66,7 @@ class SpaceMember(models.Model):
 	class HydrationMeta:
 		attributes = ['id', 'member', 'is_admin', 'is_editor']
 
-class Asset(models.Model):
+class Asset(HydrateModel):
 	"""A chunk of typed data used by a template to instantiate a Thing in a Space."""
 	TYPE_CHOICES = (('geometry', 'geometry'), ('animation', 'animation'), ('script', 'script'), ('texture', 'texture'), ('text', 'text'))
 	type = models.CharField(max_length=20, choices=TYPE_CHOICES, blank=False, null=False, default='text')
@@ -78,7 +87,7 @@ class Asset(models.Model):
 	class HydrationMeta:
 		attributes = ['id', 'type', 'file']
 
-class TemplateAsset(models.Model):
+class TemplateAsset(HydrateModel):
 	"""A mediation record linking an asset with a template"""
 	template = models.ForeignKey('Template', blank=False, null=False, related_name="templateassets")
 	asset = models.ForeignKey(Asset, blank=False, null=False)
@@ -87,8 +96,9 @@ class TemplateAsset(models.Model):
 		return "TemplateAsset: %s" % self.asset
 	class HydrationMeta:
 		attributes = ['key']
+		ref_by_attributes = [('asset', 'type')]
 
-class TemplateSetting(models.Model):
+class TemplateSetting(HydrateModel):
 	"""A key/value tuple used to initialize a Thing's state"""
 	key = models.CharField(max_length=1000, blank=False, null=False)
 	value = models.TextField(blank=False, null=False)
@@ -98,7 +108,7 @@ class TemplateSetting(models.Model):
 	def __unicode__(self):
 		return "<%s|%s>" % (self.key, self.value)
 
-class TemplateChild(models.Model):
+class TemplateChild(HydrateModel):
 	"""A record of where a child template should be in relation to its parent."""
 	template = models.ForeignKey('Template', blank=False, null=False)
 	#TODO make position and orientation custom tuple fields
@@ -114,7 +124,7 @@ class TemplateChild(models.Model):
 		ref_attributes = ['template']
 		nodes = ['settings']
 	
-class Template(models.Model):
+class Template(HydrateModel):
 	"""A set of information used to instantiate a Thing in a Space."""
 	name = models.CharField(max_length=1000, blank=False, null=False, default="A Template")
 	owner = models.ForeignKey(User, blank=False, null=False)
@@ -144,5 +154,7 @@ class SimulatorPoolRegistration(models.Model):
 	port = models.IntegerField()
 	class HydrationMeta:
 		attributes = ['id', 'ip', 'port']
+
+HYDRATE_MODELS = [Template, TemplateChild, TemplateSetting, TemplateAsset, Asset, SpaceMember, Space]
 
 # Copyright 2010 Trevor F. Smith (http://trevor.smith.name/) Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
