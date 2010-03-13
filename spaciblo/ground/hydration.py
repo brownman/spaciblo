@@ -13,13 +13,14 @@ import simplejson
 from django.utils.encoding import smart_unicode
 from django.contrib.auth.models import User
 
-hydration_meta_name = 'HydrationMeta'
-hydration_attributes_name = 'attributes' # simple attributes on the element
-hydration_reference_attributes_name  = 'ref_attributes' # names of members whose ids should be set as attributes or 
-hydration_reference_by_attributes_name  = 'ref_by_attributes' # tuples of <member name, member attribute> which should be set as an attribute, for example [('site', 'name')]
-hydration_nodes_name = 'nodes' # members which should be dehydrated and included as children
-hydration_text_node_name = 'text_node' # member which should be used as the text node
-hydration_element_name = 'element_name' # what the element should be named, defaults to __class__.__name__
+meta_name = 'HydrationMeta'
+attributes_name = 'attributes' # simple attributes on the element
+reference_attributes_name  = 'ref_attributes' # names of members whose ids should be set as attributes or 
+reference_by_attributes_name  = 'ref_by_attributes' # tuples of <member name, member attribute> which should be set as an attribute, for example [('site', 'name')]
+nodes_name = 'nodes' # members which should be dehydrated and included as children
+raw_nodes_name = 'raw_nodes' # members which should are native python types and can be passed directly to the json serializer
+text_node_name = 'text_node' # member which should be used as the text node
+element_name = 'element_name' # what the element should be named, defaults to __class__.__name__
 
 class HydrationError(Exception): pass
 
@@ -73,9 +74,9 @@ class Hydration:
 		return smart_unicode(value)
 
 	def get_element_name(self, source):
-		if hasattr(source, hydration_meta_name): 
-			meta = getattr(source, hydration_meta_name)
-			if hasattr(meta, hydration_element_name): return getattr(meta, hydration_element_name)
+		if hasattr(source, meta_name): 
+			meta = getattr(source, meta_name)
+			if hasattr(meta, element_name): return getattr(meta, element_name)
 		return smart_unicode(source.__class__.__name__)
 
 	def prep(self, source):
@@ -87,11 +88,13 @@ class Hydration:
 		element_name = self.get_element_name(source)
 		result = {'type': element_name }
 		
-		if not hasattr(source, hydration_meta_name): # no HydrationMeta, so do the best we can
+		if not hasattr(source, meta_name): # no HydrationMeta, so do the best we can
 			if isinstance(source, DictType):
 				attributes = {}
 				for (key, value) in source.items(): attributes[key] = self.prep_value(value)
 				result['attributes'] = attributes
+			elif isinstance(source, ListType):
+				result['value'] = [self.prep_value(val) for val in source]
 			else:
 				text = self.prep_value(source)
 				if len(text.strip()) == 0: return None
@@ -99,9 +102,9 @@ class Hydration:
 			return result
 			
 		prepped_attributes = {}
-		meta = getattr(source, hydration_meta_name)
-		if hasattr(meta, hydration_attributes_name):
-			attributes = getattr(meta, hydration_attributes_name)
+		meta = getattr(source, meta_name)
+		if hasattr(meta, attributes_name):
+			attributes = getattr(meta, attributes_name)
 			for attribute in attributes:
 				value = getattr(source, attribute)
 				if value is None: continue
@@ -114,8 +117,8 @@ class Hydration:
 					if len(str(prepped_value).strip()) == 0: continue
 					prepped_attributes[attribute] = prepped_value
 
-		if hasattr(meta, hydration_reference_attributes_name):
-			attributes = getattr(meta, hydration_reference_attributes_name)
+		if hasattr(meta, reference_attributes_name):
+			attributes = getattr(meta, reference_attributes_name)
 			for attribute in attributes:
 				value = getattr(source, attribute)
 				if value is None: continue
@@ -127,8 +130,8 @@ class Hydration:
 					raise HydrationError('reference attribute %s has no id or pk attribute' % value)
 				prepped_attributes[attribute] = self.prep_value(pk)
 
-		if hasattr(meta, hydration_reference_by_attributes_name):
-			attributes = getattr(meta, hydration_reference_by_attributes_name)
+		if hasattr(meta, reference_by_attributes_name):
+			attributes = getattr(meta, reference_by_attributes_name)
 			for attribute in attributes:
 				if not isinstance(attribute, TupleType): raise HydrationError('Reference by attributes name values must be tuples')
 				attribute_name = attribute[0]
@@ -138,8 +141,14 @@ class Hydration:
 				if not hasattr(value, attribute_property): raise HydrationError("Reference by attributes name property does not exist: %s - %s" % (attribute, attribute_property))
 				prepped_attributes[attribute_name] = self.prep_value(getattr(value,attribute_property))
 
-		if hasattr(meta, hydration_nodes_name):
-			nodes = getattr(meta, hydration_nodes_name)
+		if hasattr(meta, raw_nodes_name):
+			nodes = getattr(meta, raw_nodes_name)
+			for node in nodes:
+				data = getattr(source, node)
+				result[node] = data
+
+		if hasattr(meta, nodes_name):
+			nodes = getattr(meta, nodes_name)
 			for node in nodes:
 				data = getattr(source, node)
 				if data is None: continue
@@ -160,15 +169,15 @@ class Hydration:
 					result[node] = {}
 					for (key, value) in data.items():
 						result[node][key] = self.prep(value)
-				elif hasattr(data, hydration_meta_name):
+				elif hasattr(data, meta_name):
 					result[node] = self.prep(data)
 				else:
 					data_string = self.prep_value(data)
 					if not data_string or len(data_string.strip()) == 0: continue
 					result[node] = data_string
 		
-		if hasattr(meta, hydration_text_node_name):
-			name = getattr(meta, hydration_text_node_name)
+		if hasattr(meta, text_node_name):
+			name = getattr(meta, text_node_name)
 			value = getattr(source, name)
 			if value is not None:
 				result[name] = value
