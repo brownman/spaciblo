@@ -137,7 +137,15 @@ class Obj:
 		else:
 			root_geo = Geometry()
 			for object_group in self.object_groups:
-				root_geo.children.append(self.genGeometry(object_group[0], object_group[1], object_group[1] + object_group[2]))
+				mat_groups = []
+				for mg in self.material_groups:
+					if mg[1] >= object_group[1] and mg[1] < (object_group[1] + object_group[2]): mat_groups.append(mg)
+				if len(mat_groups) == 0:
+					root_geo.children.append(self.genGeometry(object_group[0], object_group[1], object_group[1] + object_group[2]))
+				else:
+					for mg in mat_groups:
+						#TODO add the correct material based on the mtllib
+						root_geo.children.append(self.genGeometry(mg[0], mg[1], mg[1] + mg[2]))
 		return root_geo
 	
 	def genGeometry(self, name, face_start, face_end):
@@ -268,6 +276,19 @@ class ObjLoader(Loader):
 			if self.object_group[0] == name: return
 			self.object_group[2] = len(self.obj.faces) - self.object_group[1]
 			self.obj.object_groups.append(self.object_group)
+			# we assume that if the object group closes then the other groups close
+			if self.material_group:
+				self.material_group[2] = len(self.obj.faces) - self.material_group[1]
+				self.obj.material_groups.append(self.material_group)
+				self.material_group = None
+			if self.polygon_group:
+				self.polygon_group[2] = len(self.obj.faces) - self.polygon_group[1]
+				self.obj.polygon_groups.append(self.polygon_group)
+				self.polygon_group = None
+			if self.smoothing_group:
+				self.smoothing_group[1] = len(self.obj.faces) - self.smoothing_group[0]
+				self.obj.smoothing_groups.append(self.smoothing_group)
+				self.smoothing_group = None
 		self.object_group = [name, len(self.obj.faces), None]
 
 	def parse_g(self, tokens):

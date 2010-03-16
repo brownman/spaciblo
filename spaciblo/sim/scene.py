@@ -78,16 +78,25 @@ class Motion(SceneNode):
 		nodes = ['frames']
 
 class Material(SceneNode):
-	def __init__(self, fill_color=Color(0.8, 0.8, 0.8), line_color=Color(0,0,0)):
-		self.fill_color = fill_color
-		self.line_color = line_color
-		# texture
-		# animated
-		# double_sided
-		# smooth
-		# ...
+	def __init__(self, name=None, specular=[0.5,0.5,0.5], ambient=[0.5,0.5,0.5], diffuse=[0.5,0.5,0.5], alpha=1.0, phong_specular=1, illumination=2, ambient_map=None, diffuse_map=None, specular_map=None, alpha_map=None, bump_map=None):
+		self.name = name
+		self.specular = specular # a len 3 array of values [0.0-1.0]
+		self.ambient = ambient # a len 3 array of values [0.0-1.0]
+		self.diffuse = diffuse # a len 3 array of values [0.0-1.0]
+		self.alpha = alpha # a number in the range [0.0-1.0]
+		self.phong_specular = phong_specular # [0.0-1000.0]
+		self.illumination = illumination # [0 - 2]
+		
+		# texture maps, all of these are file names (used as asset keys)
+		self.specular_map = specular_map 
+		self.ambient_map = ambient_map
+		self.diffuse_map = diffuse_map
+		self.alpha_map = alpha_map 
+		self.bump_map = bump_map
+
 	class HydrationMeta:
-		attributes = ['fill_color', 'line_color']
+		attributes = ['name', 'alpha', 'phong_specular', 'illumination', 'ambient_map', 'diffuse_map', 'specular_map', 'alpha_map', 'bump_map']
+		raw_nodes = ['specular', 'ambient', 'diffuse']
 
 class Geometry(SceneNode):
 	"""A set of 3D data representing a visually distinct 3D "unit" which can be moved and referenced by name."""

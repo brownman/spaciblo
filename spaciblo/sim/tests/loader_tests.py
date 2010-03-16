@@ -63,7 +63,7 @@ class ObjTest(TransactionTestCase):
 		self.assertEqual(1416, obj.object_groups[2][2], 'Should have 1416 faces in the first object group: %s' % obj.object_groups[2][2])
 		self.assertEqual(3, len(obj.smoothing_groups), 'Should have three smoothing groups')
 		self.assertEqual(obj.object_groups[2][1], obj.smoothing_groups[2][0], 'The object and smoothing groups should be the same')
-		self.assertEqual(2, len(obj.material_groups), 'Should have two material groups %s' % len(obj.material_groups))
+		self.assertEqual(3, len(obj.material_groups), 'Should have three material groups %s' % len(obj.material_groups))
 
 		mtl_parser = MtlLibLoader()
 		mtl = mtl_parser.parse(open('example/template/LeCorbusier Sofa/LeCorbusierSofa.mtl').read())
