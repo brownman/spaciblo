@@ -89,20 +89,15 @@ class Material(SceneNode):
 	class HydrationMeta:
 		attributes = ['fill_color', 'line_color']
 
-class Face(SceneNode):
-	"""indices into the vertices array of Position objects"""
-	def __init__(self, position_1, position_2, position_3):
-		self.position_1 = position_1 
-		self.position_2 = position_2
-		self.position_3 = position_3
-	class HydrationMeta:
-		attributes = ['position_1', 'position_2', 'position_3']
-
 class Geometry(SceneNode):
-	def __init__(self, material=Material(), vertices=[], faces=[], position=Position(), orientation=Orientation(), scale=1.0, motion=None):
+	"""A set of 3D data representing a visually distinct 3D "unit" which can be moved and referenced by name."""
+	def __init__(self, name=None, material=Material(), vertices=[], normals=[], uvs=[], faces=[], position=Position(), orientation=Orientation(), scale=1.0, motion=None):
+		self.name = name # a named used by animations and scripts, but may be null for anonymous geometries
 		self.material = material
-		self.vertices = vertices # an array of Positions objects
-		self.faces = faces # an array of Face objects
+		self.vertices = vertices # an array of float triplets, e.g. [x1,y1,z1,x2,y2,z2,...]
+		self.normals = normals # an array of float triplets, e.g. [x1,y1,z1,x2,y2,z2,...]
+		self.uvs = uvs # an array of float doubles representing texture coordinates, e.g. [u1,v1,u2,v2,u3,v3,...]
+		self.faces = faces # a three directional array: [face_index][[vertex_index,uv_index,normal_index],...]
 
 		self.position = position
 		self.orientation = orientation
@@ -112,8 +107,9 @@ class Geometry(SceneNode):
 		self.parent = None
 		self.children = []
 	class HydrationMeta:
-		attributes = ['position', 'orientation', 'scale']
-		nodes = ['material', 'vertices', 'faces', 'motion']
+		attributes = ['name', 'position', 'orientation', 'scale']
+		nodes = ['material', 'motion', 'children']
+		raw_nodes = ['vertices', 'normals', 'faces']
 
 class Light(SceneNode):
 	light_types = ['ambient', 'directional', 'point']
@@ -217,6 +213,6 @@ class Scene(SceneNode):
 		attributes = ['background_color']
 		nodes = ['thing']
 
-SCENE_GRAPH_CLASSES = [Color, Position, Orientation, Material, MotionFrame, Motion, Light, Face, Geometry, Scene, Thing]
+SCENE_GRAPH_CLASSES = [Color, Position, Orientation, Material, MotionFrame, Motion, Light, Geometry, Scene, Thing]
 
 # Copyright 2010 Trevor F. Smith (http://trevor.smith.name/) Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.

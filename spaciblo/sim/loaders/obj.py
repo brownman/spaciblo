@@ -4,6 +4,8 @@ NOTE: These data structures use 0-based indexing (like the rest of python), even
 
 """
 
+from sim.scene import Geometry, Material
+
 class Loader:
 	def prep_line(self, line):
 		if len(line.strip()) == 0: return None
@@ -120,7 +122,7 @@ class Obj:
 
 		# faces is a three dimensional array of floats
 		# the first dimension is the face index
-		# the second dimension is the sequence index, 3 for triangle, 4 for quad, ...
+		# the second dimension is the face sequence index. There are 3 for triangles, 4 for quads, ...
 		# the third dimension is a triple: [vertex index, texture index, normal index]
 		self.faces = []
 
@@ -129,6 +131,61 @@ class Obj:
 		self.material_groups = [] # an array of arrays of form ['material name', start_face_index, num_faces]
 		self.smoothing_groups = [] # an array of arrays of form [start_face_index, num_faces]
 
+	def toGeometry(self, mtllib):
+		if len(self.object_groups) == 0:
+			root_geo = self.genGeometry(None, 0, len(self.faces))
+		else:
+			root_geo = Geometry()
+			for object_group in self.object_groups:
+				root_geo.children.append(self.genGeometry(object_group[0], object_group[1], object_group[1] + object_group[2]))
+		return root_geo
+	
+	def genGeometry(self, name, face_start, face_end):
+		group_vertices = []
+		group_normals = []
+		group_uvs = []
+		group_faces = []
+
+		vertex_map = {}
+		normal_map = {}
+		uv_map = {}
+		for face in self.faces[face_start:face_end]:
+			new_face = []
+			for point in face:
+				if vertex_map.has_key(point[0]):
+					new_vertex_index = vertex_map[point[0]]
+				else:
+					new_vertex_index = len(group_vertices) / 3
+					vertex_map[point[0]] = new_vertex_index
+					vertex_offset = point[0] * 3
+					group_vertices.extend([self.vertices[vertex_offset], self.vertices[vertex_offset + 1], self.vertices[vertex_offset + 2]])
+
+				if point[1]:
+					if uv_map.has_key(point[1]):
+						new_uv_index = uv_map[point[1]]
+					else:
+						new_uv_index = len(group_uvs) / 2
+						uv_map[point[1]] = new_uv_index
+						uv_offset = point[1] * 2
+						group_uvs.extend([self.uvs[uv_offset], self.uvs[uv_offset + 1]])
+				else:
+					new_uv_index = None
+					
+				if point[2]:
+					if normal_map.has_key(point[2]):
+						new_normal_index = normal_map[point[2]]
+					else:
+						new_normal_index = len(group_normals) / 3
+						normal_map[point[2]] = new_normal_index
+						normal_offset = point[2] * 3
+						group_normals.extend([self.normals[normal_offset], self.normals[normal_offset + 1], self.normals[normal_offset + 2]])
+				else:
+					new_normal_index = None
+
+				new_face.append([new_vertex_index, new_uv_index, new_normal_index])
+
+			group_faces.append(new_face)
+		return Geometry(name=name, vertices=group_vertices, uvs=group_uvs, normals=group_normals, faces=group_faces)
 	class HydrationMeta:
 		raw_nodes = ['vertices', 'normals', 'uvs', 'faces', 'object_groups', 'polygon_groups', 'material_groups', 'smoothing_groups']
 
