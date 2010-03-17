@@ -41,7 +41,11 @@ class ObjTest(TransactionTestCase):
 		
 		geometry = obj.toGeometry(mtl)
 		self.assertTrue(len(geometry.children) == 0, "The cube geometry should have no children")
-		
+		self.assertTrue(geometry.material != None, "The cube should have one material")
+		self.assertEqual(geometry.material.name, 'Material', 'The material should be named "Material": %s' % geometry.material.name)
+		self.assertEqual(geometry.material.ambient, [0,0,0], 'The ambient material should have been 0s: %s' % geometry.material.ambient)
+		self.assertEqual(geometry.material.alpha, 0.5, 'The alph should have 0.5: %s' % 0.5)
+
 	def test_moon(self):
 		parser = ObjLoader()
 		obj = parser.parse(open('example/template/moon/Moon.obj').read())

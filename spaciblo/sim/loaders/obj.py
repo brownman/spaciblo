@@ -132,8 +132,9 @@ class Obj:
 		self.smoothing_groups = [] # an array of arrays of form [start_face_index, num_faces]
 
 	def toGeometry(self, mtllib):
+		materials = self.genMaterials(mtllib)
 		if len(self.object_groups) == 0:
-			root_geo = self.genGeometry(None, 0, len(self.faces))
+			root_geo = self.genGeometry(None, 0, len(self.faces), materials)
 		else:
 			root_geo = Geometry()
 			for object_group in self.object_groups:
@@ -141,19 +142,34 @@ class Obj:
 				for mg in self.material_groups:
 					if mg[1] >= object_group[1] and mg[1] < (object_group[1] + object_group[2]): mat_groups.append(mg)
 				if len(mat_groups) == 0:
-					root_geo.children.append(self.genGeometry(object_group[0], object_group[1], object_group[1] + object_group[2]))
+					root_geo.children.append(self.genGeometry(object_group[0], object_group[1], object_group[1] + object_group[2]), materials)
 				else:
 					for mg in mat_groups:
 						#TODO add the correct material based on the mtllib
-						root_geo.children.append(self.genGeometry(mg[0], mg[1], mg[1] + mg[2]))
+						root_geo.children.append(self.genGeometry(mg[0], mg[1], mg[1] + mg[2], materials))
 		return root_geo
+
+	def objMaterialForFace(self, face_index):
+		for mg in self.material_groups:
+			if face_index >= mg[1] and face_index < mg[1] + mg[2]: return mg
+		return None
 	
-	def genGeometry(self, name, face_start, face_end):
+	def genMaterials(self, mtllib):
+		materials = {}
+		for obj_mat in mtllib.materials:
+			materials[obj_mat.name] = Material(name=obj_mat.name, specular=obj_mat.specular, ambient=obj_mat.ambient, diffuse=obj_mat.diffuse, alpha=obj_mat.alpha, phong_specular=obj_mat.phong_specular, illumination=obj_mat.illumination, ambient_map=obj_mat.ambient_map, diffuse_map=obj_mat.diffuse_map, specular_map=obj_mat.specular_map, alpha_map=obj_mat.alpha_map, bump_map=obj_mat.bump_map)
+		return materials
+	
+	def genGeometry(self, name, face_start, face_end, materials):
 		group_vertices = []
 		group_normals = []
 		group_uvs = []
 		group_faces = []
-
+		obj_mat = self.objMaterialForFace(face_start)
+		if obj_mat and materials.has_key(obj_mat[0]):
+			material = materials[obj_mat[0]]
+		else:
+			material = None
 		vertex_map = {}
 		normal_map = {}
 		uv_map = {}
@@ -193,7 +209,7 @@ class Obj:
 				new_face.append([new_vertex_index, new_uv_index, new_normal_index])
 
 			group_faces.append(new_face)
-		return Geometry(name=name, vertices=group_vertices, uvs=group_uvs, normals=group_normals, faces=group_faces)
+		return Geometry(name=name, vertices=group_vertices, uvs=group_uvs, normals=group_normals, faces=group_faces, material=material)
 	class HydrationMeta:
 		raw_nodes = ['vertices', 'normals', 'uvs', 'faces', 'object_groups', 'polygon_groups', 'material_groups', 'smoothing_groups']
 

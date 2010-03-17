@@ -118,7 +118,7 @@ class Geometry(SceneNode):
 	class HydrationMeta:
 		attributes = ['name', 'position', 'orientation', 'scale']
 		nodes = ['material', 'motion', 'children']
-		raw_nodes = ['vertices', 'normals', 'faces']
+		raw_nodes = ['vertices', 'normals', 'uvs', 'faces']
 
 class Light(SceneNode):
 	light_types = ['ambient', 'directional', 'point']
