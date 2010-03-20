@@ -114,7 +114,7 @@ class MtlLibLoader(Loader):
 class Obj:
 	"""A data structure representing the data in an Obj file"""
 	def __init__(self):
-		self.mtllibs = [] # an array of strings holding the names of material files
+		self.mtllib = None # a string holding the name of material file
 		
 		self.vertices = [] # an array of floats, each three representing x,y,z coordinates
 		self.normals = [] # an array of floats, each three representing a normal vector
@@ -155,6 +155,7 @@ class Obj:
 		return None
 	
 	def genMaterials(self, mtllib):
+		if not mtllib: return {}
 		materials = {}
 		for obj_mat in mtllib.materials:
 			materials[obj_mat.name] = Material(name=obj_mat.name, specular=obj_mat.specular, ambient=obj_mat.ambient, diffuse=obj_mat.diffuse, alpha=obj_mat.alpha, phong_specular=obj_mat.phong_specular, illumination=obj_mat.illumination, ambient_map=obj_mat.ambient_map, diffuse_map=obj_mat.diffuse_map, specular_map=obj_mat.specular_map, alpha_map=obj_mat.alpha_map, bump_map=obj_mat.bump_map)
@@ -211,6 +212,7 @@ class Obj:
 			group_faces.append(new_face)
 		return Geometry(name=name, vertices=group_vertices, uvs=group_uvs, normals=group_normals, faces=group_faces, material=material)
 	class HydrationMeta:
+		attributes = ['mtllib']
 		raw_nodes = ['vertices', 'normals', 'uvs', 'faces', 'object_groups', 'polygon_groups', 'material_groups', 'smoothing_groups']
 
 class ObjLoader(Loader):
@@ -329,8 +331,7 @@ class ObjLoader(Loader):
 			self.smoothing_group = [len(self.obj.faces), None]
 
 	def parse_mtllib(self, tokens):
-		lib_name = ' '.join(tokens[1:])
-		if self.obj.mtllibs.count(lib_name) == 0: self.obj.mtllibs.append(lib_name)
+		self.obj.mtllib = ' '.join(tokens[1:])
 
 	def parse_pound(self, tokens): pass # it is a comment, ignore it
 

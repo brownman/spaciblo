@@ -6,7 +6,7 @@ MEDIA_ROOT = PROJECT_ROOT + '/media/'
 TEMPLATE_DIRS = ( PROJECT_ROOT + '/templates/', )
 
 # the directories under the media root which include things like uploaded pics or other dynamic files
-DYNAMIC_MEDIA_DIRS = ['asset','resized_image']
+DYNAMIC_MEDIA_DIRS = ['asset','prepped', 'resized_image']
 
 SOUTH_AUTO_FREEZE_APP = True
 

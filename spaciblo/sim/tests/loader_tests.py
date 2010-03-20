@@ -29,8 +29,8 @@ class ObjTest(TransactionTestCase):
 		self.assertEqual([0,1,2,3], [point[0] for point in obj.faces[0]], 'The first face should have point vertices of [0, 1, 2, 3]: %s' % [point[0] for point in obj.faces[0]])
 		self.assertEqual(1, len(obj.material_groups), 'There should be only one material')
 		self.assertEqual('Material', obj.material_groups[0][0], 'Material name should be "Material"')
-		self.assertEqual(1, len(obj.mtllibs), 'Should have only one mtllib')
-		self.assertEqual('cube.mtl', obj.mtllibs[0], 'The mtllib should be "cube.mtl"')
+		self.assertTrue(obj.mtllib != None, 'Should have a mtllib')
+		self.assertEqual('cube.mtl', obj.mtllib, 'The mtllib should be "cube.mtl"')
 
 		mtl_parser = MtlLibLoader()
 		mtl = mtl_parser.parse(open('example/template/Cube/cube.mtl').read())

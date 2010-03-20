@@ -1,10 +1,14 @@
+import traceback
+import os
 from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.exceptions import *
 from django.core.files.storage import default_storage
+from django.core.files import File
 
 from scene import Scene
+from sim.loaders.obj import ObjLoader, MtlLibLoader
 from ground.hydration import Hydration
 
 class HydrateModel(models.Model):
@@ -71,21 +75,25 @@ class Asset(HydrateModel):
 	TYPE_CHOICES = (('geometry', 'geometry'), ('animation', 'animation'), ('script', 'script'), ('texture', 'texture'), ('text', 'text'))
 	type = models.CharField(max_length=20, choices=TYPE_CHOICES, blank=False, null=False, default='text')
 	file = models.FileField(upload_to='asset/%Y/%m/%d', null=False, blank=False)
+	prepped_file = models.FileField(upload_to='prepped/%Y/%m/%d', null=True, blank=True) # a version of this asset which is optimized for use, e.g. a JSON representation of a geometry
 	
 	def save(self, force_insert=False, force_update=False):
-		"""Delete an old file if it exists for this asset"""
+		"""Deletes old files if they exist for this asset"""
 		try:
-			old_obj = Asset.objects.get(pk=self.pk)
-			if old_obj.file.path != self.file.path:
-				default_storage.delete(old_obj.file.path)
+			if Asset.objects.filter(pk=self.pk).count() > 0:
+				old_obj = Asset.objects.get(pk=self.pk)
+				if self.file and old_obj.file and old_obj.file.path != self.file.path:
+					default_storage.delete(old_obj.file.path)
+				if self.prepped_file and old_obj.prepped_file and old_obj.prepped_file.path != self.prepped_file.path:
+					default_storage.delete(old_obj.prepped_file.path)
 		except:
-			pass
+			traceback.print_exc()
 		super(Asset, self).save(force_insert, force_update)
 	
 	def __unicode__(self):
 		return self.file.name
 	class HydrationMeta:
-		attributes = ['id', 'type', 'file']
+		attributes = ['id', 'type', 'file', 'prepped_file']
 
 class TemplateAsset(HydrateModel):
 	"""A mediation record linking an asset with a template"""
@@ -95,8 +103,8 @@ class TemplateAsset(HydrateModel):
 	def __unicode__(self):
 		return "TemplateAsset: %s" % self.asset
 	class HydrationMeta:
-		attributes = ['key']
-		ref_by_attributes = [('asset', 'type')]
+		attributes = ['id', 'key']
+		nodes = ['asset']
 
 class TemplateSetting(HydrateModel):
 	"""A key/value tuple used to initialize a Thing's state"""
@@ -135,6 +143,41 @@ class Template(HydrateModel):
 	#TODO make position and orientation custom tuple fields
 	seat_position = models.CharField(max_length=1000, blank=True, null=True, default="0,0,0") # px, py, pz
 	seat_orientation = models.CharField(max_length=1000, blank=True, null=True, default="1,0,0,0") # qs,qx,qy,qz
+
+	def prep_assets(self):
+		obj_assets = []
+		mtl_assets = {}
+		for template_asset in TemplateAsset.objects.filter(template=self):
+			if template_asset.asset.type == 'geometry' and template_asset.asset.file.name.endswith('.mtl'):
+				mtl_assets[template_asset.key] = template_asset.asset
+			if template_asset.asset.type == 'geometry' and template_asset.asset.file.name.endswith('.obj'):
+				obj_assets.append(template_asset.asset)
+		print mtl_assets
+		for obj_asset in obj_assets: # try to save a prepped geometry JSON
+			try:
+				loader = ObjLoader()
+				obj = loader.parse(open(obj_asset.file.path).read())
+				if obj.mtllib and mtl_assets.has_key(obj.mtllib):
+					mtllib_loader = MtlLibLoader()
+					mtllib = mtllib_loader.parse(open(mtl_assets[obj.mtllib].file.path).read())
+				elif obj.mtllib:
+					print 'Obj asset %s requires an unknown mtllib: %s' % (obj_asset.file, obj.mtllib)
+					mtllib = None
+				else:
+					print 'Obj has no mtllib'
+					mtllib = None
+				geometry = obj.toGeometry(mtllib)
+				path = '/tmp/prepped_geo-%s' % self.id
+				json_file = file(path, 'wb')
+				json_file.write(Hydration.dehydrate(geometry))
+				json_file.close()
+				json_file = file(path, 'r')
+				obj_asset.prepped_file.save(json_file.name, File(json_file), save=False)
+				obj_asset.save()
+				json_file.close()
+				os.unlink(path)
+			except:
+				traceback.print_exc()
 
 	def get_asset(self, key):
 		try:

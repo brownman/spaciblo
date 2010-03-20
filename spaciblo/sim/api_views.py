@@ -27,6 +27,7 @@ from models import *
 def template_asset(request, template_id, asset_key):
 	"""Redirect the request to this asset's file URL."""
 	template_asset = get_object_or_404(TemplateAsset, template__id=template_id, key=asset_key)
+	if template_asset.asset.prepped_file: return HttpResponseRedirect(template_asset.asset.prepped_file.url)
 	return HttpResponseRedirect(template_asset.asset.file.url)
 
 # Copyright 2010 Trevor F. Smith (http://trevor.smith.name/) Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.

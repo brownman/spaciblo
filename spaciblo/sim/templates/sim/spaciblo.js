@@ -12,6 +12,8 @@ String.prototype.length_in_bytes = function() {
     return encodeURIComponent(this).replace(/%../g, 'x').length;
 };
 
+String.prototype.endsWith = function(str){ return (this.match(str+"$")==str) }
+
 //
 //
 //  EVENTS
@@ -52,6 +54,11 @@ SpacibloScene.{{ cls.node_name }} = function({% for attr in cls.HydrationMeta.at
 	{% endfor %}
 	{% for ref in cls.HydrationMeta.ref_attributes %}self.{{ ref }} = null;
 	{% endfor %}
+	{% for ref in cls.HydrationMeta.nodes %}self.{{ ref }} = null;
+	{% endfor %}
+	{% for ref in cls.HydrationMeta.raw_nodes %}self.{{ ref }} = null;
+	{% endfor %}
+
 	if(self.init){ self.init(); }
 }
 {% else %}
@@ -170,6 +177,14 @@ SpacibloScene.parseThingData = function(thingData, parent, scene, assetManager){
 	return thing;
 }
 
+SpacibloScene.Geometry.prototype.hydrate = function(geoData){
+	this.name = geoData['attributes']['name'];
+	this.position = new SpacibloScene.Position(geoData['attributes']['position']);
+	this.children = new Array();
+	for(var i=0; i < geoData['children'].length; i++){
+		this.children[i] = this.hydrate(geoData['children'][i]);
+	}
+}
 
 SpacibloScene.Orientation.prototype.set = function(sValue, xValue, yValue, zValue){
 	this.s = sValue;
@@ -501,7 +516,8 @@ Spaciblo.AssetManager = function(imageCallback, templateCallback){
 	self.imageCallback = imageCallback;
 	self.templateCallback = templateCallback;
 	self.images = {};
-	self.templates = {}
+	self.templates = {};
+	self.geometries = {};
 	
 	self.getOrCreateTemplate = function(template_id){
 		var template = self.getTemplate(template_id);
@@ -529,19 +545,40 @@ Spaciblo.AssetManager = function(imageCallback, templateCallback){
 			return;
 		}
 		Spaciblo.rehydrateModel(jsonData, template);
-		template.assets = []
+		template.templateAssets = []
 		if(jsonData['templateassets']){
 			for(var i=0; i < jsonData['templateassets'].length; i++){
-				template.assets[i] = new SpacibloModels.TemplateAsset();
-				Spaciblo.rehydrateModel(jsonData['templateassets'][i], template.assets[i]);
-				if(template.assets[i].asset == 'texture'){
-					self.loadImage('/api/sim/template/' + template.id + '/asset/' + template.assets[i].key);
+				var templateAsset = new SpacibloModels.TemplateAsset();
+				Spaciblo.rehydrateModel(jsonData['templateassets'][i], templateAsset);
+				templateAsset.asset = new SpacibloModels.Asset();
+				Spaciblo.rehydrateModel(jsonData['templateassets'][i].asset, templateAsset.asset);
+				if(templateAsset.asset.type == 'texture'){
+					//TODO stop consing these up from scratch
+					self.loadImage('/api/sim/template/' + template.id + '/asset/' + templateAsset.key);
+				} else if (templateAsset.asset.type == 'geometry' && templateAsset.key.endsWith('.obj')){
+					self.loadGeometry(templateAsset.id, '/api/sim/template/' + template.id + '/asset/' + templateAsset.key);
 				}
+				template.templateAssets[i] = templateAsset;
 			}
 		}
 		self.templateCallback(template);
 	}
-	
+
+	self.loadGeometry = function(templateAssetID, path){
+		if(self.geometries[templateAssetID]) return;
+		self.geometries[templateAssetID] = new SpacibloScene.Geometry();
+		$.ajax({ 
+			type: "GET",
+			url: path,
+			dataType: "json",
+			success: self.geometryLoaded
+		});
+	}
+
+	self.geometryLoaded = function(jsonData){
+		console.log(jsonData);
+	}
+
 	self.imageLoaded = function(image, path){
 		self.images[path] = {'path':path, 'image':image};
 		self.imageCallback(image, path);

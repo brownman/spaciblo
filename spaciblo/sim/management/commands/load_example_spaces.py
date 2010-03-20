@@ -138,6 +138,7 @@ class Command(NoArgsCommand):
 			asset.save()
 			asset_file.close()
 			template_asset, created = TemplateAsset.objects.get_or_create(template=template, asset=asset, key=asset_name)
+		template.prep_assets()
 		
 		return template
 

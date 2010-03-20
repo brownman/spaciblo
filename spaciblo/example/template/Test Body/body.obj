@@ -1,6 +1,6 @@
 # Blender3D v245 OBJ File: Mailbox.blend
 # www.blender3d.org
-mtllib Mailbox.mtl
+mtllib body.mtl
 o mailbox_001
 v 0.297452 1.072525 -0.244356
 v 0.297452 1.072525 0.343261
