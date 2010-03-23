@@ -49,7 +49,7 @@ class Hydration:
 
 	def serialize(self, prepped_data):
 		"""Convert the prepped_data to a JSON string"""
-		return simplejson.dumps(prepped_data, indent=4)
+		return simplejson.dumps(prepped_data)
 		
 	def prep_list(self, input_list, start=None, end=None):
 		"""Return a serialization-ready map for dehydrate_list"""

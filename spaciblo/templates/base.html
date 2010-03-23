@@ -3,13 +3,14 @@
 <head>
 	<meta charset="utf-8">
 	<title>{% block title %}{%block sub-title%}{% endblock %}{{site.name}}{% endblock %}</title>
+   <meta name="description" content="{% block meta-description %}{% endblock %}" />
 
 	<link href="{{ MEDIA_URL }}base.css" rel="stylesheet" type="text/css" />
 
 <!--[if IE]>
 	<script src="{{ MEDIA_URL }}js/html5.js"></script>
 <![endif]-->
-	<script src="{{ MEDIA_URL }}spaciblo/jquery-1.3.js"></script>
+	<script src="{{ MEDIA_URL }}jquery-1.4.2.min.js"></script>
 
 	<style>
 {% block style %}{% endblock %}

@@ -180,9 +180,23 @@ SpacibloScene.parseThingData = function(thingData, parent, scene, assetManager){
 SpacibloScene.Geometry.prototype.hydrate = function(geoData){
 	this.name = geoData['attributes']['name'];
 	this.position = new SpacibloScene.Position(geoData['attributes']['position']);
+	this.orientation = new SpacibloScene.Orientation(geoData['attributes']['position']);
+	this.vertices = geoData['vertices'];
+	this.uvs = geoData['uvs'];
+	this.normals = geoData['normals'];
+	if(geoData['material']){
+		this.material = new SpacibloScene.Material();
+		for(var key in geoData['material']['attributes']){
+			this.material[key] = geoData['material']['attributes'][key];
+		}
+		this.material.specular = geoData['material']['specular'];
+		this.material.ambient = geoData['material']['ambient'];
+		this.material.diffuse = geoData['material']['diffuse'];
+	}
 	this.children = new Array();
-	for(var i=0; i < geoData['children'].length; i++){
-		this.children[i] = this.hydrate(geoData['children'][i]);
+	for(var i=0; geoData['children'] && i < geoData['children'].length; i++){
+		this.children[i] = new SpacibloScene.Geometry();
+		this.children[i].hydrate(geoData['children'][i]);
 	}
 }
 
@@ -349,8 +363,8 @@ Spaciblo.WebSocketClient = function(_ws_port, _ws_host, _message_handler_functio
 	self.ws_host = _ws_host;
 	self.message_handler_function = _message_handler_function;
 	
-	self.onopen = function() { console.log('web socket opened'); }
-	self.onclose = function() { console.log('web socket closed'); }
+	self.onopen = function() { }
+	self.onclose = function() { }
 	self.onmessage = function(message) { 
 		self.message_handler_function(message.data);
 	}
@@ -396,9 +410,10 @@ Spaciblo.SpaceClient = function(space_id) {
 	self.suggest_render_handler = function(){}
 	self.close_handler = function(){}
 	self.handleIncomingImage = function(image, path){ }
-	self.handleIncomingTemplate = function(template){ console.log('template arrived'); }
+	self.handleIncomingTemplate = function(template){ }
+	self.handleIncomingGeometry = function(templateID, templateAssetID, geometry){ }
 
-	self.assetManager = new Spaciblo.AssetManager(self.handleIncomingImage, self.handleIncomingTemplate);
+	self.assetManager = new Spaciblo.AssetManager(self.handleIncomingImage, self.handleIncomingTemplate, self.handleIncomingGeometry);
 	
 	self.handle_message = function(message) {
 		spaciblo_event = Spaciblo.rehydrateEvent(JSON.parse(message));
@@ -510,11 +525,12 @@ Spaciblo.SpaceClient = function(space_id) {
 //
 //
 
-Spaciblo.AssetManager = function(imageCallback, templateCallback){
+Spaciblo.AssetManager = function(imageCallback, templateCallback, geometryCallback){
 	// This handles loading and unloading asset resources like images and geometry
 	var self = this;
 	self.imageCallback = imageCallback;
 	self.templateCallback = templateCallback;
+	self.geometryCallback = geometryCallback;
 	self.images = {};
 	self.templates = {};
 	self.geometries = {};
@@ -553,41 +569,47 @@ Spaciblo.AssetManager = function(imageCallback, templateCallback){
 				templateAsset.asset = new SpacibloModels.Asset();
 				Spaciblo.rehydrateModel(jsonData['templateassets'][i].asset, templateAsset.asset);
 				if(templateAsset.asset.type == 'texture'){
-					//TODO stop consing these up from scratch
+					//TODO stop consing these URIs from scratch
 					self.loadImage('/api/sim/template/' + template.id + '/asset/' + templateAsset.key);
 				} else if (templateAsset.asset.type == 'geometry' && templateAsset.key.endsWith('.obj')){
-					self.loadGeometry(templateAsset.id, '/api/sim/template/' + template.id + '/asset/' + templateAsset.key);
+					self.loadGeometry(template.id, templateAsset.id, '/api/sim/template/' + template.id + '/asset/' + templateAsset.key);
 				}
 				template.templateAssets[i] = templateAsset;
 			}
 		}
-		self.templateCallback(template);
+		if (self.templateCallback) self.templateCallback(template);
 	}
 
-	self.loadGeometry = function(templateAssetID, path){
+	self.loadGeometry = function(templateID, templateAssetID, path){
 		if(self.geometries[templateAssetID]) return;
 		self.geometries[templateAssetID] = new SpacibloScene.Geometry();
 		$.ajax({ 
 			type: "GET",
 			url: path,
 			dataType: "json",
-			success: self.geometryLoaded
+			success: self.geometryLoaded,
+			error:self.geometryErrored,
+			beforeSend: function(request){ request.templateAssetID = templateAssetID; request.templateID = templateID}
 		});
 	}
 
-	self.geometryLoaded = function(jsonData){
-		console.log(jsonData);
+	self.geometryErrored = function(request, status, error){
+		if (self.geometryCallback) self.geometryCallback(request.templateID, request.templateAssetID, null);
+	}
+
+	self.geometryLoaded = function(jsonData, status, request){
+		self.geometries[request.templateAssetID].hydrate(jsonData);
+		if (self.geometryCallback) self.geometryCallback(request.templateID, request.templateAssetID, self.geometries[request.templateAssetID]);
 	}
 
 	self.imageLoaded = function(image, path){
 		self.images[path] = {'path':path, 'image':image};
-		self.imageCallback(image, path);
-		console.log('loaded ' + path);
+		if(self.imageCallback) self.imageCallback(image, path);
 	}
 
 	self.imageErrored = function(path){
 		self.images[path] = {'path':path, 'image':null};
-		self.imageCallback(null, path);
+		if(self.imageCallback) self.imageCallback(null, path);
 	}
 	
 	self.getImage = function(path){
@@ -783,7 +805,7 @@ SpacibloRenderer.Canvas = function(_canvas_id, _scene, _username){
 	self.canvas = document.getElementById(self.canvas_id);
 
 	self.initializeCanvas = function() {
-		//--Initialize WebGLU, shaders
+		// This is just junk, placeholder code
 		if (!$W.initialize(self.canvas)) return false;
 		$W.newProgram('textured');
 		$W.programs['textured'].attachShader('texVS', $W.paths.shaders + 'texture.vert');

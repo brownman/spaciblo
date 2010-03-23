@@ -51,7 +51,7 @@ function initialize(){
 	space_client.suggest_render_handler = function() {};
 	space_client.open();
 	
-	setupDummyCanvas();
+	//setupDummyCanvas();
 }
 
 function handle_client_open(){
@@ -77,7 +77,7 @@ function handle_join_space(successful){
 	} else {
 	   console.log("Joined the space.");
 	}
-	//sv_canvas = new SpacibloRenderer.Canvas('canvas', space_client.scene, space_client.username);
+	sv_canvas = new SpacibloRenderer.Canvas('canvas', space_client.scene, space_client.username);
 	space_client.addUserThing("0,0,0", Spaciblo.defaultOrientation);
 	setupInput();
 	setInterval(tick, 25);
@@ -103,7 +103,7 @@ function setupInput(){
 }
 
 function tick() {
-	//sv_canvas.render();
+	sv_canvas.render();
 }
 
 function user_message_handler(username, message){
