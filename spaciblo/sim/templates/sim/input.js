@@ -59,7 +59,6 @@ SpacibloInput.InputManager = function(_space_client){
 				userThing.orientation.rotateEuler(0, -1 * self.y_rot_delta, 0);
 				break;
 			default:
-				console.log(event.keyCode);
 				return;
 		}
 		var event = new SpacibloEvents.UserThingMoveRequest(self.space_client.space_id, self.space_client.username, userThing.position.toString(), userThing.orientation.toString());

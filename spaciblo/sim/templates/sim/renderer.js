@@ -288,7 +288,7 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 			rotVector = [userThing.orientation.x, userThing.orientation.y, userThing.orientation.z];
 		} else{
 			theta = 1;
-			rotVector = [0,0,0];
+			rotVector = [0,1,0];
 			position = [-1.5, 0.0, -7.0];
 		}
 		var mvMatrix = Matrix.I(4);
