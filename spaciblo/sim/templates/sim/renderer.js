@@ -3,16 +3,20 @@ SpacibloRenderer = {}
 
 SpacibloRenderer.vsShaderSource = "\
 attribute vec3 aVertexPosition;\
+attribute vec4 aVertexColor;\
 uniform mat4 uMVMatrix;\
 uniform mat4 uPMatrix;\
+varying vec4 vColor;\
 void main(void) {\
  gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);\
+ vColor = aVertexColor;\
 }\
 ";
 
 SpacibloRenderer.fsShaderSource = "\
+varying vec4 vColor;\
 void main(void) {\
- gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0);\
+ gl_FragColor = vColor;\
 }\
 ";
 
@@ -149,6 +153,17 @@ SpacibloRenderer.Renderable = function(geometry, canvas){
 	self.vertexPositionBuffer.itemSize = 3;
 	self.vertexPositionBuffer.numItems = geometry.vertices.length / 3;
 	
+	self.vertexColorBuffer = self.gl.createBuffer();
+	self.gl.bindBuffer(self.gl.ARRAY_BUFFER, self.vertexColorBuffer);
+	var colors = []
+    for (var i=0; i < self.vertexPositionBuffer.numItems; i++) {
+      colors = colors.concat([Math.random(), Math.random(), Math.random(), 1.0]);
+    }
+
+	self.gl.bufferData(self.gl.ARRAY_BUFFER, new WebGLFloatArray(colors), self.gl.STATIC_DRAW);
+	self.vertexColorBuffer.itemSize = 4;
+	self.vertexColorBuffer.numItems = self.vertexPositionBuffer.numItems;
+	
 	self.children = new Array();
 	for(var index=0; index < self.geometry.children.length; index++){
 		self.children[self.children.length] = new SpacibloRenderer.Renderable(self.geometry.children[index], self.canvas);
@@ -161,6 +176,9 @@ SpacibloRenderer.Renderable = function(geometry, canvas){
 		self.gl.uniformMatrix4fv(canvas.shaderProgram.mvMatrixUniform, false, new WebGLFloatArray(mvMatrix.flatten()));
 		self.gl.drawArrays(self.gl.TRIANGLES, 0, self.vertexPositionBuffer.numItems);
 		
+		self.gl.bindBuffer(self.gl.ARRAY_BUFFER, self.vertexColorBuffer);
+		self.gl.vertexAttribPointer(self.canvas.shaderProgram.vertexColorAttribute, self.vertexColorBuffer.itemSize, self.gl.FLOAT, false, 0, 0);
+
 		for(var index=0; index < self.children.length; index++){
 			self.children[index].render(pMatrix, mvMatrix);
 		}
@@ -220,6 +238,8 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 
 		self.shaderProgram.vertexPositionAttribute = self.gl.getAttribLocation(self.shaderProgram, "aVertexPosition");
 		self.gl.enableVertexAttribArray(self.shaderProgram.vertexPositionAttribute);
+		self.shaderProgram.vertexColorAttribute = self.gl.getAttribLocation(self.shaderProgram, "aVertexColor");
+		self.gl.enableVertexAttribArray(self.shaderProgram.vertexColorAttribute);
 		self.shaderProgram.pMatrixUniform = self.gl.getUniformLocation(self.shaderProgram, "uPMatrix");
 		self.shaderProgram.mvMatrixUniform = self.gl.getUniformLocation(self.shaderProgram, "uMVMatrix");
 
