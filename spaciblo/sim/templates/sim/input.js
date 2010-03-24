@@ -32,19 +32,25 @@ SpacibloInput.InputManager = function(_space_client){
 		switch(event.keyCode){
 			case 37: //left arrow
 			case 65: //a key
-				userThing.position.x -= self.x_delta;
+				userThing.position.x += self.x_delta;
 				break;
 			case 38: //up arrow
 			case 87: //w key
-				userThing.position.z -= self.z_delta;
+				userThing.position.z += self.z_delta;
 				break;
 			case 39: //right
 			case 68: //d key
-				userThing.position.x += self.x_delta;
+				userThing.position.x -= self.x_delta;
 				break;
 			case 40: //down
 			case 83: //s key
-				userThing.position.z += self.z_delta;
+				userThing.position.z -= self.z_delta;
+				break;
+			case 82: //r key
+				userThing.position.y -= self.y_delta;
+				break;
+			case 70: //f key
+				userThing.position.y += self.y_delta;
 				break;
 			case 81: //q key
 				userThing.orientation.rotateEuler(0, self.y_rot_delta, 0);
@@ -53,6 +59,7 @@ SpacibloInput.InputManager = function(_space_client){
 				userThing.orientation.rotateEuler(0, -1 * self.y_rot_delta, 0);
 				break;
 			default:
+				console.log(event.keyCode);
 				return;
 		}
 		var event = new SpacibloEvents.UserThingMoveRequest(self.space_client.space_id, self.space_client.username, userThing.position.toString(), userThing.orientation.toString());

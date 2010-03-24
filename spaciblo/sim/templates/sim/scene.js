@@ -52,6 +52,16 @@ SpacibloScene.Thing.prototype.getUserThing = function(username){
 	return null;
 }
 
+SpacibloScene.Thing.prototype.getThingsByTemplate = function(templateID, results){
+	if(!results) {
+		results = new Array();
+	}
+	if(this.template_id == templateID) results[results.length] = this;
+	for(var i=0; i < this.children.length; i++)
+		this.children[i].getThingsByTemplate(templateID, results);
+	return results
+}
+
 SpacibloScene.Thing.prototype.getUser = function(username){
 	var ut = this.getUserThing(username);
 	if(ut != null) return ut.user;

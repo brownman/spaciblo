@@ -147,6 +147,10 @@ SpacibloRenderer.Renderable = function(geometry, canvas){
 	self.canvas = canvas
 	self.gl = canvas.gl;
 
+	self.thing = null; //this is only filled out for the Geometry which is the root of the Thing's geometry tree
+	self.position = new SpacibloScene.Position("0,0,0");
+	self.orientation = new SpacibloScene.Orientation("1,0,0,0");
+	
 	self.vertexPositionBuffer = self.gl.createBuffer();
 	self.gl.bindBuffer(self.gl.ARRAY_BUFFER, self.vertexPositionBuffer);
 	self.gl.bufferData(self.gl.ARRAY_BUFFER, new WebGLFloatArray(geometry.vertices), self.gl.STATIC_DRAW);
@@ -156,9 +160,13 @@ SpacibloRenderer.Renderable = function(geometry, canvas){
 	self.vertexColorBuffer = self.gl.createBuffer();
 	self.gl.bindBuffer(self.gl.ARRAY_BUFFER, self.vertexColorBuffer);
 	var colors = []
-    for (var i=0; i < self.vertexPositionBuffer.numItems; i++) {
-      colors = colors.concat([Math.random(), Math.random(), Math.random(), 1.0]);
-    }
+	for (var i=0; i < self.vertexPositionBuffer.numItems; i++) {
+		if(self.geometry.material){
+			colors = colors.concat([self.geometry.material.diffuse[0], self.geometry.material.diffuse[1], self.geometry.material.diffuse[2], 1.0]);
+		} else {
+			colors = colors.concat([0.5, 1, 0.5, 1.0]);
+		}
+	}
 
 	self.gl.bufferData(self.gl.ARRAY_BUFFER, new WebGLFloatArray(colors), self.gl.STATIC_DRAW);
 	self.vertexColorBuffer.itemSize = 4;
@@ -168,14 +176,22 @@ SpacibloRenderer.Renderable = function(geometry, canvas){
 	for(var index=0; index < self.geometry.children.length; index++){
 		self.children[self.children.length] = new SpacibloRenderer.Renderable(self.geometry.children[index], self.canvas);
 	}
-	
+
 	self.render = function(pMatrix, mvMatrix){
 		self.gl.bindBuffer(self.gl.ARRAY_BUFFER, self.vertexPositionBuffer);
 		self.gl.vertexAttribPointer(canvas.shaderProgram.vertexPositionAttribute, self.vertexPositionBuffer.itemSize, self.gl.FLOAT, false, 0, 0);
 		self.gl.uniformMatrix4fv(canvas.shaderProgram.pMatrixUniform, false, new WebGLFloatArray(pMatrix.flatten()));
-		self.gl.uniformMatrix4fv(canvas.shaderProgram.mvMatrixUniform, false, new WebGLFloatArray(mvMatrix.flatten()));
+
+		var gMvMatrix = mvMatrix.dup();
+		var transMatrix = Matrix.Translation($V([self.position.x, self.position.y, self.position.z])).ensure4x4();
+		gMvMatrix = gMvMatrix.x(transMatrix);
+		//var arad = 0 * Math.PI / 180.0;
+		//var v = [0, 1, 0];
+		//var rotMatrix = Matrix.Rotation(arad, $V([v[0], v[1], v[2]])).ensure4x4();
+		//gMvMatrix = gMvMatrix.x(rotMatrix);
+		self.gl.uniformMatrix4fv(canvas.shaderProgram.mvMatrixUniform, false, new WebGLFloatArray(gMvMatrix.flatten()));
+
 		self.gl.drawArrays(self.gl.TRIANGLES, 0, self.vertexPositionBuffer.numItems);
-		
 		self.gl.bindBuffer(self.gl.ARRAY_BUFFER, self.vertexColorBuffer);
 		self.gl.vertexAttribPointer(self.canvas.shaderProgram.vertexColorAttribute, self.vertexColorBuffer.itemSize, self.gl.FLOAT, false, 0, 0);
 
@@ -268,12 +284,18 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 		var position = null;
 		if(userThing){
 			position = [userThing.position.x, userThing.position.y, userThing.position.z];
+			theta = userThing.orientation.s;
+			rotVector = [userThing.orientation.x, userThing.orientation.y, userThing.orientation.z];
 		} else{
+			theta = 1;
+			rotVector = [0,0,0];
 			position = [-1.5, 0.0, -7.0];
 		}
 		var mvMatrix = Matrix.I(4);
-		var m = Matrix.Translation($V(position)).ensure4x4();
-		mvMatrix = mvMatrix.x(m);
+		var transMatrix = Matrix.Translation($V(position)).ensure4x4();
+		mvMatrix = mvMatrix.x(transMatrix);
+		var rotMatrix = Matrix.Rotation(theta, $V(rotVector)).ensure4x4();
+		mvMatrix = mvMatrix.x(rotMatrix);
 
 		//Do this for each renderable
 		for(var i=0; i < self.renderables.length; i++){
@@ -291,7 +313,14 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 	self.handleTemplateAsset = function(template){ }
 	
 	self.handleGeometryAsset = function(templateID, templateAssetID, geometry){
-		self.renderables[self.renderables.length] = new SpacibloRenderer.Renderable(geometry, self);
+		var things = self.scene.thing.getThingsByTemplate(templateID);
+		for(var i=0; i < things.length; i++){
+			var renderable = new SpacibloRenderer.Renderable(geometry, self);
+			renderable.thing = things[i];
+			renderable.position = things[i].position;
+			renderable.orientation = things[i].orientation;
+			self.renderables[self.renderables.length] = renderable;
+		}
 	}
 
 	self.assetManager = new SpacibloRenderer.AssetManager(self.handleImageAsset, self.handleTemplateAsset, self.handleGeometryAsset);
