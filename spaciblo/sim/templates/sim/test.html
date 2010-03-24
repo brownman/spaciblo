@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block sub-head %}
-<script src="{{ MEDIA_URL }}jquery-1.4.2.min.js"></script>
+<script src="{{ MEDIA_URL}}gl.js"></script>
 <script src="{% url sim.views.spaciblo_js %}"></script>
 
 <link rel="stylesheet" href="{{ MEDIA_URL }}qunit/qunit.css" type="text/css" media="screen" />
@@ -107,12 +107,13 @@ function runTests(){
    test("load valid image", function(){
       var testImagePath = "/media/spaciblo/Spaciblo-Logo.jpg"
       var assetManager = new SpacibloRenderer.AssetManager(function(image, path){
-         ok(image != null, "A valid image could not be loaded");
-         ok(path == testImagePath, "The image path was not valid: " + path);
-         ok(image == assetManager.getImage(testImagePath), "Could not get the already loaded image.");
-         ok(assetManager.images[path].image = image, "assetManager images had incorrect path");
-         start();
-      });
+            ok(image != null, "A valid image could not be loaded");
+            ok(path == testImagePath, "The image path was not valid: " + path);
+            ok(image == assetManager.getImage(testImagePath), "Could not get the already loaded image.");
+            ok(assetManager.images[path].image = image, "assetManager images had incorrect path");
+            start();
+         }, function(template){}, function(templateID, templateAssetID, geometry){}
+      );
       assetManager.loadImage(testImagePath);
       stop();
    });

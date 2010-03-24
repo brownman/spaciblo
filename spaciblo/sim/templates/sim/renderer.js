@@ -1,6 +1,21 @@
 
 SpacibloRenderer = {}
 
+SpacibloRenderer.vsShaderSource = "\
+attribute vec3 aVertexPosition;\
+uniform mat4 uMVMatrix;\
+uniform mat4 uPMatrix;\
+void main(void) {\
+ gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);\
+}\
+";
+
+SpacibloRenderer.fsShaderSource = "\
+void main(void) {\
+ gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);\
+}\
+";
+
 //
 //
 // AssetManager
@@ -51,16 +66,19 @@ SpacibloRenderer.AssetManager = function(imageCallback, templateCallback, geomet
 				SpacibloModels.rehydrateModel(jsonData['templateassets'][i], templateAsset);
 				templateAsset.asset = new SpacibloModels.Asset();
 				SpacibloModels.rehydrateModel(jsonData['templateassets'][i].asset, templateAsset.asset);
-				if(templateAsset.asset.type == 'texture'){
-					//TODO stop consing these URIs from scratch
-					self.loadImage('/api/sim/template/' + template.id + '/asset/' + templateAsset.key);
-				} else if (templateAsset.asset.type == 'geometry' && templateAsset.key.endsWith('.obj')){
-					self.loadGeometry(template.id, templateAsset.id, '/api/sim/template/' + template.id + '/asset/' + templateAsset.key);
-				}
 				template.templateAssets[i] = templateAsset;
 			}
 		}
 		if (self.templateCallback) self.templateCallback(template);
+
+		// Now that we have notified listeners about the template, load the assets.
+		for(var i=0; i < template.templateAssets.length; i++){
+			if(template.templateAssets[i].asset.type == 'texture'){
+				self.loadImage('/api/sim/template/' + template.id + '/asset/' + template.templateAssets[i].key);
+			} else if (template.templateAssets[i].asset.type == 'geometry' && template.templateAssets[i].key.endsWith('.obj')){
+				self.loadGeometry(template.id, template.templateAssets[i].id, '/api/sim/template/' + template.id + '/asset/' + template.templateAssets[i].key);
+			}
+		}
 	}
 
 	self.loadGeometry = function(templateID, templateAssetID, path){
@@ -119,15 +137,20 @@ SpacibloRenderer.AssetManager = function(imageCallback, templateCallback, geomet
 //
 //
 
-SpacibloRenderer.Renderable = function(thing){
+SpacibloRenderer.Renderable = function(geometry, gl){
 	var self = this;
-	self.thing = thing;
-	self.thing.renderable = self;
+	self.geometry = geometry;
+	self.gl = gl;
+
+	self.vertexPositionBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, self.vertexPositionBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new WebGLFloatArray(geometry.vertices), gl.STATIC_DRAW);
+	self.vertexPositionBuffer.itemSize = 3;
+	self.vertexPositionBuffer.numItems = geometry.vertices.length / 3;
 	
 	self.children = new Array();
-	//self.glObj.setPosition(self.thing.position.x, self.thing.position.y, self.thing.position.z);
-	for(var index=0; index < self.thing.children.length; index++){
-		self.children[self.children.length] = new SpacibloRenderer.Renderable(self.thing.children[index]);
+	for(var index=0; index < self.geometry.children.length; index++){
+		self.children[self.children.length] = new SpacibloRenderer.Renderable(self.geometry.children[index], gl);
 	}
 }
 
@@ -166,21 +189,58 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 		self.gl.enable(self.gl.DEPTH_TEST);
 		self.gl.depthFunc(self.gl.LEQUAL);
 
-		var rootRenderable = new SpacibloRenderer.Renderable(self.scene.thing);
-		self.renderables[self.renderables.length] = rootRenderable;
-		self.initializeRenderable(rootRenderable);
+		self.fsShader = self.gl.createShader(self.gl.FRAGMENT_SHADER);
+		self.gl.shaderSource(self.fsShader, SpacibloRenderer.fsShaderSource);
+		self.gl.compileShader(self.fsShader);
+
+		self.vsShader = self.gl.createShader(self.gl.VERTEX_SHADER);
+		self.gl.shaderSource(self.vsShader, SpacibloRenderer.vsShaderSource);
+		self.gl.compileShader(self.vsShader);
+
+		self.shaderProgram = self.gl.createProgram();
+		self.gl.attachShader(self.shaderProgram, self.vsShader);
+		self.gl.attachShader(self.shaderProgram, self.fsShader);
+		self.gl.linkProgram(self.shaderProgram);
+
+		if (!self.gl.getProgramParameter(self.shaderProgram, self.gl.LINK_STATUS)) console.log("Could not initialise shaders");
+		self.gl.useProgram(self.shaderProgram);
+
+		self.shaderProgram.vertexPositionAttribute = self.gl.getAttribLocation(self.shaderProgram, "aVertexPosition");
+		self.gl.enableVertexAttribArray(self.shaderProgram.vertexPositionAttribute);
+		self.shaderProgram.pMatrixUniform = self.gl.getUniformLocation(self.shaderProgram, "uPMatrix");
+		self.shaderProgram.mvMatrixUniform = self.gl.getUniformLocation(self.shaderProgram, "uMVMatrix");
+
+
+		self.requestTemplates(self.scene.thing);
+
 	    return true;
 	}
 
-	self.initializeRenderable = function(renderable){
-		if(renderable.thing.template_id) self.assetManager.getOrCreateTemplate(renderable.thing.template_id);
-		for(var i=0; i < renderable.children.length; i++){
-			self.initializeRenderable(renderable.children[i]);
+	self.requestTemplates = function(thing){
+		if(thing.template_id) thing.template = self.assetManager.getOrCreateTemplate(thing.template_id);
+		for(var i=0; i < thing.children.length; i++){
+			self.requestTemplates(thing.children[i]);
 		}
 	}
 
 	self.render = function() {
 		self.gl.clear(self.gl.COLOR_BUFFER_BIT | self.gl.DEPTH_BUFFER_BIT);
+		var fovy = 45;
+		var aspect = 1.0;
+		var znear = 0.1;
+		var zfar = 100.0;
+		var pMatrix = makePerspective(fovy, aspect, znear, zfar)
+		var mvMatrix;
+		var mvMatrix = Matrix.I(4);
+		var m = Matrix.Translation($V([-1.5, 0.0, -7.0])).ensure4x4();
+		mvMatrix = mvMatrix.x(m);
+
+		//Do this for each renderable
+		//self.gl.bindBuffer(self.gl.ARRAY_BUFFER, self.vertexPositionBuffer);
+		//self.gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, self.vertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+		//self.gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, new WebGLFloatArray(pMatrix.flatten()));
+		//self.gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, new WebGLFloatArray(mvMatrix.flatten()));
+		//self.gl.drawArrays(self.gl.TRIANGLES, 0, self.vertexPositionBuffer.numItems);
 
 		//var userThing = self.scene.thing.getUserThing(self.username);
 	}
@@ -194,7 +254,9 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 	
 	self.handleTemplateAsset = function(template){ }
 	
-	self.handleGeometryAsset = function(templateID, templateAssetID, geometry){ }
+	self.handleGeometryAsset = function(templateID, templateAssetID, geometry){
+		self.renderables[self.renderables.length] = new SpacibloRenderer.Renderable(geometry, self.gl);
+	}
 
 	self.assetManager = new SpacibloRenderer.AssetManager(self.handleImageAsset, self.handleTemplateAsset, self.handleGeometryAsset);
 }
