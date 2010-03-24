@@ -12,7 +12,7 @@ void main(void) {\
 
 SpacibloRenderer.fsShaderSource = "\
 void main(void) {\
- gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);\
+ gl_FragColor = vec4(0.5, 0.5, 0.5, 1.0);\
 }\
 ";
 
@@ -137,20 +137,33 @@ SpacibloRenderer.AssetManager = function(imageCallback, templateCallback, geomet
 //
 //
 
-SpacibloRenderer.Renderable = function(geometry, gl){
+SpacibloRenderer.Renderable = function(geometry, canvas){
 	var self = this;
 	self.geometry = geometry;
-	self.gl = gl;
+	self.canvas = canvas
+	self.gl = canvas.gl;
 
-	self.vertexPositionBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, self.vertexPositionBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new WebGLFloatArray(geometry.vertices), gl.STATIC_DRAW);
+	self.vertexPositionBuffer = self.gl.createBuffer();
+	self.gl.bindBuffer(self.gl.ARRAY_BUFFER, self.vertexPositionBuffer);
+	self.gl.bufferData(self.gl.ARRAY_BUFFER, new WebGLFloatArray(geometry.vertices), self.gl.STATIC_DRAW);
 	self.vertexPositionBuffer.itemSize = 3;
 	self.vertexPositionBuffer.numItems = geometry.vertices.length / 3;
 	
 	self.children = new Array();
 	for(var index=0; index < self.geometry.children.length; index++){
-		self.children[self.children.length] = new SpacibloRenderer.Renderable(self.geometry.children[index], gl);
+		self.children[self.children.length] = new SpacibloRenderer.Renderable(self.geometry.children[index], self.canvas);
+	}
+	
+	self.render = function(pMatrix, mvMatrix){
+		self.gl.bindBuffer(self.gl.ARRAY_BUFFER, self.vertexPositionBuffer);
+		self.gl.vertexAttribPointer(canvas.shaderProgram.vertexPositionAttribute, self.vertexPositionBuffer.itemSize, self.gl.FLOAT, false, 0, 0);
+		self.gl.uniformMatrix4fv(canvas.shaderProgram.pMatrixUniform, false, new WebGLFloatArray(pMatrix.flatten()));
+		self.gl.uniformMatrix4fv(canvas.shaderProgram.mvMatrixUniform, false, new WebGLFloatArray(mvMatrix.flatten()));
+		self.gl.drawArrays(self.gl.TRIANGLES, 0, self.vertexPositionBuffer.numItems);
+		
+		for(var index=0; index < self.children.length; index++){
+			self.children[index].render(pMatrix, mvMatrix);
+		}
 	}
 }
 
@@ -230,19 +243,22 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 		var znear = 0.1;
 		var zfar = 100.0;
 		var pMatrix = makePerspective(fovy, aspect, znear, zfar)
-		var mvMatrix;
+
+		var userThing = self.scene.thing.getUserThing(self.username);
+		var position = null;
+		if(userThing){
+			position = [userThing.position.x, userThing.position.y, userThing.position.z];
+		} else{
+			position = [-1.5, 0.0, -7.0];
+		}
 		var mvMatrix = Matrix.I(4);
-		var m = Matrix.Translation($V([-1.5, 0.0, -7.0])).ensure4x4();
+		var m = Matrix.Translation($V(position)).ensure4x4();
 		mvMatrix = mvMatrix.x(m);
 
 		//Do this for each renderable
-		//self.gl.bindBuffer(self.gl.ARRAY_BUFFER, self.vertexPositionBuffer);
-		//self.gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, self.vertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-		//self.gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, new WebGLFloatArray(pMatrix.flatten()));
-		//self.gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, new WebGLFloatArray(mvMatrix.flatten()));
-		//self.gl.drawArrays(self.gl.TRIANGLES, 0, self.vertexPositionBuffer.numItems);
-
-		//var userThing = self.scene.thing.getUserThing(self.username);
+		for(var i=0; i < self.renderables.length; i++){
+			self.renderables[i].render(pMatrix, mvMatrix);
+		}
 	}
 
 	self.close = function(){
@@ -255,7 +271,7 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 	self.handleTemplateAsset = function(template){ }
 	
 	self.handleGeometryAsset = function(templateID, templateAssetID, geometry){
-		self.renderables[self.renderables.length] = new SpacibloRenderer.Renderable(geometry, self.gl);
+		self.renderables[self.renderables.length] = new SpacibloRenderer.Renderable(geometry, self);
 	}
 
 	self.assetManager = new SpacibloRenderer.AssetManager(self.handleImageAsset, self.handleTemplateAsset, self.handleGeometryAsset);

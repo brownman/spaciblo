@@ -74,6 +74,7 @@ function handle_join_space(successful){
 	} else {
 	   console.log("Joined the space.");
 	}
+	space_client.addUserThing(Spaciblo.defaultPosition, Spaciblo.defaultOrientation);
 	sv_canvas.initialize(space_client.scene, space_client.username);
 	setupInput();
 	setInterval(tick, 25);
