@@ -29,9 +29,6 @@
 {% endblock %}
 
 {% block sub-head %}
-<script src="{{ MEDIA_URL}}webglu/external/Sylvester.src.js"></script>
-<script src="{{ MEDIA_URL}}webglu/src/gameglu.js"></script>
-<script src="{{ MEDIA_URL}}webglu/src/webglu.js"></script>
 <script src="{% url sim.views.spaciblo_js %}"></script>
 {% endblock %}
 
@@ -42,7 +39,8 @@ var sv_canvas = null;
 var input_manager = null;
 
 function initialize(){
-	space_client = new Spaciblo.SpaceClient({{ space.id }});
+	sv_canvas = new SpacibloRenderer.Canvas('canvas');
+	space_client = new Spaciblo.SpaceClient({{ space.id }}, sv_canvas);
 	space_client.open_handler = handle_client_open;
 	space_client.close_handler = handle_client_close;
 	space_client.authentication_handler = handle_client_auth;
@@ -50,8 +48,6 @@ function initialize(){
 	space_client.user_message_handler = user_message_handler;
 	space_client.suggest_render_handler = function() {};
 	space_client.open();
-	
-	//setupDummyCanvas();
 }
 
 function handle_client_open(){
@@ -77,8 +73,7 @@ function handle_join_space(successful){
 	} else {
 	   console.log("Joined the space.");
 	}
-	sv_canvas = new SpacibloRenderer.Canvas('canvas', space_client.scene, space_client.username);
-	space_client.addUserThing("0,0,0", Spaciblo.defaultOrientation);
+	sv_canvas.initialize(space_client.scene, space_client.username);
 	setupInput();
 	setInterval(tick, 25);
 }
@@ -128,21 +123,6 @@ function handle_command_input(){
 	$("#key-catcher").focus();
 }
 
-function setupDummyCanvas(){
-   if (!$W.initialize()) return false;
-
-   $W.GL.clearColor(0.9, 0.9, 0.9, 1.0);
-   $W.camera.setPosition(1,1,1);
-
-   var originLines = new $W.Object($W.GL.LINES);
-   originLines.vertexCount = 6;
-
-   var c = $W.constants.colors;
-   originLines.fillArray('vertex', [[-5,0,0], [5,0,0], [0,-5,0], [0,5,0], [0,0,-5], [0,0,5]]);
-   originLines.fillArray('color',  [c.RED,    c.RED,   c.GREEN,  c.GREEN, c.BLUE,   c.BLUE]);
-   $W.update();
-   $W.draw();  
-}
 
 $(document).ready(initialize);
 

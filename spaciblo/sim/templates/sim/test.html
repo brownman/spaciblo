@@ -3,10 +3,11 @@
 {%block sub-title%}Tests | {% endblock %}
 
 {% block style%}
+#canvas { border: solid 1px #eee; margin-top: 10px; }
 {% endblock %}
 
 {% block sub-head %}
-<script src="{{ MEDIA_URL }}spaciblo/jquery-1.3.js"></script>
+<script src="{{ MEDIA_URL }}jquery-1.4.2.min.js"></script>
 <script src="{% url sim.views.spaciblo_js %}"></script>
 
 <link rel="stylesheet" href="{{ MEDIA_URL }}qunit/qunit.css" type="text/css" media="screen" />
@@ -16,19 +17,29 @@
 {% block script %}
 
 function runTests(){
+   module("Renderer");
+   
+   test("initialization tests", function(){
+      var sceneDoc = '{"thing": {"attributes": {"position": "0.0,0.0,0.0", "scale": 1.0, "id": 0, "orientation": "1.0,0.0,0.0,0.0"}, "type": "Thing", "children": [{"attributes": {"position": "0.0,0.0,0.0", "scale": 1.0, "id": 1, "template": 6, "orientation": "1.0,0.0,0.0,0.0"}, "type": "Thing"}, {"attributes": {"position": "0.0,40.0,0.0", "scale": 1.0, "id": 2, "template": 3, "orientation": "1.0,0.0,0.0,0.0"}, "type": "Thing"}]}, "type": "Scene", "attributes": {"background_color": "0.2,0.5,0.8,1.0"}}';
+      var scene = SpacibloScene.parseSceneDocument(sceneDoc);
+      var canvas = new SpacibloRenderer.Canvas('canvas');
+      ok(canvas.initialize(scene, 'trevor'), "Could not initialize the canvas.");
+      canvas.render();
+   });
+   
    module("Events");
    
    test("serialization tests", function(){
       var event = new SpacibloEvents.JoinSpaceRequest(32);
       var event_json = event.toJSON()
       var event_json_data = JSON.parse(event_json)
-      var parsed_event = Spaciblo.rehydrateEvent(event_json_data);
+      var parsed_event = SpacibloEvents.rehydrateEvent(event_json_data);
       equals(event.space_id, parsed_event.space_id, 'Event space ids are not equal');
 
       event = new SpacibloEvents.AuthenticationResponse('someone');
       event_json = event.toJSON()
       event_json_data = JSON.parse(event_json)
-      parsed_event = Spaciblo.rehydrateEvent(event_json_data);
+      parsed_event = SpacibloEvents.rehydrateEvent(event_json_data);
       equals(event.username, parsed_event.username, 'Event username are not equal');
       
       var color = new SpacibloScene.Color("1,0.5,0.1");
@@ -39,9 +50,63 @@ function runTests(){
    
    module("Asset Manager");
    
+   test("load valid geometry", function(){
+      var assetManager = new SpacibloRenderer.AssetManager(
+         function(image, path){ },
+         function(template){ },
+         function(templateID, templateAssetID, geometry){
+            ok(templateID == 2, "Incorrect image id: " + templateID);
+            ok(templateAssetID, "No templateAssetID");
+            ok(geometry, "No Geometry");
+            ok(geometry.children.length == 0, "Cube should have no children");
+            ok(geometry.vertices.length == 24, "Cube should have 24 vertices");
+            start();
+         }
+      );
+      assetManager.getOrCreateTemplate(2);
+      stop();
+   });
+
+   test("load bigger geometry", function(){
+      var assetManager = new SpacibloRenderer.AssetManager(
+         function(image, path){ },
+         function(template){ },
+         function(templateID, templateAssetID, geometry){
+            ok(templateID == 3, "Incorrect image id: " + templateID);
+            ok(templateAssetID, "No templateAssetID");
+            ok(geometry, "No Geometry");
+            ok(geometry.vertices.length == 0);
+            ok(geometry.children.length == 40, "Glass house should have 40 children.");
+            ok(geometry.children[0].material.name == "GreatroomBase");
+            ok(geometry.children[0].material.phong_specular == 96.078431);
+            start();
+         }
+      );
+      assetManager.getOrCreateTemplate(3);
+      stop();
+   });
+
+   test("load beanie geometry", function(){
+      var assetManager = new SpacibloRenderer.AssetManager(
+         function(image, path){ },
+         function(template){ },
+         function(templateID, templateAssetID, geometry){
+            ok(templateID == 1, "Incorrect image id: " + templateID);
+            ok(templateAssetID, "No templateAssetID");
+            ok(geometry, "No Geometry");
+            ok(geometry.vertices.length == 279);
+            ok(geometry.uvs.length == 302);
+            ok(geometry.normals.length == 1059);
+            start();
+         }
+      );
+      assetManager.getOrCreateTemplate(1);
+      stop();
+   });
+
    test("load valid image", function(){
       var testImagePath = "/media/spaciblo/Spaciblo-Logo.jpg"
-      var assetManager = new Spaciblo.AssetManager(function(image, path){
+      var assetManager = new SpacibloRenderer.AssetManager(function(image, path){
          ok(image != null, "A valid image could not be loaded");
          ok(path == testImagePath, "The image path was not valid: " + path);
          ok(image == assetManager.getImage(testImagePath), "Could not get the already loaded image.");
@@ -54,19 +119,19 @@ function runTests(){
 
    test("load invalid image", function(){
       var testImagePath = "/media/DoesNotExist.jpg"
-      var assetManager = new Spaciblo.AssetManager(function(image, path){
+      var assetManager = new SpacibloRenderer.AssetManager(function(image, path){
          ok(image == null, "A invalid image should be null");
          ok(path == testImagePath, "The image path was not valid: " + path);
          ok(assetManager.getImage(testImagePath) == null, "Received non-null for invalid get_image: " + assetManager.getImage(testImagePath));
          start();
-      });
+      }, function(template){}, function(templateID, templateAssetID, geometry){});
       assetManager.loadImage(testImagePath);
       stop();
    });
    
    test("load template", function(){
       // right now the asset manager just creates them on demand, so let's test that
-      var assetManager = new Spaciblo.AssetManager(function(image, path){});
+      var assetManager = new SpacibloRenderer.AssetManager(function(image, path){}, function(template){}, function(templateID, templateAssetID, geometry){});
       var template1 = assetManager.getTemplate(1);
       ok(template1 == null, "Should not have a template at this point");
       template1 = assetManager.getOrCreateTemplate(1);
@@ -84,4 +149,6 @@ $(document).ready(runTests);
 <h2 id="qunit-banner"></h2>
 <h2 id="qunit-userAgent"></h2>
 <ol id="qunit-tests"></ol>
+<canvas id="canvas" width="400" height="150"></canvas>
+
 {% endblock %}
