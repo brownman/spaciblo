@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>{% block sub-title %}{% endblock %}Cube</title>
+	<link href="{{ APP_MEDIA_URL }}base.css" rel="stylesheet" type="text/css" />
+<style>{% block style %}
+{% endblock %}</style>
+<script>{% block script%}
+{% endblock %}</script>
+</head>
+<body>
+<div id="content">{% block content%}
+{% endblock %}</div>
+</body>
+</html>

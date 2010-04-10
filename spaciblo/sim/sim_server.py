@@ -74,13 +74,14 @@ class WebSocketConnection:
 				else:
 					try:
 						space = Space.objects.get(pk=event.space_id)
+						sim = self.server.sim_pool.get_simulator(space.id)
+						if not sim: print 'Could not find a sim for space: %s' % space.id
 						allow_join, space_member = Space.objects.get_membership(space, self.user)
 						response_event = events.JoinSpaceResponse(space.id, allow_join)
 						if allow_join:
 							self.space_id = space.id
 							try:
-								scene = self.server.sim_pool.get_simulator(self.space_id).scene
-								response_event.scene_doc = Hydration.dehydrate(scene)
+								response_event.scene_doc = Hydration.dehydrate(sim.scene)
 							except:
 								print "Could not log in: %s" % pprint.pformat(traceback.format_exc())
 						else:
@@ -116,15 +117,12 @@ class WebSocketConnection:
 
 		user_id = session_wrapper.get(SESSION_KEY)
 		if user_id == None:
-			print 'user_id', user_id
 			return AnonymousUser()
 		backend = session_wrapper.get(BACKEND_SESSION_KEY)
 		if backend == None:
-			print 'backend', backend
 			session_wrapper.get(BACKEND_SESSION_KEY)
 		auth_backend = load_backend(backend)
 		if auth_backend == None:
-			print 'auth_backend', auth_backend
 			return AnonymousUser()	
 		return auth_backend.get_user(user_id)
 			

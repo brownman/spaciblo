@@ -100,13 +100,12 @@ class Material(SceneNode):
 
 class Geometry(SceneNode):
 	"""A set of 3D data representing a visually distinct 3D "unit" which can be moved and referenced by name."""
-	def __init__(self, name=None, material=Material(), vertices=[], normals=[], uvs=[], faces=[], position=Position(), orientation=Orientation(), scale=1.0, motion=None):
+	def __init__(self, name=None, material=Material(), vertices=[], normals=[], uvs=[], position=Position(), orientation=Orientation(), scale=1.0, motion=None):
 		self.name = name # a named used by animations and scripts, but may be null for anonymous geometries
 		self.material = material
 		self.vertices = vertices # an array of float triplets, e.g. [x1,y1,z1,x2,y2,z2,...]
 		self.normals = normals # an array of float triplets, e.g. [x1,y1,z1,x2,y2,z2,...]
 		self.uvs = uvs # an array of float doubles representing texture coordinates, e.g. [u1,v1,u2,v2,u3,v3,...]
-		self.faces = faces # a three directional array: [face_index][[vertex_index,uv_index,normal_index],...]
 
 		self.position = position
 		self.orientation = orientation
@@ -118,7 +117,7 @@ class Geometry(SceneNode):
 	class HydrationMeta:
 		attributes = ['name', 'position', 'orientation', 'scale']
 		nodes = ['material', 'motion', 'children']
-		raw_nodes = ['vertices', 'normals', 'uvs', 'faces']
+		raw_nodes = ['vertices', 'normals', 'uvs']
 
 class Light(SceneNode):
 	light_types = ['ambient', 'directional', 'point']

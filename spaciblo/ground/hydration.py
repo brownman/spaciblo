@@ -11,7 +11,6 @@ from types import *
 import simplejson
 
 from django.utils.encoding import smart_unicode
-from django.contrib.auth.models import User
 
 meta_name = 'HydrationMeta'
 attributes_name = 'attributes' # simple attributes on the element
@@ -29,14 +28,13 @@ class Hydration:
 
 	@classmethod
 	def dehydrate(cls, source):
-		hydrator = Hydration()
-		return hydrator.serialize(hydrator.prep(source))
+		"""Return a JSON string with four elements: a start index, an end index, a total length of the list, and a slice of the list"""
+		return Hydration().serialize(hydrator.prep(source))
 
 	@classmethod
 	def dehydrate_list(cls, input_list, start=None, end=None):
 		"""Return a JSON string with four elements: a start index, an end index, a total length of the list, and a slice of the list"""
-		hydrator = Hydration()
-		return hydrator.serialize(hydrator.prep_list(input_list, start, end))
+		return Hydration().serialize(hydrator.prep_list(input_list, start, end))
 	
 	@classmethod
 	def hydrate(cls, source, data):
@@ -185,6 +183,7 @@ class Hydration:
 		if len(prepped_attributes) != 0: result['attributes'] = prepped_attributes
 		return result
 
+from django.contrib.auth.models import User
 class UserHydrationMeta:
 	"""Sets up hydration for the Django auth User model"""
 	attributes = ['id', 'username']

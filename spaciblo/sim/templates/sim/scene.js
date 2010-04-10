@@ -122,6 +122,7 @@ SpacibloScene.Orientation.prototype.toString = function(){
 }
 
 SpacibloScene.parseSceneDocument = function(sceneDoc){
+   console.log(sceneDoc);
 	var sceneData = JSON.parse(sceneDoc);
 	var scene = new SpacibloScene.Scene(new SpacibloScene.Color(sceneData['attributes']['background_color']));
 	scene.thing = SpacibloScene.parseThingData(sceneData['thing'], null, this);

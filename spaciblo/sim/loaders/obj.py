@@ -165,52 +165,25 @@ class Obj:
 		group_vertices = []
 		group_normals = []
 		group_uvs = []
-		group_faces = []
 		obj_mat = self.objMaterialForFace(face_start)
 		if obj_mat and materials.has_key(obj_mat[0]):
 			material = materials[obj_mat[0]]
 		else:
 			material = None
-		vertex_map = {}
-		normal_map = {}
-		uv_map = {}
 		for face in self.faces[face_start:face_end]:
-			new_face = []
-			for point in face:
-				if vertex_map.has_key(point[0]):
-					new_vertex_index = vertex_map[point[0]]
-				else:
-					new_vertex_index = len(group_vertices) / 3
-					vertex_map[point[0]] = new_vertex_index
-					vertex_offset = point[0] * 3
-					group_vertices.extend([self.vertices[vertex_offset], self.vertices[vertex_offset + 1], self.vertices[vertex_offset + 2]])
+			for point in face[0:3]: # TODO This is treating all faces like they are triangles, which is wrong
+				vertex_offset = point[0] * 3
+				group_vertices.extend([self.vertices[vertex_offset], self.vertices[vertex_offset + 1], self.vertices[vertex_offset + 2]])
 
 				if point[1]:
-					if uv_map.has_key(point[1]):
-						new_uv_index = uv_map[point[1]]
-					else:
-						new_uv_index = len(group_uvs) / 2
-						uv_map[point[1]] = new_uv_index
-						uv_offset = point[1] * 2
-						group_uvs.extend([self.uvs[uv_offset], self.uvs[uv_offset + 1]])
-				else:
-					new_uv_index = None
+					uv_offset = point[1] * 2
+					group_uvs.extend([self.uvs[uv_offset], self.uvs[uv_offset + 1]])
 					
 				if point[2]:
-					if normal_map.has_key(point[2]):
-						new_normal_index = normal_map[point[2]]
-					else:
-						new_normal_index = len(group_normals) / 3
-						normal_map[point[2]] = new_normal_index
-						normal_offset = point[2] * 3
-						group_normals.extend([self.normals[normal_offset], self.normals[normal_offset + 1], self.normals[normal_offset + 2]])
-				else:
-					new_normal_index = None
+					normal_offset = point[2] * 3
+					group_normals.extend([self.normals[normal_offset], self.normals[normal_offset + 1], self.normals[normal_offset + 2]])
 
-				new_face.append([new_vertex_index, new_uv_index, new_normal_index])
-
-			group_faces.append(new_face)
-		return Geometry(name=name, vertices=group_vertices, uvs=group_uvs, normals=group_normals, faces=group_faces, material=material)
+		return Geometry(name=name, vertices=group_vertices, uvs=group_uvs, normals=group_normals, material=material)
 	class HydrationMeta:
 		attributes = ['mtllib']
 		raw_nodes = ['vertices', 'normals', 'uvs', 'faces', 'object_groups', 'polygon_groups', 'material_groups', 'smoothing_groups']

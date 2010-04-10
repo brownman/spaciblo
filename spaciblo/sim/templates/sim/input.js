@@ -15,12 +15,18 @@ SpacibloInput.InputManager = function(_space_client){
 	self.x_delta = 1;
 	self.y_delta = 1;
 	self.z_delta = 1;
-	self.y_rot_delta = Math.PI / 8.0;
+	self.y_rot_delta = Math.PI / 24.0;
 	self.getUserThing = function(){
 		if(self.user_thing == null){
 			self.user_thing = self.space_client.scene.thing.getUserThing(self.space_client.username);
 		}
 		return self.user_thing;
+	}
+	
+	self.relativeMove = function(x, y, z, userThing){
+		userThing.position.x += x;
+		userThing.position.y += y;
+		userThing.position.z += z;
 	}
 	
 	self.handle_keydown = function(event){
@@ -32,31 +38,31 @@ SpacibloInput.InputManager = function(_space_client){
 		switch(event.keyCode){
 			case 37: //left arrow
 			case 65: //a key
-				userThing.position.x += self.x_delta;
+				self.relativeMove(-self.x_delta, 0, 0, userThing);
 				break;
 			case 38: //up arrow
 			case 87: //w key
-				userThing.position.z += self.z_delta;
+				self.relativeMove(0, 0, -self.z_delta, userThing);
 				break;
 			case 39: //right
 			case 68: //d key
-				userThing.position.x -= self.x_delta;
+				self.relativeMove(self.x_delta, 0, 0, userThing);
 				break;
 			case 40: //down
 			case 83: //s key
-				userThing.position.z -= self.z_delta;
+				self.relativeMove(0, 0, self.z_delta, userThing);
 				break;
 			case 82: //r key
-				userThing.position.y -= self.y_delta;
+				self.relativeMove(0, self.y_delta, 0, userThing);
 				break;
 			case 70: //f key
-				userThing.position.y += self.y_delta;
+				self.relativeMove(0, -self.y_delta, 0, userThing);
 				break;
 			case 81: //q key
-				userThing.orientation.rotateEuler(0, self.y_rot_delta, 0);
+				userThing.orientation.rotateEuler(0, -1 * self.y_rot_delta, 0);
 				break;
 			case 69: //e key
-				userThing.orientation.rotateEuler(0, -1 * self.y_rot_delta, 0);
+				userThing.orientation.rotateEuler(0, self.y_rot_delta, 0);
 				break;
 			default:
 				return;

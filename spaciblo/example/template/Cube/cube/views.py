@@ -1,5 +1,3 @@
-import datetime
-import calendar
 import pprint
 import traceback
 
@@ -18,37 +16,15 @@ import django.contrib.contenttypes.models as content_type_models
 from django.template import RequestContext
 from django.core.cache import cache
 from django.core.mail import send_mail
-from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.template.loader import render_to_string
-from django.utils import feedgenerator
-from django.core.urlresolvers import reverse
 
-from models import *
-from hydration import *
+def index(request):
+   print 'cube index'
+	return render_to_response('cube/index.html', { }, context_instance=RequestContext(request))
 
-MAX_LIST_SIZE = 100
-
-def model_list(request, model):
-	"""Generates a list of models starting at 0 or the parameter 'start'"""
-	start = int(request.GET.get('start', 0))
-	return HttpResponse(Hydration.dehydrate_list(model.objects.all(), start, start + MAX_LIST_SIZE), mimetype=mime_type(request))
-
-def model(request, id, model):
-	"""Generates a representation of a model"""
-	instance = get_object_or_404(model, pk=id)
-	return HttpResponse(Hydration.dehydrate(instance), mimetype=mime_type(request))
-
-def model_attribute(request, id, model, attr_name, mimetype='text/plain'):
-	"""Returns the value of an attribute on a model"""
-	instance = get_object_or_404(model, pk=id)
-	attribute = getattr(instance, attr_name)
-	return HttpResponse(attribute, mimetype=mimetype)
-
-def podo(request, podo):
-	"""Generates a representation of a plain old django object"""
-	return HttpResponse(Hydration.dehydrate(podo()), mimetype=mime_type(request))
-
-def mime_type(request):	return request.GET.get('mime-type', 'application/json')
+def test(request):
+   print 'cube test'
+	return render_to_response('cube/test.html', { }, context_instance=RequestContext(request))
 
 # Copyright 2010 Trevor F. Smith (http://trevor.smith.name/) Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.

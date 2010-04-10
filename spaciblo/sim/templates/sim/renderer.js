@@ -286,18 +286,17 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 			position = [userThing.position.x, userThing.position.y, userThing.position.z];
 			theta = userThing.orientation.s;
 			rotVector = [userThing.orientation.x, userThing.orientation.y, userThing.orientation.z];
-		} else{
+		} else {
 			theta = 1;
 			rotVector = [0,1,0];
 			position = [-1.5, 0.0, -7.0];
 		}
 		var mvMatrix = Matrix.I(4);
-		var transMatrix = Matrix.Translation($V(position)).ensure4x4();
-		mvMatrix = mvMatrix.x(transMatrix);
 		var rotMatrix = Matrix.Rotation(theta, $V(rotVector)).ensure4x4();
-		mvMatrix = mvMatrix.x(rotMatrix);
+		mvMatrix = mvMatrix.x(rotMatrix.inverse());
+		var transMatrix = Matrix.Translation($V(position)).ensure4x4();
+		mvMatrix = mvMatrix.x(transMatrix.inverse());
 
-		//Do this for each renderable
 		for(var i=0; i < self.renderables.length; i++){
 			self.renderables[i].render(pMatrix, mvMatrix);
 		}

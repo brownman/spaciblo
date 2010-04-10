@@ -49,6 +49,8 @@ function initialize(){
 	space_client.user_message_handler = user_message_handler;
 	space_client.suggest_render_handler = function() {};
 	space_client.open();
+	$("#key-catcher").focus();
+
 }
 
 function handle_client_open(){
