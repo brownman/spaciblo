@@ -5,7 +5,7 @@ The main site for this project is http://spaciblo.org/
 This project is licensed under the Apache 2 license.  See COPYING.txt for more information.
 
 The correct pronunciation of the name of this project is spah-see-blow.
-To get the full effect of the name, it helps to fake an Italian accent and wave your hands. 
+To get the full effect of the name it helps to fake an Italian accent and wave your hands. 
 
 The current code wrangler is Trevor F. Smith: http://trevor.smith.name/
 He can be reached via email at trevor at spaciblo dot org
