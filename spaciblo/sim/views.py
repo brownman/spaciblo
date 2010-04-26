@@ -20,6 +20,7 @@ from django.core.cache import cache
 from django.core.mail import send_mail
 from django.contrib.admin.views.decorators import staff_member_required
 from django.template.loader import render_to_string
+from django.core.urlresolvers import reverse, RegexURLPattern, RegexURLResolver
 
 import sim_pool as sim_pool
 import events as events
@@ -34,6 +35,22 @@ def space(request, id):
 	space = get_object_or_404(Space, pk=id)
 	return render_to_response('sim/space.html', { 'space':space }, context_instance=RequestContext(request))
 
+def thing_app(request, space_id, thing_id):
+	space = get_object_or_404(Space, pk=space_id)
+
+	template_module_name = 'template_2' # hard coded for the mo
+	module_name = '%s.%s.application' % (os.path.basename(settings.TEMPLATE_APPS_DIR), template_module_name)
+	exec 'import %s as app_module' % module_name
+	app = app_module.Application()
+	resolver = RegexURLResolver(r'^/', app.urlpatterns)
+	
+	base_path = reverse('sim.views.thing_app', kwargs={ 'space_id':space_id, 'thing_id':thing_id })
+	print base_path
+	local_path = request.path[len(base_path) - 1:]
+	print local_path
+	view_function = resolver.resolve(local_path)
+	return view_function[0](request)
+
 @staff_member_required
 def space_debug(request, id):
 	space = get_object_or_404(Space, pk=id)
@@ -42,7 +59,11 @@ def space_debug(request, id):
 def spaciblo_js(request):
 	return render_to_response('sim/spaciblo.js', {'events': events.SIM_EVENTS, 'models':HYDRATE_MODELS, 'scene_graph_classes': scene.SCENE_GRAPH_CLASSES }, context_instance=RequestContext(request), mimetype='application/javascript')
 
+def foo(request):
+	return render_to_response('sim/scratch.html', { }, context_instance=RequestContext(request))
+
 def scratch(request):
+	if not settings.DEBUG: raise Http404
 	return render_to_response('sim/scratch.html', {'sim_pool': sim_pool.DEFAULT_SIM_POOL }, context_instance=RequestContext(request))
 
 def test(request):

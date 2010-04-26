@@ -6,7 +6,9 @@ urlpatterns = patterns('',
 	(r'^spaciblo.js$', 'sim.views.spaciblo_js'),
 	(r'^space/(?P<id>[\d]+)/$', 'sim.views.space'),
 	(r'^space/(?P<id>[\d]+)/debug/$', 'sim.views.space_debug'),
+	(r'^space/(?P<space_id>[\d]+)/thing/(?P<thing_id>[\d]+)/app/', 'sim.views.thing_app'),
 	(r'^test/', 'sim.views.test'),
+	(r'^scratch/', 'sim.views.scratch'),
     (r'^$', 'sim.views.index'),
 )
 

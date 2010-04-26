@@ -29,12 +29,14 @@ class Hydration:
 	@classmethod
 	def dehydrate(cls, source):
 		"""Return a JSON string with four elements: a start index, an end index, a total length of the list, and a slice of the list"""
-		return Hydration().serialize(hydrator.prep(source))
+		hydrator = Hydration()
+		return hydrator.serialize(hydrator.prep(source))
 
 	@classmethod
 	def dehydrate_list(cls, input_list, start=None, end=None):
 		"""Return a JSON string with four elements: a start index, an end index, a total length of the list, and a slice of the list"""
-		return Hydration().serialize(hydrator.prep_list(input_list, start, end))
+		hydrator = Hydration()
+		return hydrator.serialize(hydrator.prep_list(input_list, start, end))
 	
 	@classmethod
 	def hydrate(cls, source, data):

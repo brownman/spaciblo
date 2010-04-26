@@ -1,11 +1,16 @@
 import traceback
 import os
+import tempfile
+import shutil
+import tarfile
+
 from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.exceptions import *
 from django.core.files.storage import default_storage
 from django.core.files import File
+from django.conf import settings
 
 from scene import Scene
 from sim.loaders.obj import ObjLoader, MtlLibLoader
@@ -72,7 +77,8 @@ class SpaceMember(HydrateModel):
 
 class Asset(HydrateModel):
 	"""A chunk of typed data used by a template to instantiate a Thing in a Space."""
-	TYPE_CHOICES = (('geometry', 'geometry'), ('animation', 'animation'), ('script', 'script'), ('texture', 'texture'), ('text', 'text'))
+	APPLICATION_KEY = 'application'
+	TYPE_CHOICES = (('geometry', 'geometry'), ('animation', 'animation'), ('script', 'script'), ('texture', 'texture'), ('text', 'text'), ('application', 'application'))
 	type = models.CharField(max_length=20, choices=TYPE_CHOICES, blank=False, null=False, default='text')
 	file = models.FileField(upload_to='asset/%Y/%m/%d', null=False, blank=False)
 	prepped_file = models.FileField(upload_to='prepped/%Y/%m/%d', null=True, blank=True) # a version of this asset which is optimized for use, e.g. a JSON representation of a geometry
@@ -147,12 +153,19 @@ class Template(HydrateModel):
 	def prep_assets(self):
 		obj_assets = []
 		mtl_assets = {}
+		app_asset = None
 		for template_asset in TemplateAsset.objects.filter(template=self):
+			print 'asset type %s' % template_asset.asset.type
 			if template_asset.asset.type == 'geometry' and template_asset.asset.file.name.endswith('.mtl'):
 				mtl_assets[template_asset.key] = template_asset.asset
-			if template_asset.asset.type == 'geometry' and template_asset.asset.file.name.endswith('.obj'):
+			elif template_asset.asset.type == 'geometry' and template_asset.asset.file.name.endswith('.obj'):
 				obj_assets.append(template_asset.asset)
-		print mtl_assets
+			elif template_asset.asset.type == 'application':
+				app_asset = template_asset.asset
+				print app_asset
+			else:
+				print 'asset type %s' % template_asset.asset.type
+				
 		for obj_asset in obj_assets: # try to save a prepped geometry JSON
 			try:
 				loader = ObjLoader()
@@ -178,12 +191,23 @@ class Template(HydrateModel):
 				os.unlink(path)
 			except:
 				traceback.print_exc()
+		
+		if app_asset != None:
+			print 'Setting up app dir for %s' % app_asset
+			target_dir = os.path.join(settings.TEMPLATE_APPS_DIR, self.template_app_module_name)
+			if os.path.exists(target_dir): shutil.rmtree(target_dir)
+			tar = tarfile.open(app_asset.file.path)
+			tar.extractall(path=target_dir)
+			tar.close()
 
 	def get_asset(self, key):
 		try:
 			return TemplateAsset.objects.get(template=self, key=key).asset
 		except ObjectDoesNotExist:
 			return None
+
+	@property
+	def template_app_module_name(self): return "template_%s" % self.id
 
 	def __unicode__(self):
 		return self.name

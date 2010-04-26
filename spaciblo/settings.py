@@ -1,9 +1,12 @@
 import os 
 
 PROJECT_ROOT = os.path.realpath(os.path.dirname(__file__))
-BACKUP_ROOT = PROJECT_ROOT + '/backups/'
-MEDIA_ROOT = PROJECT_ROOT + '/media/'
-TEMPLATE_DIRS = ( PROJECT_ROOT + '/templates/', )
+BACKUP_ROOT = os.path.join(PROJECT_ROOT, 'backups/')
+MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'media/')
+TEMPLATE_DIRS = os.path.join(PROJECT_ROOT, 'templates/')
+
+# Spaciblo thing templates have web apps which are installed in subdirectories (named by template ID) of this directory
+TEMPLATE_APPS_DIR = os.path.join(PROJECT_ROOT, 'tapps')
 
 # the directories under the media root which include things like uploaded pics or other dynamic files
 DYNAMIC_MEDIA_DIRS = ['asset','prepped', 'resized_image']
@@ -29,6 +32,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
     'django.template.loaders.app_directories.load_template_source',
+	'sim.tapp_template_loader.load_template_source',
 #     'django.template.loaders.eggs.load_template_source',
 )
 

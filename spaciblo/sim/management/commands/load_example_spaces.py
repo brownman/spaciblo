@@ -1,6 +1,8 @@
 import os
 import csv
 import ConfigParser
+import tarfile
+import tempfile
 
 from django.template.defaultfilters import slugify
 from django.core.management.base import NoArgsCommand, CommandError
@@ -26,6 +28,7 @@ class Command(NoArgsCommand):
 		for template_dir in os.listdir(TEMPLATE_DIR_PATH):
 			abs_dir = os.path.join(TEMPLATE_DIR_PATH, template_dir)
 			if not os.path.isdir(abs_dir): continue
+			if not template_dir == 'Cube': continue
 			template = self.load_template_from_dir(abs_dir, admin_user)
 			print 'loaded template: ', template
 		
@@ -100,18 +103,20 @@ class Command(NoArgsCommand):
 		template_name = os.path.basename(template_dir_path)
 		seat_position = '0,0,0'
 		seat_orientation = '1,0,0,0'
-
+		application_dir = None
+		
 		properties_path = os.path.join(template_dir_path, TEMPLATE_PROPERTIES_FILE_NAME)
 		if os.path.isfile(properties_path):
 			config = ConfigParser.ConfigParser()
 			config.readfp(open(properties_path))
 			if config.has_option(TEMPLATE_INFO_SECTION, TEMPLATE_NAME_OPTION):
 				template_name = config.get(TEMPLATE_INFO_SECTION, TEMPLATE_NAME_OPTION)
+			if config.has_option(TEMPLATE_INFO_SECTION, APPLICATION_DIR):
+				application_dir = config.get(TEMPLATE_INFO_SECTION, APPLICATION_DIR)
 			if config.has_option(SEATING_SECTION, POSITION_OPTION):
 				seat_position = config.get(SEATING_SECTION, POSITION_OPTION)
 			if config.has_option(SEATING_SECTION, ORIENTATION_OPTION):
 				seat_orientation = config.get(SEATING_SECTION, ORIENTATION_OPTION)
-				
 		else:
 			print 'no properties at ', properties_path
 		
@@ -138,8 +143,36 @@ class Command(NoArgsCommand):
 			asset.save()
 			asset_file.close()
 			template_asset, created = TemplateAsset.objects.get_or_create(template=template, asset=asset, key=asset_name)
+
+		if application_dir != None:
+			app_dir_path = os.path.join(template_dir_path, application_dir)
+			if not os.path.exists(app_dir_path):
+				print 'Application directory "%s" does not exist' % app_dir_path
+			elif not os.path.isdir(app_dir_path):
+				print 'Application directory "%s" is not a directory' % app_dir_path
+			else:
+				print 'Creating app archive %s' % app_dir_path
+				app_archive = self.create_app_archive(template_dir_path, application_dir)
+				asset = template.get_asset(key=Asset.APPLICATION_KEY)
+				if asset == None: asset = Asset(type='application')
+				asset.file.save(Asset.APPLICATION_KEY, File(app_archive), save=False)
+				asset.save()
+				app_archive.close()
+				template_asset, created = TemplateAsset.objects.get_or_create(template=template, asset=asset, key=Asset.APPLICATION_KEY)
+
 		template.prep_assets()
 		
 		return template
+
+	def create_app_archive(self, template_dir_path, application_dir):
+		full_app_path = os.path.join(template_dir_path, application_dir)
+		working_dir = tempfile.mkdtemp('template-app')
+		tar_path = os.path.join(working_dir, 'template-app.tgz')
+		tar = tarfile.open(tar_path, "w:gz")
+		for target_file in os.listdir(full_app_path):
+			full_target_path = os.path.join(full_app_path, target_file)
+			tar.add(full_target_path, arcname=target_file)
+		tar.close()
+		return open(tar_path)
 
 # Copyright 2010 Trevor F. Smith (http://trevor.smith.name/) Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
