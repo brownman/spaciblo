@@ -29,37 +29,36 @@ To install you will need the following:
 
 ### Example installation commands
 
-> # create the database
+Create the database
 > echo "create database spaciblo; grant all on database spaciblo to postgres;" | psql -U postgres
 
-> # get the code
+Get the code
 > git clone http://github.com/Spaciblo/spaciblo.git
 
-> # set up Django
+Set up Django
 > cd spaciblo/spaciblo
 > cp local_settings.py.example local_settings.py
-> # Then edit the local settings to reflect your environment
+Then edit the local settings to reflect your environment
 
-> # populate the database
+Populate the database
 > ./manage.py syncdb # you will need to create your admin username and pass
 > ./manage.py migrate
 > ./manage.py load_example_spaces
 
 ## Running:
 
-> # run the web service
+Run the web service
 > cd spaciblo/spaciblo
 > ./manage.py runserver 0.0.0.0:8000
 
-> # run the simulators (in another shell)
+Run the simulators (in another shell)
 > cd spaciblo/spaciblo
 > ./manage.py run_sim_server
 
 ## Using Spaciblo:
 
-> Point your browser at http://127.0.0.1:8000/ and login.
-> Now on the front page you should see a list of available spaces.
-> Click "The Hills".
+Point your browser at http://127.0.0.1:8000/ and login.
+Now on the front page you should see a list of available spaces.
 
 Check the Issues section of the GitHub project for current development direction:
 https://github.com/Spaciblo/spaciblo
