@@ -45,9 +45,7 @@ def thing_app(request, space_id, thing_id):
 	resolver = RegexURLResolver(r'^/', app.urlpatterns)
 	
 	base_path = reverse('sim.views.thing_app', kwargs={ 'space_id':space_id, 'thing_id':thing_id })
-	print base_path
 	local_path = request.path[len(base_path) - 1:]
-	print local_path
 	view_function = resolver.resolve(local_path)
 	return view_function[0](request)
 
