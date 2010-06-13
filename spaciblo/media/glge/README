@@ -1,0 +1,35 @@
+What is GLGE?
+
+GLGE is a javascript library intended to ease the use of WebGL; which is 
+basically a native browser javascript API giving direct access to openGL 
+ES2, allowing for the use of hardware accelerated 2D/3D applications 
+without having to download any plugins.
+
+The aim of GLGE is to mask the involved nature of WebGL from the web 
+developer, who can then spend his/her time creating richer content for 
+the web.
+
+Main Features
+
+1) Keyframe animation
+2) Perpixel lighting directional lights, spot lights and point lights
+3) Normal mapping
+4) Animated materials
+5) Skeletal animation(WIP)
+6) Collada format support
+7) Parallax Mapping
+8) Text rendering(probably bitmap)
+9) Fog
+10) Depth Shadows
+11) Shader based picking
+
+Planed additions(pending no technical walls), not nessasarly in this order
+1) Environment mapping
+2) Shape keys
+3) Reflections/Refractions
+4) Portals
+5) Collada Animations
+6) Physics
+7) LOD
+8) Culling
++ Much more!

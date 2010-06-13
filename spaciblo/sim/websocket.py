@@ -3,7 +3,10 @@ import socket
 import threading
 import sys
 import time
+import re
 import traceback
+import struct
+import hashlib
 
 def parse_request_header(header):
 	"""Breaks up the header lines of the WebSocket request into a dictionary"""
@@ -61,7 +64,7 @@ class WebSocketClient:
 
 class WebSocketServer(threading.Thread):
 	"""The server class which accepts incoming connections, parses the WebSockets request headers, sends the WebSockets response headers, and then passes control of the socket to a callback."""
-	response_header_pattern = '''HTTP/1.1 101 Web Socket Protocol Handshake\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nWebSocket-Origin: %s\r\nWebSocket-Location: %s\r\nWebSocket-Protocol: %s'''
+	response_header_pattern = '''HTTP/1.1 101 Web Socket Protocol Handshake\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nSec-WebSocket-Origin: %s\r\nSec-WebSocket-Location: %s\r\nSec-WebSocket-Protocol: %s\r\n'''
 
 	def __init__(self, client_handler, port, protocol='0.01'):
 		"""client_handler must be a callable which takes a single argument: a socket connected to the browser"""
@@ -75,17 +78,33 @@ class WebSocketServer(threading.Thread):
 		self.sock.bind(('', self.port))
 		self.sock.listen(1)
 		threading.Thread.__init__(self)
-		
 
+	def parse_key(self, key_value):
+		key_number = int(re.sub("\\D", "", key_value))
+		spaces = re.subn(" ", "", key_value)[1]
+		if key_number % spaces != 0: raise Error('key_number %d is not an integral multiple of spaces %d' % (key_number, spaces))
+		part = key_number / spaces
+		return part
+
+	def read_challenge(self, secret, request_headers):
+		challenge = struct.pack("!I", self.parse_key(request_headers['Sec-WebSocket-Key1']))  # network byteorder int
+		challenge += struct.pack("!I", self.parse_key(request_headers['Sec-WebSocket-Key2']))  # network byteorder int
+		challenge += secret
+		return challenge
 		
 	def handle_socket(self, client_socket):
 		"""Sends the response headers and then hands the socket to the client_handler"""
 		raw_headers = client_socket.recv(4096)
 		request_headers = parse_request_header(raw_headers)
+		challenge = self.read_challenge(raw_headers[len(raw_headers) - 8:], request_headers)
+		md5 = hashlib.md5()
+		md5.update(challenge)
+		challenge_md5 = md5.digest()
 		location_host = 'ws://%s/' % request_headers['Host']
 		origin_host = request_headers['Origin']
 		response_header = self.response_header_pattern % (origin_host, location_host, self.port)
-		client_socket.send( response_header + '\r\n\r\n')
+		client_socket.send( response_header + '\r\n')
+		client_socket.send(challenge_md5)
 		self.client_handler(client_socket)
 		client_socket.close()
 

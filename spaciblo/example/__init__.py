@@ -1,0 +1,1 @@
+"""This directory contains the example templates and spaces which are loaded by the load_example_spaces management command."""

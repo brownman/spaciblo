@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block sub-title %}Sign Up | {% endblock %}
+
+{% block style %}
+#registration-form h2 { visibility: hidden; }
+{% endblock %}
+
+{% block content%}
+<h1>Sign Up:</h1>
+
+{% if open_registration %}
+	{% if request.user.is_authenticated %}
+		<p>It appears that you're already logged in.  If you'd like to register a new account, you'll need to log out.</p>
+	{% else %}
+		{% include "person/registration_form.frag" %}
+	{% endif %}
+{% else %}
+	<h2 style="margin: 100px; text-align: center;">We're sorry, but registration is currently closed.</h2>
+{% endif %}
+{% endblock %}

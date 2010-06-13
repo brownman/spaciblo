@@ -153,7 +153,6 @@ Spaciblo.SpaceClient = function(space_id, canvas) {
 	}
 
 	self.ws_client = new Spaciblo.WebSocketClient(9876, document.location.hostname, self.handle_message);
-
 	self.open = function() {
 		self.ws_client.onopen = self.__open;
 		self.ws_client.onclose = self.__close;

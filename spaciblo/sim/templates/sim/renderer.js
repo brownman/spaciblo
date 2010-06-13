@@ -1,25 +1,6 @@
 
 SpacibloRenderer = {}
 
-SpacibloRenderer.vsShaderSource = "\
-attribute vec3 aVertexPosition;\
-attribute vec4 aVertexColor;\
-uniform mat4 uMVMatrix;\
-uniform mat4 uPMatrix;\
-varying vec4 vColor;\
-void main(void) {\
- gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);\
- vColor = aVertexColor;\
-}\
-";
-
-SpacibloRenderer.fsShaderSource = "\
-varying vec4 vColor;\
-void main(void) {\
- gl_FragColor = vColor;\
-}\
-";
-
 //
 //
 // AssetManager
@@ -141,65 +122,24 @@ SpacibloRenderer.AssetManager = function(imageCallback, templateCallback, geomet
 //
 //
 
-SpacibloRenderer.Renderable = function(geometry, canvas){
-	var self = this;
-	self.geometry = geometry;
-	self.canvas = canvas
-	self.gl = canvas.gl;
-
-	self.thing = null; //this is only filled out for the Geometry which is the root of the Thing's geometry tree
-	self.position = new SpacibloScene.Position("0,0,0");
-	self.orientation = new SpacibloScene.Orientation("1,0,0,0");
+SpacibloRenderer.Renderable = function(geometry, uid){
+	GLGE.Assets.registerAsset(this,uid);
+	this.geometry = geometry;
+	this.thing = null; //this is only filled out for the Geometry which is the root of the Thing's geometry tree
 	
-	self.vertexPositionBuffer = self.gl.createBuffer();
-	self.gl.bindBuffer(self.gl.ARRAY_BUFFER, self.vertexPositionBuffer);
-	self.gl.bufferData(self.gl.ARRAY_BUFFER, new WebGLFloatArray(geometry.vertices), self.gl.STATIC_DRAW);
-	self.vertexPositionBuffer.itemSize = 3;
-	self.vertexPositionBuffer.numItems = geometry.vertices.length / 3;
-	
-	self.vertexColorBuffer = self.gl.createBuffer();
-	self.gl.bindBuffer(self.gl.ARRAY_BUFFER, self.vertexColorBuffer);
-	var colors = []
-	for (var i=0; i < self.vertexPositionBuffer.numItems; i++) {
-		if(self.geometry.material){
-			colors = colors.concat([self.geometry.material.diffuse[0], self.geometry.material.diffuse[1], self.geometry.material.diffuse[2], 1.0]);
-		} else {
-			colors = colors.concat([0.5, 1, 0.5, 1.0]);
-		}
-	}
-
-	self.gl.bufferData(self.gl.ARRAY_BUFFER, new WebGLFloatArray(colors), self.gl.STATIC_DRAW);
-	self.vertexColorBuffer.itemSize = 4;
-	self.vertexColorBuffer.numItems = self.vertexPositionBuffer.numItems;
-	
-	self.children = new Array();
 	for(var index=0; index < self.geometry.children.length; index++){
-		self.children[self.children.length] = new SpacibloRenderer.Renderable(self.geometry.children[index], self.canvas);
-	}
-
-	self.render = function(pMatrix, mvMatrix){
-		self.gl.bindBuffer(self.gl.ARRAY_BUFFER, self.vertexPositionBuffer);
-		self.gl.vertexAttribPointer(canvas.shaderProgram.vertexPositionAttribute, self.vertexPositionBuffer.itemSize, self.gl.FLOAT, false, 0, 0);
-		self.gl.uniformMatrix4fv(canvas.shaderProgram.pMatrixUniform, false, new WebGLFloatArray(pMatrix.flatten()));
-
-		var gMvMatrix = mvMatrix.dup();
-		var transMatrix = Matrix.Translation($V([self.position.x, self.position.y, self.position.z])).ensure4x4();
-		gMvMatrix = gMvMatrix.x(transMatrix);
-		//var arad = 0 * Math.PI / 180.0;
-		//var v = [0, 1, 0];
-		//var rotMatrix = Matrix.Rotation(arad, $V([v[0], v[1], v[2]])).ensure4x4();
-		//gMvMatrix = gMvMatrix.x(rotMatrix);
-		self.gl.uniformMatrix4fv(canvas.shaderProgram.mvMatrixUniform, false, new WebGLFloatArray(gMvMatrix.flatten()));
-
-		self.gl.drawArrays(self.gl.TRIANGLES, 0, self.vertexPositionBuffer.numItems);
-		self.gl.bindBuffer(self.gl.ARRAY_BUFFER, self.vertexColorBuffer);
-		self.gl.vertexAttribPointer(self.canvas.shaderProgram.vertexColorAttribute, self.vertexColorBuffer.itemSize, self.gl.FLOAT, false, 0, 0);
-
-		for(var index=0; index < self.children.length; index++){
-			self.children[index].render(pMatrix, mvMatrix);
-		}
+		//self.children[self.children.length] = new SpacibloRenderer.Renderable(self.geometry.children[index], self.canvas);
 	}
 }
+GLGE.augment(GLGE.Group,SpacibloRenderer.Renderable);
+
+SpacibloRenderer.parseArray = function(data){
+	var result = [];
+	currentArray = data.split(",");
+	for(i = 0; i < currentArray.length; i++) result.push(currentArray[i]);
+	return result;
+}
+
 
 // 
 //
@@ -214,53 +154,69 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 	self.scene = null;
 	self.username = null;
 	self.canvas = null;
-	self.gl = null;
-	self.renderables = [];
-	
+	self.gameRenderer = null;
+	self.gameScene = null;
+
 	self.initialize = function(scene, username) {
 		self.scene = scene;
 		self.username = username;
 		
 		self.canvas = document.getElementById(self.canvas_id);		
 		if(self.canvas == null) return false;
-		try {
-			self.gl = canvas.getContext("experimental-webgl");
-			self.gl.viewport(0, 0, self.canvas.width, self.canvas.height);
-		} catch(e) {
-			console.log("Error initializing WebGL");
-			console.log(e);
-			return false;
-		}
-		self.gl.clearColor(scene.background_color.red, scene.background_color.green, scene.background_color.blue, scene.background_color.alpha);
-		self.gl.clearDepth(1.0);
-		self.gl.enable(self.gl.DEPTH_TEST);
-		self.gl.depthFunc(self.gl.LEQUAL);
 
-		self.fsShader = self.gl.createShader(self.gl.FRAGMENT_SHADER);
-		self.gl.shaderSource(self.fsShader, SpacibloRenderer.fsShaderSource);
-		self.gl.compileShader(self.fsShader);
+		self.gameRenderer = new GLGE.Renderer(self.canvas);
 
-		self.vsShader = self.gl.createShader(self.gl.VERTEX_SHADER);
-		self.gl.shaderSource(self.vsShader, SpacibloRenderer.vsShaderSource);
-		self.gl.compileShader(self.vsShader);
+		var material = new GLGE.Material(GLGE.Assets.createUUID());
+		material.setColor("green");
+		material.setSpecular(1);
+		material.setShininess(20);
 
-		self.shaderProgram = self.gl.createProgram();
-		self.gl.attachShader(self.shaderProgram, self.vsShader);
-		self.gl.attachShader(self.shaderProgram, self.fsShader);
-		self.gl.linkProgram(self.shaderProgram);
+		var mesh = new GLGE.Mesh(GLGE.Assets.createUUID());
+		mesh.setPositions(SpacibloRenderer.parseArray("1.000,1.000,0.000,-1.000,1.000,0.000,-1.000,-1.000,0.000,1.000,1.000,0.000,-1.000,-1.000,0.000,1.000,-1.000,0.000"));
+		mesh.setNormals(SpacibloRenderer.parseArray("-0.000,0.000,1.000,-0.000,0.000,1.000,-0.000,0.000,1.000,0.000,-0.000,1.000,0.000,-0.000,1.000,0.000,-0.000,1.000"));
+		mesh.setUV(SpacibloRenderer.parseArray("0.000,0.000,1.000,0.000,1.000,1.000,0.000,0.000,1.000,1.000,0.000,1.000"));
+		mesh.setFaces(SpacibloRenderer.parseArray("0,1,2,3,4,5"));
 
-		if (!self.gl.getProgramParameter(self.shaderProgram, self.gl.LINK_STATUS)) console.log("Could not initialise shaders");
-		self.gl.useProgram(self.shaderProgram);
+		var obj = new GLGE.Object(GLGE.Assets.createUUID());
+		obj.id = "groundMesh"
+		obj.setMesh(mesh);
+		obj.setMaterial(material);
+		obj.setRotX(-1.57);
+		obj.setScale(2);
 
-		self.shaderProgram.vertexPositionAttribute = self.gl.getAttribLocation(self.shaderProgram, "aVertexPosition");
-		self.gl.enableVertexAttribArray(self.shaderProgram.vertexPositionAttribute);
-		self.shaderProgram.vertexColorAttribute = self.gl.getAttribLocation(self.shaderProgram, "aVertexColor");
-		self.gl.enableVertexAttribArray(self.shaderProgram.vertexColorAttribute);
-		self.shaderProgram.pMatrixUniform = self.gl.getUniformLocation(self.shaderProgram, "uPMatrix");
-		self.shaderProgram.mvMatrixUniform = self.gl.getUniformLocation(self.shaderProgram, "uMVMatrix");
+		var light1 = new GLGE.Light(GLGE.Assets.createUUID());
+		light1.setLocX(-3);
+		light1.setLocY(15)
+		light1.setLocZ(-7);
+		light1.setAttenuationQuadratic(0.00001);
+		light1.setAttenuationLinear(0.00000001);
+		light1.setAttenuationConstant(1);
+		light1.setType(GLGE.L_POINT);
 
+		var light2 = new GLGE.Light(GLGE.Assets.createUUID());
+		light2.setLocX(3);
+		light2.setLocY(15)
+		light2.setLocZ(-7);
+		light2.setAttenuationQuadratic(0.00001);
+		light2.setAttenuationLinear(0.00000001);
+		light2.setAttenuationConstant(1.5);
+		light2.setType(GLGE.L_POINT);
 
-		self.requestTemplates(self.scene.thing);
+		var camera = new GLGE.Camera(GLGE.Assets.createUUID());
+		camera.setLocZ(7);
+		camera.setLocY(4.0);
+		camera.setFovY(35);
+		camera.setRotX(-0.5);
+
+		self.gameScene = new GLGE.Scene();
+		self.gameScene.setAmbientColor("#555");
+		self.gameScene.setBackgroundColor("#338");
+		self.gameScene.setCamera(camera);
+		self.gameScene.addLight(light1);
+		self.gameScene.addChild(obj);
+		self.gameRenderer.setScene(self.gameScene);
+
+		//self.requestTemplates(self.scene.thing);
 
 	    return true;
 	}
@@ -273,38 +229,13 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 	}
 
 	self.render = function() {
-		self.gl.clear(self.gl.COLOR_BUFFER_BIT | self.gl.DEPTH_BUFFER_BIT);
-		var fovy = 45;
-		var aspect = 1.0;
-		var znear = 0.1;
-		var zfar = 100.0;
-		var pMatrix = makePerspective(fovy, aspect, znear, zfar)
-
-		var userThing = self.scene.thing.getUserThing(self.username);
-		var position = null;
-		if(userThing){
-			position = [userThing.position.x, userThing.position.y, userThing.position.z];
-			theta = userThing.orientation.s;
-			rotVector = [userThing.orientation.x, userThing.orientation.y, userThing.orientation.z];
-		} else {
-			theta = 1;
-			rotVector = [0,1,0];
-			position = [-1.5, 0.0, -7.0];
-		}
-		var mvMatrix = Matrix.I(4);
-		var rotMatrix = Matrix.Rotation(theta, $V(rotVector)).ensure4x4();
-		mvMatrix = mvMatrix.x(rotMatrix.inverse());
-		var transMatrix = Matrix.Translation($V(position)).ensure4x4();
-		mvMatrix = mvMatrix.x(transMatrix.inverse());
-
-		for(var i=0; i < self.renderables.length; i++){
-			self.renderables[i].render(pMatrix, mvMatrix);
-		}
+		self.gameRenderer.render();
+		//var userThing = self.scene.thing.getUserThing(self.username);
 	}
 
 	self.close = function(){
 		if(self.canvas == null || self.gl == null) return;
-		self.gl.clearColor(1.0, 1.0, 1.0, 1.0);
+		//self.gl.clearColor(1.0, 1.0, 1.0, 1.0);
 	}
 	
 	self.handleImageAsset = function(image, path){ }

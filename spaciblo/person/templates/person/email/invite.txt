@@ -1,0 +1,15 @@
+
+{% if message%}
+{{ message|safe }}
+{% endif %}
+
+To find out more about {{ site.name}}, and optionally sign up, visit the link below:
+http://{{ site.domain}}{{ invite.get_absolute_url }}
+
+Thanks,
+
+The {{ site.name}} team
+
+This invitation was sent you from {{ site.name}} by {{ inviter.full_name }}.
+
+{{ site.name}}: A more friendly way to read the news.

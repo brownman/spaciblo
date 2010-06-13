@@ -1,0 +1,21 @@
+
+.person-info .person-photo { margin-right: 10px; float: left; }
+.person-info a { text-decoration: none; }
+.person-info a:hover { text-decoration: underline; }
+.person-info th { width: 80px;}
+.person-info-list .person-info { margin-bottom: 20px; }
+
+.person-info-small .person-photo { margin-right: 10px; float: left; }
+.person-info-small a { text-decoration: none; }
+.person-info-small a:hover { text-decoration: underline; }
+.person-info-small th { width: 80px;}
+.person-info-list .person-info-small { margin-bottom: 20px; }
+
+#registration-form input[type=text], #registration-form input[type=password] { width: 200px; }
+#registration-form td { padding: 5px;}
+#registration-form th { padding-right: 10px; }
+
+.invite-form { margin: 20px 0px; }
+.invite-form th { vertical-align: top; }
+.invite-form #id_email { width: 300px; }
+.invite-form input[type=submit] { text-align: right; }

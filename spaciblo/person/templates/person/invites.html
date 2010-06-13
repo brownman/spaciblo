@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block sub-title %}Invites | {% endblock %}
+
+{% block content%}
+<h1>Invites:</h1>
+
+{% if message %}
+	<h2>{{ message }}</h2>
+	<p>You can send more invites and see who's accepted them back on the <a href="{% url person.views.invites %}">invites page</a>.</p>
+{% else %}
+	{% if request.user.get_profile.available_invites %}
+		<p>You have {{ request.user.get_profile.available_invites.count }} invite{{ request.user.get_profile.available_invites|pluralize }}.</p>
+		<form action="." method="post">
+			<table class="invite-form">
+			{{ invite_form }}
+			<tr><td colspan="2" style="text-align: right;"><input tabindex="3" type="submit" value="send invite" /></td></tr>
+			</table>
+		</form>
+	{% else %}
+		<p>Dang!  At the moment you have no invites.</p>
+		<p>Don't worry, we're in talks with the invite factory and they're going to ship a big batch our way.</p>
+	{% endif %}
+
+	{% if request.user.get_profile.invitees %}
+		<h2>People who accepted your invites:</h2>
+		{% with request.user.get_profile.invitees as profiles %}
+			{% include "person/person_info_list.frag" %}
+		{% endwith %}
+	{% endif %}
+{% endif %}
+
+{% endblock %}

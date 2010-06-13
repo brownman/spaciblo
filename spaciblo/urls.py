@@ -14,6 +14,7 @@ urlpatterns = patterns('',
 	(r'^admin/', include(admin.site.urls)),
     (r'^api/sim/', include('spaciblo.sim.api_urls')),
     (r'^sim/', include('spaciblo.sim.urls')),
+    (r'^person/', include('spaciblo.person.urls')),
     (r'^', include('spaciblo.front.urls')),
 )
 

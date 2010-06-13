@@ -54,6 +54,7 @@ INSTALLED_APPS = (
 	'south',
 	'spaciblo.ground',
 	'spaciblo.sim',
+	'spaciblo.person',
 	'spaciblo.front',
 )
 

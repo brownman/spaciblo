@@ -1,4 +1,6 @@
 @import url("reset.css");
+@import url("/media/person/person.css");
+@import url("/media/jquery/css/smoothness/jquery-ui-1.7.1.custom.css");
 
 body {
 		font-family: Arial, sans-serif;

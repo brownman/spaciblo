@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block sub-title %}Find People | {% endblock %}
+
+{% block sub-head %}
+<meta name="robots" content="noindex, noarchive, nofollow" />
+
+<script type="text/javascript">
+function initialize(){
+	$("#id_terms").focus();
+}
+$(document).ready(function() { initialize(); });
+</script>
+{% endblock %}
+	
+{% block style %}
+#profile-search-form { text-align: center; }
+#profile-search-form input[type=text] { width: 300px; }
+#search-results { min-height: 100px; width: 500px; margin-top: 20px; position: relative; left: 280px; }
+.person-info-small { margin: 10px 0px; }
+{% endblock %}
+
+{% block content%}
+
+<form id="profile-search-form" action="." method="post">
+	<h1>Find People on {{ site.name }}:</h1>
+	{% for field in profile_search_form  %}{{ field }}{% endfor %}
+	<br />
+	<input type="submit" value="Go!">
+</form>
+
+<div id="search-results">
+	{% ifequal request.method "POST" %}
+		{% if not profile_search_results %}
+			<div style="text-align: center;">
+				No people could be found.  Dang.
+				{% if open_invite and request.user.is_authenticated and request.user.get_profile.available_invites %}
+					<div style="margin-top: 20px;">But you have <a href="{% url person.views.invites %}">invites</a>!</div>
+				{% endif %}
+			</div>
+		{% endif %}
+	{% endifequal %}
+	{% if profile_search_results %}
+		<ul>{% for profile in profile_search_results|slice:":100" %}
+			<li>
+				{% with profile.user.get_absolute_url as profile_link %}
+					{% include "person/person_info_small.frag" %}
+				{% endwith %}
+			</li>
+		{% endfor %}</ul>
+	{% endif %}
+</div>
+{% endblock %}
