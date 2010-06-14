@@ -89,6 +89,12 @@ SpacibloScene.Thing.prototype.listThings = function(results){
 	return results
 }
 
+SpacibloScene.Color.prototype.toCSS = function(){
+	return "#" + (Math.round(256 * this.red)).toString(16) + "" + (Math.round(256 * this.green)).toString(16) + "" + (Math.round(256 * this.blue)).toString(16);
+}
+
+
+/* These are the manual initialization functions for scene nodes */
 SpacibloScene.Scene.prototype.init = function(){
 }
 
@@ -97,7 +103,6 @@ SpacibloScene.Thing.prototype.init = function(){
 	this.renderable = null;
 }
 
-/* These are the manual initialization functions for scene nodes */
 SpacibloScene.Color.prototype.init = function(){
 	this.red = parseFloat(this.data.split(",")[0]);
 	this.green = parseFloat(this.data.split(",")[1]);
@@ -122,7 +127,6 @@ SpacibloScene.Orientation.prototype.toString = function(){
 }
 
 SpacibloScene.parseSceneDocument = function(sceneDoc){
-   console.log(sceneDoc);
 	var sceneData = JSON.parse(sceneDoc);
 	var scene = new SpacibloScene.Scene(new SpacibloScene.Color(sceneData['attributes']['background_color']));
 	scene.thing = SpacibloScene.parseThingData(sceneData['thing'], null, this);

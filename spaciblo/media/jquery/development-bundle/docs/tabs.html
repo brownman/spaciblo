@@ -28,7 +28,7 @@
 <li class="toclevel-2"><a href="#...select_a_tab_from_a_text_link_instead_of_clicking_a_tab_itself"><span class="tocnumber">3.3</span> <span class="toctext">...select a tab from a text link instead of clicking a tab itself</span></a></li>
 <li class="toclevel-2"><a href="#...prevent_switching_to_the_tab_on_click_depending_on_form_validation"><span class="tocnumber">3.4</span> <span class="toctext">...prevent switching to the tab on click depending on form validation</span></a></li>
 <li class="toclevel-2"><a href="#...immediately_select_a_just_added_tab"><span class="tocnumber">3.5</span> <span class="toctext">...immediately select a just added tab</span></a></li>
-<li class="toclevel-2"><a href="#...open_a_tab_in_a_new_window_instead"><span class="tocnumber">3.6</span> <span class="toctext">...open a tab in a new window instead</span></a></li>
+<li class="toclevel-2"><a href="#...follow_a_tab.27s_URL_instead_of_loading_its_content_via_ajax"><span class="tocnumber">3.6</span> <span class="toctext">...follow a tab's URL instead of loading its content via ajax</span></a></li>
 <li class="toclevel-2"><a href="#...prevent_a_FOUC_.28Flash_of_Unstyled_Content.29_before_tabs_are_initialized"><span class="tocnumber">3.7</span> <span class="toctext">...prevent a FOUC (Flash of Unstyled Content) before tabs are initialized</span></a></li>
 </ul>
 </li>
@@ -127,16 +127,22 @@ $('#my-text-link').click(function() { // bind click event to link
         $tabs.tabs('select', '#' + ui.panel.id);
     }
 });</pre>
-<div class="editsection" style="float:right;margin-left:5px;">[<a href="http://docs.jquery.com/action/edit/Template:UIAPIPlugin?section=10" title="Template:UIAPIPlugin">edit</a>]</div><a name="...open_a_tab_in_a_new_window_instead"></a><h3>...open a tab in a new window instead</h3>
+<div class="editsection" style="float:right;margin-left:5px;">[<a href="http://docs.jquery.com/action/edit/Template:UIAPIPlugin?section=10" title="Template:UIAPIPlugin">edit</a>]</div><a name="...follow_a_tab.27s_URL_instead_of_loading_its_content_via_ajax"></a><h3>...follow a tab's URL instead of loading its content via ajax</h3>
 <p>Note that opening a tab in a new window is unexpected, e.g.
 inconsistent behaviour exposing a usablity problem (<a href="http://www.useit.com/alertbox/tabs.html" class="external free" title="http://www.useit.com/alertbox/tabs.html">http://www.useit.com/alertbox/tabs.html</a>).
 </p>
 <pre>$('#example').tabs({
     select: function(event, ui) {
-        location.href = $.data(ui.tab, 'load.tabs');
-        return false;
+        var url = $.data(ui.tab, 'load.tabs');
+        if( url ) {
+            location.href = url;
+            return false;
+        }
+        return true;
     }
 });</pre>
+<p><br />
+</p>
 <div class="editsection" style="float:right;margin-left:5px;">[<a href="http://docs.jquery.com/action/edit/Template:UIAPIPlugin?section=11" title="Template:UIAPIPlugin">edit</a>]</div><a name="...prevent_a_FOUC_.28Flash_of_Unstyled_Content.29_before_tabs_are_initialized"></a><h3>...prevent a FOUC (Flash of Unstyled Content) before tabs are initialized</h3>
 <p>Add the necessary classes to hide an inactive tab panel to the HTML right away - note that this will <b>not</b> degrade gracefully with JavaScript being disabled:
 </p>
@@ -188,12 +194,12 @@ A simple jQuery UI Tabs.<br />
 <pre>&lt;!DOCTYPE html&gt;
 &lt;html&gt;
 &lt;head&gt;
-  &lt;link type=&quot;text/css&quot; href=&quot;http://jqueryui.com/latest/themes/base/ui.all.css&quot; rel=&quot;stylesheet&quot; /&gt;
-  &lt;script type=&quot;text/javascript&quot; src=&quot;http://jqueryui.com/latest/jquery-1.3.2.js&quot;&gt;&lt;/script&gt;
-  &lt;script type=&quot;text/javascript&quot; src=&quot;http://jqueryui.com/latest/ui/ui.core.js&quot;&gt;&lt;/script&gt;
-  &lt;script type=&quot;text/javascript&quot; src=&quot;http://jqueryui.com/latest/ui/ui.tabs.js&quot;&gt;&lt;/script&gt;
-  &lt;script type="text/javascript"&gt;
-  $(document).ready(function(){
+  &lt;link href=&quot;http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css&quot; rel=&quot;stylesheet&quot; type=&quot;text/css&quot;/&gt;
+  &lt;script src=&quot;http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js&quot;&gt;&lt;/script&gt;
+  &lt;script src=&quot;http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js&quot;&gt;&lt;/script&gt;
+  
+  &lt;script&gt;
+  $(document).ready(function() {
     $(&quot;#tabs&quot;).tabs();
   });
   &lt;/script&gt;
@@ -231,6 +237,48 @@ A simple jQuery UI Tabs.<br />
     <h2 class="top-header">Options</h2>
     <ul class="options-list">
       
+<li class="option" id="option-disabled">
+  <div class="option-header">
+    <h3 class="option-name"><a href="#option-disabled">disabled</a></h3>
+    <dl>
+      <dt class="option-type-label">Type:</dt>
+        <dd class="option-type">Boolean</dd>
+      
+      <dt class="option-default-label">Default:</dt>
+        <dd class="option-default">false</dd>
+      
+    </dl>
+  </div>
+  <div class="option-description">
+    <p>Disables (true) or enables (false) the tabs. Can be set when initialising (first creating) the tabs.</p>
+  </div>
+  <div class="option-examples">
+    <h4>Code examples</h4>
+    <dl class="option-examples-list">
+    
+<dt>
+  Initialize a tabs with the <code>disabled</code> option specified.
+</dt>
+<dd>
+<pre><code>$( ".selector" ).tabs({ disabled: true });</code></pre>
+</dd>
+
+    
+<dt>
+  Get or set the <code>disabled</code> option, after init.
+</dt>
+<dd>
+<pre><code>//getter
+var disabled = $( ".selector" ).tabs( "option", "disabled" );
+//setter
+$( ".selector" ).tabs( "option", "disabled", true );</code></pre>
+</dd>
+
+    </dl>
+  </div>
+</li>
+
+
 <li class="option" id="option-ajaxOptions">
   <div class="option-header">
     <h3 class="option-name"><a href="#option-ajaxOptions">ajaxOptions</a></h3>
@@ -254,7 +302,7 @@ A simple jQuery UI Tabs.<br />
   Initialize a tabs with the <code>ajaxOptions</code> option specified.
 </dt>
 <dd>
-<pre><code>$('.selector').tabs({ ajaxOptions: { async: false } });</code></pre>
+<pre><code>$( ".selector" ).tabs({ ajaxOptions: { async: false } });</code></pre>
 </dd>
 
     
@@ -263,9 +311,9 @@ A simple jQuery UI Tabs.<br />
 </dt>
 <dd>
 <pre><code>//getter
-var ajaxOptions = $('.selector').tabs('option', 'ajaxOptions');
+var ajaxOptions = $( ".selector" ).tabs( "option", "ajaxOptions" );
 //setter
-$('.selector').tabs('option', 'ajaxOptions', { async: false });</code></pre>
+$( ".selector" ).tabs( "option", "ajaxOptions", { async: false } );</code></pre>
 </dd>
 
     </dl>
@@ -296,7 +344,7 @@ $('.selector').tabs('option', 'ajaxOptions', { async: false });</code></pre>
   Initialize a tabs with the <code>cache</code> option specified.
 </dt>
 <dd>
-<pre><code>$('.selector').tabs({ cache: true });</code></pre>
+<pre><code>$( ".selector" ).tabs({ cache: true });</code></pre>
 </dd>
 
     
@@ -305,9 +353,9 @@ $('.selector').tabs('option', 'ajaxOptions', { async: false });</code></pre>
 </dt>
 <dd>
 <pre><code>//getter
-var cache = $('.selector').tabs('option', 'cache');
+var cache = $( ".selector" ).tabs( "option", "cache" );
 //setter
-$('.selector').tabs('option', 'cache', true);</code></pre>
+$( ".selector" ).tabs( "option", "cache", true );</code></pre>
 </dd>
 
     </dl>
@@ -338,7 +386,7 @@ $('.selector').tabs('option', 'cache', true);</code></pre>
   Initialize a tabs with the <code>collapsible</code> option specified.
 </dt>
 <dd>
-<pre><code>$('.selector').tabs({ collapsible: true });</code></pre>
+<pre><code>$( ".selector" ).tabs({ collapsible: true });</code></pre>
 </dd>
 
     
@@ -347,9 +395,9 @@ $('.selector').tabs('option', 'cache', true);</code></pre>
 </dt>
 <dd>
 <pre><code>//getter
-var collapsible = $('.selector').tabs('option', 'collapsible');
+var collapsible = $( ".selector" ).tabs( "option", "collapsible" );
 //setter
-$('.selector').tabs('option', 'collapsible', true);</code></pre>
+$( ".selector" ).tabs( "option", "collapsible", true );</code></pre>
 </dd>
 
     </dl>
@@ -380,7 +428,7 @@ $('.selector').tabs('option', 'collapsible', true);</code></pre>
   Initialize a tabs with the <code>cookie</code> option specified.
 </dt>
 <dd>
-<pre><code>$('.selector').tabs({ cookie: { expires: 30 } });</code></pre>
+<pre><code>$( ".selector" ).tabs({ cookie: { expires: 30 } });</code></pre>
 </dd>
 
     
@@ -389,9 +437,9 @@ $('.selector').tabs('option', 'collapsible', true);</code></pre>
 </dt>
 <dd>
 <pre><code>//getter
-var cookie = $('.selector').tabs('option', 'cookie');
+var cookie = $( ".selector" ).tabs( "option", "cookie" );
 //setter
-$('.selector').tabs('option', 'cookie', { expires: 30 });</code></pre>
+$( ".selector" ).tabs( "option", "cookie", { expires: 30 } );</code></pre>
 </dd>
 
     </dl>
@@ -422,7 +470,7 @@ $('.selector').tabs('option', 'cookie', { expires: 30 });</code></pre>
   Initialize a tabs with the <code>deselectable</code> option specified.
 </dt>
 <dd>
-<pre><code>$('.selector').tabs({ deselectable: true });</code></pre>
+<pre><code>$( ".selector" ).tabs({ deselectable: true });</code></pre>
 </dd>
 
     
@@ -431,9 +479,9 @@ $('.selector').tabs('option', 'cookie', { expires: 30 });</code></pre>
 </dt>
 <dd>
 <pre><code>//getter
-var deselectable = $('.selector').tabs('option', 'deselectable');
+var deselectable = $( ".selector" ).tabs( "option", "deselectable" );
 //setter
-$('.selector').tabs('option', 'deselectable', true);</code></pre>
+$( ".selector" ).tabs( "option", "deselectable", true );</code></pre>
 </dd>
 
     </dl>
@@ -464,7 +512,7 @@ $('.selector').tabs('option', 'deselectable', true);</code></pre>
   Initialize a tabs with the <code>disabled</code> option specified.
 </dt>
 <dd>
-<pre><code>$('.selector').tabs({ disabled: [1, 2] });</code></pre>
+<pre><code>$( ".selector" ).tabs({ disabled: [1, 2] });</code></pre>
 </dd>
 
     
@@ -473,9 +521,9 @@ $('.selector').tabs('option', 'deselectable', true);</code></pre>
 </dt>
 <dd>
 <pre><code>//getter
-var disabled = $('.selector').tabs('option', 'disabled');
+var disabled = $( ".selector" ).tabs( "option", "disabled" );
 //setter
-$('.selector').tabs('option', 'disabled', [1, 2]);</code></pre>
+$( ".selector" ).tabs( "option", "disabled", [1, 2] );</code></pre>
 </dd>
 
     </dl>
@@ -506,7 +554,7 @@ $('.selector').tabs('option', 'disabled', [1, 2]);</code></pre>
   Initialize a tabs with the <code>event</code> option specified.
 </dt>
 <dd>
-<pre><code>$('.selector').tabs({ event: 'mouseover' });</code></pre>
+<pre><code>$( ".selector" ).tabs({ event: 'mouseover' });</code></pre>
 </dd>
 
     
@@ -515,9 +563,9 @@ $('.selector').tabs('option', 'disabled', [1, 2]);</code></pre>
 </dt>
 <dd>
 <pre><code>//getter
-var event = $('.selector').tabs('option', 'event');
+var event = $( ".selector" ).tabs( "option", "event" );
 //setter
-$('.selector').tabs('option', 'event', 'mouseover');</code></pre>
+$( ".selector" ).tabs( "option", "event", 'mouseover' );</code></pre>
 </dd>
 
     </dl>
@@ -548,7 +596,7 @@ $('.selector').tabs('option', 'event', 'mouseover');</code></pre>
   Initialize a tabs with the <code>fx</code> option specified.
 </dt>
 <dd>
-<pre><code>$('.selector').tabs({ fx: { opacity: 'toggle' } });</code></pre>
+<pre><code>$( ".selector" ).tabs({ fx: { opacity: 'toggle' } });</code></pre>
 </dd>
 
     
@@ -557,9 +605,9 @@ $('.selector').tabs('option', 'event', 'mouseover');</code></pre>
 </dt>
 <dd>
 <pre><code>//getter
-var fx = $('.selector').tabs('option', 'fx');
+var fx = $( ".selector" ).tabs( "option", "fx" );
 //setter
-$('.selector').tabs('option', 'fx', { opacity: 'toggle' });</code></pre>
+$( ".selector" ).tabs( "option", "fx", { opacity: 'toggle' } );</code></pre>
 </dd>
 
     </dl>
@@ -590,7 +638,7 @@ $('.selector').tabs('option', 'fx', { opacity: 'toggle' });</code></pre>
   Initialize a tabs with the <code>idPrefix</code> option specified.
 </dt>
 <dd>
-<pre><code>$('.selector').tabs({ idPrefix: 'ui-tabs-primary' });</code></pre>
+<pre><code>$( ".selector" ).tabs({ idPrefix: 'ui-tabs-primary' });</code></pre>
 </dd>
 
     
@@ -599,9 +647,9 @@ $('.selector').tabs('option', 'fx', { opacity: 'toggle' });</code></pre>
 </dt>
 <dd>
 <pre><code>//getter
-var idPrefix = $('.selector').tabs('option', 'idPrefix');
+var idPrefix = $( ".selector" ).tabs( "option", "idPrefix" );
 //setter
-$('.selector').tabs('option', 'idPrefix', 'ui-tabs-primary');</code></pre>
+$( ".selector" ).tabs( "option", "idPrefix", 'ui-tabs-primary' );</code></pre>
 </dd>
 
     </dl>
@@ -632,7 +680,7 @@ $('.selector').tabs('option', 'idPrefix', 'ui-tabs-primary');</code></pre>
   Initialize a tabs with the <code>panelTemplate</code> option specified.
 </dt>
 <dd>
-<pre><code>$('.selector').tabs({ panelTemplate: '&lt;li&gt;&lt;/li&gt;' });</code></pre>
+<pre><code>$( ".selector" ).tabs({ panelTemplate: '&lt;li&gt;&lt;/li&gt;' });</code></pre>
 </dd>
 
     
@@ -641,9 +689,9 @@ $('.selector').tabs('option', 'idPrefix', 'ui-tabs-primary');</code></pre>
 </dt>
 <dd>
 <pre><code>//getter
-var panelTemplate = $('.selector').tabs('option', 'panelTemplate');
+var panelTemplate = $( ".selector" ).tabs( "option", "panelTemplate" );
 //setter
-$('.selector').tabs('option', 'panelTemplate', '&lt;li&gt;&lt;/li&gt;');</code></pre>
+$( ".selector" ).tabs( "option", "panelTemplate", '&lt;li&gt;&lt;/li&gt;' );</code></pre>
 </dd>
 
     </dl>
@@ -664,7 +712,7 @@ $('.selector').tabs('option', 'panelTemplate', '&lt;li&gt;&lt;/li&gt;');</code><
     </dl>
   </div>
   <div class="option-description">
-    <p>Zero-based index of the tab to be selected on initialization. To set all tabs to nselected pass -1 as value.</p>
+    <p>Zero-based index of the tab to be selected on initialization. To set all tabs to unselected pass -1 as value.</p>
   </div>
   <div class="option-examples">
     <h4>Code examples</h4>
@@ -674,7 +722,7 @@ $('.selector').tabs('option', 'panelTemplate', '&lt;li&gt;&lt;/li&gt;');</code><
   Initialize a tabs with the <code>selected</code> option specified.
 </dt>
 <dd>
-<pre><code>$('.selector').tabs({ selected: 3 });</code></pre>
+<pre><code>$( ".selector" ).tabs({ selected: 3 });</code></pre>
 </dd>
 
     
@@ -683,9 +731,9 @@ $('.selector').tabs('option', 'panelTemplate', '&lt;li&gt;&lt;/li&gt;');</code><
 </dt>
 <dd>
 <pre><code>//getter
-var selected = $('.selector').tabs('option', 'selected');
+var selected = $( ".selector" ).tabs( "option", "selected" );
 //setter
-$('.selector').tabs('option', 'selected', 3);</code></pre>
+$( ".selector" ).tabs( "option", "selected", 3 );</code></pre>
 </dd>
 
     </dl>
@@ -706,7 +754,7 @@ $('.selector').tabs('option', 'selected', 3);</code></pre>
     </dl>
   </div>
   <div class="option-description">
-    <p>The HTML content of this string is shown in a tab title while remote content is loading. Pass in empty string to deactivate that behavior.</p>
+    <p>The HTML content of this string is shown in a tab title while remote content is loading. Pass in empty string to deactivate that behavior. An span element must be present in the A tag of the title, for the spinner content to be visible.</p>
   </div>
   <div class="option-examples">
     <h4>Code examples</h4>
@@ -716,7 +764,7 @@ $('.selector').tabs('option', 'selected', 3);</code></pre>
   Initialize a tabs with the <code>spinner</code> option specified.
 </dt>
 <dd>
-<pre><code>$('.selector').tabs({ spinner: 'Retrieving data...' });</code></pre>
+<pre><code>$( ".selector" ).tabs({ spinner: 'Retrieving data...' });</code></pre>
 </dd>
 
     
@@ -725,9 +773,9 @@ $('.selector').tabs('option', 'selected', 3);</code></pre>
 </dt>
 <dd>
 <pre><code>//getter
-var spinner = $('.selector').tabs('option', 'spinner');
+var spinner = $( ".selector" ).tabs( "option", "spinner" );
 //setter
-$('.selector').tabs('option', 'spinner', 'Retrieving data...');</code></pre>
+$( ".selector" ).tabs( "option", "spinner", 'Retrieving data...' );</code></pre>
 </dd>
 
     </dl>
@@ -758,7 +806,7 @@ $('.selector').tabs('option', 'spinner', 'Retrieving data...');</code></pre>
   Initialize a tabs with the <code>tabTemplate</code> option specified.
 </dt>
 <dd>
-<pre><code>$('.selector').tabs({ tabTemplate: '&lt;div&gt;&lt;a href&#61;"#&#123;href&#125;"&gt;&lt;span&gt;#&#123;label&#125;&lt;/span&gt;&lt;/a&gt;&lt;/div&gt;' });</code></pre>
+<pre><code>$( ".selector" ).tabs({ tabTemplate: '&lt;div&gt;&lt;a href&#61;"#&#123;href&#125;"&gt;&lt;span&gt;#&#123;label&#125;&lt;/span&gt;&lt;/a&gt;&lt;/div&gt;' });</code></pre>
 </dd>
 
     
@@ -767,9 +815,9 @@ $('.selector').tabs('option', 'spinner', 'Retrieving data...');</code></pre>
 </dt>
 <dd>
 <pre><code>//getter
-var tabTemplate = $('.selector').tabs('option', 'tabTemplate');
+var tabTemplate = $( ".selector" ).tabs( "option", "tabTemplate" );
 //setter
-$('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;href&#125;"&gt;&lt;span&gt;#&#123;label&#125;&lt;/span&gt;&lt;/a&gt;&lt;/div&gt;');</code></pre>
+$( ".selector" ).tabs( "option", "tabTemplate", '&lt;div&gt;&lt;a href&#61;"#&#123;href&#125;"&gt;&lt;span&gt;#&#123;label&#125;&lt;/span&gt;&lt;/a&gt;&lt;/div&gt;' );</code></pre>
 </dd>
 
     </dl>
@@ -801,7 +849,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
   Supply a callback function to handle the <code>select</code> event as an init option.
 </dt>
 <dd>
-<pre><code>$('.selector').tabs({
+<pre><code>$( &quot;.selector&quot; ).tabs({
    select: function(event, ui) { ... }
 });</code></pre>
 </dd>
@@ -811,7 +859,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
   Bind to the <code>select</code> event by type: <code>tabsselect</code>.
 </dt>
 <dd>
-<pre><code>$('.selector').bind('tabsselect', function(event, ui) {
+<pre><code>$( &quot;.selector&quot; ).bind( &quot;tabsselect&quot;, function(event, ui) {
   ...
 });</code></pre>
 </dd>
@@ -840,7 +888,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
   Supply a callback function to handle the <code>load</code> event as an init option.
 </dt>
 <dd>
-<pre><code>$('.selector').tabs({
+<pre><code>$( &quot;.selector&quot; ).tabs({
    load: function(event, ui) { ... }
 });</code></pre>
 </dd>
@@ -850,7 +898,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
   Bind to the <code>load</code> event by type: <code>tabsload</code>.
 </dt>
 <dd>
-<pre><code>$('.selector').bind('tabsload', function(event, ui) {
+<pre><code>$( &quot;.selector&quot; ).bind( &quot;tabsload&quot;, function(event, ui) {
   ...
 });</code></pre>
 </dd>
@@ -879,7 +927,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
   Supply a callback function to handle the <code>show</code> event as an init option.
 </dt>
 <dd>
-<pre><code>$('.selector').tabs({
+<pre><code>$( &quot;.selector&quot; ).tabs({
    show: function(event, ui) { ... }
 });</code></pre>
 </dd>
@@ -889,7 +937,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
   Bind to the <code>show</code> event by type: <code>tabsshow</code>.
 </dt>
 <dd>
-<pre><code>$('.selector').bind('tabsshow', function(event, ui) {
+<pre><code>$( &quot;.selector&quot; ).bind( &quot;tabsshow&quot;, function(event, ui) {
   ...
 });</code></pre>
 </dd>
@@ -918,7 +966,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
   Supply a callback function to handle the <code>add</code> event as an init option.
 </dt>
 <dd>
-<pre><code>$('.selector').tabs({
+<pre><code>$( &quot;.selector&quot; ).tabs({
    add: function(event, ui) { ... }
 });</code></pre>
 </dd>
@@ -928,7 +976,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
   Bind to the <code>add</code> event by type: <code>tabsadd</code>.
 </dt>
 <dd>
-<pre><code>$('.selector').bind('tabsadd', function(event, ui) {
+<pre><code>$( &quot;.selector&quot; ).bind( &quot;tabsadd&quot;, function(event, ui) {
   ...
 });</code></pre>
 </dd>
@@ -957,7 +1005,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
   Supply a callback function to handle the <code>remove</code> event as an init option.
 </dt>
 <dd>
-<pre><code>$('.selector').tabs({
+<pre><code>$( &quot;.selector&quot; ).tabs({
    remove: function(event, ui) { ... }
 });</code></pre>
 </dd>
@@ -967,7 +1015,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
   Bind to the <code>remove</code> event by type: <code>tabsremove</code>.
 </dt>
 <dd>
-<pre><code>$('.selector').bind('tabsremove', function(event, ui) {
+<pre><code>$( &quot;.selector&quot; ).bind( &quot;tabsremove&quot;, function(event, ui) {
   ...
 });</code></pre>
 </dd>
@@ -996,7 +1044,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
   Supply a callback function to handle the <code>enable</code> event as an init option.
 </dt>
 <dd>
-<pre><code>$('.selector').tabs({
+<pre><code>$( &quot;.selector&quot; ).tabs({
    enable: function(event, ui) { ... }
 });</code></pre>
 </dd>
@@ -1006,7 +1054,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
   Bind to the <code>enable</code> event by type: <code>tabsenable</code>.
 </dt>
 <dd>
-<pre><code>$('.selector').bind('tabsenable', function(event, ui) {
+<pre><code>$( &quot;.selector&quot; ).bind( &quot;tabsenable&quot;, function(event, ui) {
   ...
 });</code></pre>
 </dd>
@@ -1035,7 +1083,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
   Supply a callback function to handle the <code>disable</code> event as an init option.
 </dt>
 <dd>
-<pre><code>$('.selector').tabs({
+<pre><code>$( &quot;.selector&quot; ).tabs({
    disable: function(event, ui) { ... }
 });</code></pre>
 </dd>
@@ -1045,7 +1093,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
   Bind to the <code>disable</code> event by type: <code>tabsdisable</code>.
 </dt>
 <dd>
-<pre><code>$('.selector').bind('tabsdisable', function(event, ui) {
+<pre><code>$( &quot;.selector&quot; ).bind( &quot;tabsdisable&quot;, function(event, ui) {
   ...
 });</code></pre>
 </dd>
@@ -1065,7 +1113,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
     <h3 class="method-name"><a href="#method-destroy">destroy</a></h3>
     <dl>
       <dt class="method-signature-label">Signature:</dt>
-        <dd class="method-signature">.tabs( 'destroy'
+        <dd class="method-signature">.tabs( "destroy"
 
 
 
@@ -1087,7 +1135,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
     <h3 class="method-name"><a href="#method-disable">disable</a></h3>
     <dl>
       <dt class="method-signature-label">Signature:</dt>
-        <dd class="method-signature">.tabs( 'disable'
+        <dd class="method-signature">.tabs( "disable"
 
 
 
@@ -1109,7 +1157,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
     <h3 class="method-name"><a href="#method-enable">enable</a></h3>
     <dl>
       <dt class="method-signature-label">Signature:</dt>
-        <dd class="method-signature">.tabs( 'enable'
+        <dd class="method-signature">.tabs( "enable"
 
 
 
@@ -1131,7 +1179,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
     <h3 class="method-name"><a href="#method-option">option</a></h3>
     <dl>
       <dt class="method-signature-label">Signature:</dt>
-        <dd class="method-signature">.tabs( 'option'
+        <dd class="method-signature">.tabs( "option"
 
 , optionName
 
@@ -1148,12 +1196,56 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
 </li>
 
 
+<li class="method" id="method-option">
+  <div class="method-header">
+    <h3 class="method-name"><a href="#method-option">option</a></h3>
+    <dl>
+      <dt class="method-signature-label">Signature:</dt>
+        <dd class="method-signature">.tabs( "option"
+
+, options
+
+
+
+
+
+)</dd>
+    </dl>
+  </div>
+  <div class="method-description">
+    <p>Set multiple tabs options at once by providing an options object.</p>
+  </div>
+</li>
+
+
+<li class="method" id="method-widget">
+  <div class="method-header">
+    <h3 class="method-name"><a href="#method-widget">widget</a></h3>
+    <dl>
+      <dt class="method-signature-label">Signature:</dt>
+        <dd class="method-signature">.tabs( "widget"
+
+
+
+
+
+
+
+)</dd>
+    </dl>
+  </div>
+  <div class="method-description">
+    <p>Returns the .ui-tabs element.</p>
+  </div>
+</li>
+
+
 <li class="method" id="method-add">
   <div class="method-header">
     <h3 class="method-name"><a href="#method-add">add</a></h3>
     <dl>
       <dt class="method-signature-label">Signature:</dt>
-        <dd class="method-signature">.tabs( 'add'
+        <dd class="method-signature">.tabs( "add"
 
 , url
 
@@ -1175,7 +1267,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
     <h3 class="method-name"><a href="#method-remove">remove</a></h3>
     <dl>
       <dt class="method-signature-label">Signature:</dt>
-        <dd class="method-signature">.tabs( 'remove'
+        <dd class="method-signature">.tabs( "remove"
 
 , index
 
@@ -1197,7 +1289,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
     <h3 class="method-name"><a href="#method-enable">enable</a></h3>
     <dl>
       <dt class="method-signature-label">Signature:</dt>
-        <dd class="method-signature">.tabs( 'enable'
+        <dd class="method-signature">.tabs( "enable"
 
 , index
 
@@ -1209,7 +1301,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
     </dl>
   </div>
   <div class="method-description">
-    <p>Enable a disabled tab.  To enable more than one tab at once reset the disabled property like: <code>$('#example').data('disabled.tabs', []);</code>. The second argument is the zero-based index of the tab to be enabled.</p>
+    <p>Enable a disabled tab.  To enable more than one tab at once reset the disabled property like: <code>$('#example').tabs("option","disabled",[]);</code>. The second argument is the zero-based index of the tab to be enabled.</p>
   </div>
 </li>
 
@@ -1219,7 +1311,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
     <h3 class="method-name"><a href="#method-disable">disable</a></h3>
     <dl>
       <dt class="method-signature-label">Signature:</dt>
-        <dd class="method-signature">.tabs( 'disable'
+        <dd class="method-signature">.tabs( "disable"
 
 , index
 
@@ -1231,7 +1323,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
     </dl>
   </div>
   <div class="method-description">
-    <p>Disable a tab. The selected tab cannot be disabled. To disable more than one tab at once use: <code>$('#example').data('disabled.tabs', [1, 2, 3]);</code>  The second argument is the zero-based index of the tab to be disabled.</p>
+    <p>Disable a tab. The selected tab cannot be disabled. To disable more than one tab at once use: <code>$('#example').tabs("option","disabled", [1, 2, 3]);</code>  The second argument is the zero-based index of the tab to be disabled.</p>
   </div>
 </li>
 
@@ -1241,7 +1333,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
     <h3 class="method-name"><a href="#method-select">select</a></h3>
     <dl>
       <dt class="method-signature-label">Signature:</dt>
-        <dd class="method-signature">.tabs( 'select'
+        <dd class="method-signature">.tabs( "select"
 
 , index
 
@@ -1263,7 +1355,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
     <h3 class="method-name"><a href="#method-load">load</a></h3>
     <dl>
       <dt class="method-signature-label">Signature:</dt>
-        <dd class="method-signature">.tabs( 'load'
+        <dd class="method-signature">.tabs( "load"
 
 , index
 
@@ -1285,7 +1377,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
     <h3 class="method-name"><a href="#method-url">url</a></h3>
     <dl>
       <dt class="method-signature-label">Signature:</dt>
-        <dd class="method-signature">.tabs( 'url'
+        <dd class="method-signature">.tabs( "url"
 
 , index
 
@@ -1307,7 +1399,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
     <h3 class="method-name"><a href="#method-length">length</a></h3>
     <dl>
       <dt class="method-signature-label">Signature:</dt>
-        <dd class="method-signature">.tabs( 'length'
+        <dd class="method-signature">.tabs( "length"
 
 
 
@@ -1329,7 +1421,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
     <h3 class="method-name"><a href="#method-abort">abort</a></h3>
     <dl>
       <dt class="method-signature-label">Signature:</dt>
-        <dd class="method-signature">.tabs( 'abort'
+        <dd class="method-signature">.tabs( "abort"
 
 
 
@@ -1351,7 +1443,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
     <h3 class="method-name"><a href="#method-rotate">rotate</a></h3>
     <dl>
       <dt class="method-signature-label">Signature:</dt>
-        <dd class="method-signature">.tabs( 'rotate'
+        <dd class="method-signature">.tabs( "rotate"
 
 , ms
 
@@ -1373,7 +1465,7 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
     <h2 class="top-header">Theming</h2>
     <p>The jQuery UI Tabs plugin uses the jQuery UI CSS Framework to style its look and feel, including colors and background textures. We recommend using the ThemeRoller tool to create and download custom themes that are easy to build and maintain.
 </p>
-  <p>If a deeper level of customization is needed, there are widget-specific classes referenced within the ui.tabs.css stylesheet that can be modified. These classes are highlighed in bold below.
+  <p>If a deeper level of customization is needed, there are widget-specific classes referenced within the jquery.ui.tabs.css stylesheet that can be modified. These classes are highlighed in bold below.
 </p>
     
   <h3>Sample markup with jQuery UI CSS Framework classes</h3>
@@ -1411,10 +1503,10 @@ $('.selector').tabs('option', 'tabTemplate', '&lt;div&gt;&lt;a href&#61;"#&#123;
 </div>
 
 </p><!-- 
-Pre-expand include size: 51589 bytes
-Post-expand include size: 90199 bytes
-Template argument size: 55853 bytes
+Pre-expand include size: 56186 bytes
+Post-expand include size: 95623 bytes
+Template argument size: 57017 bytes
 Maximum: 2097152 bytes
 -->
 
-<!-- Saved in parser cache with key jqdocs_docs:pcache:idhash:3184-1!1!0!!en!2 and timestamp 20090319021844 -->
+<!-- Saved in parser cache with key jqdocs_docs:pcache:idhash:3777-1!1!0!!en!2 and timestamp 20100520043008 -->

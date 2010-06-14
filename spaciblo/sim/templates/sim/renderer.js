@@ -122,16 +122,41 @@ SpacibloRenderer.AssetManager = function(imageCallback, templateCallback, geomet
 //
 //
 
-SpacibloRenderer.Renderable = function(geometry, uid){
+SpacibloRenderer.Renderable = function(geometry, canvas, uid){
 	GLGE.Assets.registerAsset(this,uid);
+	this.canvas = canvas;
 	this.geometry = geometry;
 	this.thing = null; //this is only filled out for the Geometry which is the root of the Thing's geometry tree
-	
-	for(var index=0; index < self.geometry.children.length; index++){
-		//self.children[self.children.length] = new SpacibloRenderer.Renderable(self.geometry.children[index], self.canvas);
+	this.children=[];
+}	
+GLGE.augment(GLGE.Group,SpacibloRenderer.Renderable);
+
+SpacibloRenderer.Renderable.prototype.init = function(){
+	if(this.geometry.vertices.length != 0){
+		var material = new GLGE.Material(GLGE.Assets.createUUID());
+		material.setColor("green");
+		material.setSpecular(1);
+		material.setShininess(20);
+
+		var mesh = new GLGE.Mesh(GLGE.Assets.createUUID());
+		mesh.setPositions(SpacibloRenderer.parseArray("1.000,1.000,0.000,-1.000,1.000,0.000,-1.000,-1.000,0.000,1.000,1.000,0.000,-1.000,-1.000,0.000,1.000,-1.000,0.000"));
+		mesh.setNormals(SpacibloRenderer.parseArray("-0.000,0.000,1.000,-0.000,0.000,1.000,-0.000,0.000,1.000,0.000,-0.000,1.000,0.000,-0.000,1.000,0.000,-0.000,1.000"));
+		mesh.setUV(SpacibloRenderer.parseArray("0.000,0.000,1.000,0.000,1.000,1.000,0.000,0.000,1.000,1.000,0.000,1.000"));
+		mesh.setFaces(SpacibloRenderer.parseArray("0,1,2,3,4,5"));
+
+		var obj = new GLGE.Object(GLGE.Assets.createUUID());
+		obj.setMesh(mesh);
+		obj.setMaterial(material);
+		obj.setRotX(-1.57);
+		obj.setScale(2);
+		this.addObject(obj);
+	}
+	for(var index=0; index < this.geometry.children.length; index++){
+		var childRenderable = new SpacibloRenderer.Renderable(this.geometry.children[index], this.canvas, GLGE.Assets.createUUID());
+		childRenderable.init();
+		this.addGroup(childRenderable);
 	}
 }
-GLGE.augment(GLGE.Group,SpacibloRenderer.Renderable);
 
 SpacibloRenderer.parseArray = function(data){
 	var result = [];
@@ -166,24 +191,6 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 
 		self.gameRenderer = new GLGE.Renderer(self.canvas);
 
-		var material = new GLGE.Material(GLGE.Assets.createUUID());
-		material.setColor("green");
-		material.setSpecular(1);
-		material.setShininess(20);
-
-		var mesh = new GLGE.Mesh(GLGE.Assets.createUUID());
-		mesh.setPositions(SpacibloRenderer.parseArray("1.000,1.000,0.000,-1.000,1.000,0.000,-1.000,-1.000,0.000,1.000,1.000,0.000,-1.000,-1.000,0.000,1.000,-1.000,0.000"));
-		mesh.setNormals(SpacibloRenderer.parseArray("-0.000,0.000,1.000,-0.000,0.000,1.000,-0.000,0.000,1.000,0.000,-0.000,1.000,0.000,-0.000,1.000,0.000,-0.000,1.000"));
-		mesh.setUV(SpacibloRenderer.parseArray("0.000,0.000,1.000,0.000,1.000,1.000,0.000,0.000,1.000,1.000,0.000,1.000"));
-		mesh.setFaces(SpacibloRenderer.parseArray("0,1,2,3,4,5"));
-
-		var obj = new GLGE.Object(GLGE.Assets.createUUID());
-		obj.id = "groundMesh"
-		obj.setMesh(mesh);
-		obj.setMaterial(material);
-		obj.setRotX(-1.57);
-		obj.setScale(2);
-
 		var light1 = new GLGE.Light(GLGE.Assets.createUUID());
 		light1.setLocX(-3);
 		light1.setLocY(15)
@@ -203,20 +210,19 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 		light2.setType(GLGE.L_POINT);
 
 		var camera = new GLGE.Camera(GLGE.Assets.createUUID());
-		camera.setLocZ(7);
+		camera.setLocZ(10);
 		camera.setLocY(4.0);
 		camera.setFovY(35);
-		camera.setRotX(-0.5);
+		camera.setRotX(-0.2);
 
 		self.gameScene = new GLGE.Scene();
 		self.gameScene.setAmbientColor("#555");
-		self.gameScene.setBackgroundColor("#338");
+		self.gameScene.setBackgroundColor(self.scene.background_color.toCSS());
 		self.gameScene.setCamera(camera);
 		self.gameScene.addLight(light1);
-		self.gameScene.addChild(obj);
 		self.gameRenderer.setScene(self.gameScene);
 
-		//self.requestTemplates(self.scene.thing);
+		self.requestTemplates(self.scene.thing);
 
 	    return true;
 	}
@@ -229,8 +235,12 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 	}
 
 	self.render = function() {
+		var userThing = self.scene.thing.getUserThing(self.username);
+		if(userThing){
+			self.gameScene.camera.setLoc(userThing.position.x, userThing.position.y, userThing.position.z);
+			self.gameScene.camera.setQuat(userThing.orientation.x, userThing.orientation.y, userThing.orientation.z, userThing.orientation.s);
+		}
 		self.gameRenderer.render();
-		//var userThing = self.scene.thing.getUserThing(self.username);
 	}
 
 	self.close = function(){
@@ -243,13 +253,19 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 	self.handleTemplateAsset = function(template){ }
 	
 	self.handleGeometryAsset = function(templateID, templateAssetID, geometry){
+
 		var things = self.scene.thing.getThingsByTemplate(templateID);
 		for(var i=0; i < things.length; i++){
-			var renderable = new SpacibloRenderer.Renderable(geometry, self);
-			renderable.thing = things[i];
-			renderable.position = things[i].position;
-			renderable.orientation = things[i].orientation;
-			self.renderables[self.renderables.length] = renderable;
+			try {
+				var renderable = new SpacibloRenderer.Renderable(geometry, self, GLGE.Assets.createUUID());
+				renderable.thing = things[i];
+				renderable.init();
+				renderable.setLoc(renderable.thing.position.x, renderable.thing.position.y, renderable.thing.position.z);
+				renderable.setQuat(renderable.thing.orientation.x, renderable.thing.orientation.y, renderable.thing.orientation.z, renderable.thing.orientation.s);
+				self.gameScene.addChild(renderable);
+			} catch (err){
+				console.log(err);
+			} 
 		}
 	}
 
