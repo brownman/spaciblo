@@ -7,6 +7,7 @@ import re
 import traceback
 import struct
 import hashlib
+import ws_contrib
 
 def parse_request_header(header):
 	"""Breaks up the header lines of the WebSocket request into a dictionary"""
@@ -38,6 +39,7 @@ class WebSocketClient:
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.socket.connect((self.host, self.port))
 		self.socket.send(self.generate_request_headers())
+		time.sleep(0.2) #TODO a total hack, fix when this is used outside of tests
 		self.response_headers = parse_request_header(self.socket.recv(4096))
 
 	def receive(self):
@@ -52,15 +54,18 @@ class WebSocketClient:
 		self.socket.close()
 
 	def generate_request_headers(self):
+		security = ws_contrib.generate_request_security()
 		headers = [
 			"GET / HTTP/1.1",
-			"Upgrade: WebSocket",
-			"Connection: Upgrade",
 			"Host: %s:%s" % (self.host, self.port),
+			"Connection: Upgrade",
+			"Sec-WebSocket-Key1: %s" % security[0][1],
+			"Sec-WebSocket-Key2: %s" % security[1][1],
+			"Sec-WebSocket-Protocol: sample",
+			"Upgrade: WebSocket",
 			"Origin: %s" % self.origin
 		]
-		return '%s\r\n\r\n' % '\r\n'.join(headers)
-
+		return '%s\r\n\r\n%s' % ('\r\n'.join(headers), security[2])
 
 class WebSocketServer(threading.Thread):
 	"""The server class which accepts incoming connections, parses the WebSockets request headers, sends the WebSockets response headers, and then passes control of the socket to a callback."""
