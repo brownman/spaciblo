@@ -37,22 +37,28 @@ Get the code
 
 Set up Django
 > cd spaciblo/spaciblo
+
 > cp local_settings.py.example local_settings.py
+
 Then edit the local settings to reflect your environment
 
 Populate the database
 > ./manage.py syncdb # you will need to create your admin username and pass
+
 > ./manage.py migrate
+
 > ./manage.py load_example_spaces
 
 ## Running:
 
 Run the web service
 > cd spaciblo/spaciblo
+
 > ./manage.py runserver 0.0.0.0:8000
 
 Run the simulators (in another shell)
 > cd spaciblo/spaciblo
+
 > ./manage.py run_sim_server
 
 ## Using Spaciblo:
