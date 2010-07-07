@@ -133,20 +133,19 @@ class Obj:
 
 	def toGeometry(self, mtllib):
 		materials = self.genMaterials(mtllib)
-		if len(self.object_groups) == 0:
-			root_geo = self.genGeometry(None, 0, len(self.faces), materials)
-		else:
-			root_geo = Geometry()
-			for object_group in self.object_groups:
-				mat_groups = []
-				for mg in self.material_groups:
-					if mg[1] >= object_group[1] and mg[1] < (object_group[1] + object_group[2]): mat_groups.append(mg)
-				if len(mat_groups) == 0:
-					root_geo.children.append(self.genGeometry(object_group[0], object_group[1], object_group[1] + object_group[2]), materials)
-				else:
-					for mg in mat_groups:
-						#TODO add the correct material based on the mtllib
-						root_geo.children.append(self.genGeometry(mg[0], mg[1], mg[1] + mg[2], materials))
+
+		if len(self.object_groups) == 0: return self.genGeometry(None, 0, len(self.faces), materials)
+
+		root_geo = Geometry()
+		for object_group in self.object_groups:
+			mat_groups = []
+			for mg in self.material_groups:
+				if mg[1] >= object_group[1] and mg[1] < (object_group[1] + object_group[2]): mat_groups.append(mg)
+			if len(mat_groups) == 0:
+				root_geo.children.append(self.genGeometry(object_group[0], object_group[1], object_group[1] + object_group[2]), materials)
+			else:
+				for mg in mat_groups:
+					root_geo.children.append(self.genGeometry(mg[0], mg[1], mg[1] + mg[2], materials))
 		return root_geo
 
 	def objMaterialForFace(self, face_index):

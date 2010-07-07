@@ -75,6 +75,8 @@ class ObjTest(TransactionTestCase):
 		self.assertEqual('01_-_Default', mtl.materials[1].name)
 	
 		geometry = obj.toGeometry(mtl)
+		for child in geometry.children:
+			print child
 		self.assertEqual(obj.object_groups[0][2], len(geometry.children[0].faces), 'Geometry and obj group do not have the same number of faces: %s and %s' % (obj.object_groups[0][2], len(geometry.children[0].faces)))
 		self.assertEqual(obj.object_groups[1][2], len(geometry.children[1].faces), 'Geometry and obj group do not have the same number of faces: %s and %s' % (obj.object_groups[1][2], len(geometry.children[1].faces)))
 		self.assertEqual(obj.object_groups[2][2], len(geometry.children[2].faces), 'Geometry and obj group do not have the same number of faces: %s and %s' % (obj.object_groups[2][2], len(geometry.children[2].faces)))
@@ -87,10 +89,12 @@ class ObjTest(TransactionTestCase):
 		mtl = mtl_parser.parse(open('example/template/Beanie/beanie.mtl').read())
 		geometry = obj.toGeometry(mtl)
 		# Test that all of the faces point to valid indices
-		for face in geometry.faces:
-			for point in face:
-				self.assertTrue(point[0] < (len(geometry.vertices) / 3))
-				self.assertTrue(point[1] < (len(geometry.uvs) / 2))
-				self.assertTrue(point[2] < (len(geometry.normals) / 3))
+		for geo in geometry.flatten():
+			if len(geo.faces) > 0:
+				for face in geo.faces:
+					for point in face:
+						self.assertTrue(point[0] < (len(geometry.vertices) / 3))
+						self.assertTrue(point[1] < (len(geometry.uvs) / 2))
+						self.assertTrue(point[2] < (len(geometry.normals) / 3))
 
 # Copyright 2010 Trevor F. Smith (http://trevor.smith.name/) Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
