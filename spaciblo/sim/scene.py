@@ -65,17 +65,12 @@ class MotionFrame(SceneNode):
 		self.scale = scale
 
 		self.linear = linear # True for linear interpolation instead of spline
-	class HydrationMeta:
-		attributes = ['knot', 'tension', 'bias', 'position', 'orientation', 'scale', 'linear']
 
 class Motion(SceneNode):
 	"""A TCB (aka Kochanek-Bartels) spline interpolation path"""
 	def __init__(self, frames=[], loop=False):
 		self.frames = frames # an array of MotionFrames
 		self.loop = loop
-	class HydrationMeta:
-		attributes = ['loop']
-		nodes = ['frames']
 
 class Material(SceneNode):
 	def __init__(self, name=None, specular=[0.5,0.5,0.5], ambient=[0.5,0.5,0.5], diffuse=[0.5,0.5,0.5], alpha=1.0, phong_specular=1, illumination=2, ambient_map=None, diffuse_map=None, specular_map=None, alpha_map=None, bump_map=None):
@@ -94,10 +89,6 @@ class Material(SceneNode):
 		self.alpha_map = alpha_map 
 		self.bump_map = bump_map
 
-	class HydrationMeta:
-		attributes = ['name', 'alpha', 'phong_specular', 'illumination', 'ambient_map', 'diffuse_map', 'specular_map', 'alpha_map', 'bump_map']
-		raw_nodes = ['specular', 'ambient', 'diffuse']
-
 class Geometry(SceneNode):
 	"""A set of 3D data representing a visually distinct 3D "unit" which can be moved and referenced by name."""
 	def __init__(self, name=None, material=Material(), vertices=[], normals=[], uvs=[], position=Position(), orientation=Orientation(), scale=1.0, motion=None):
@@ -114,10 +105,6 @@ class Geometry(SceneNode):
 		
 		self.parent = None
 		self.children = []
-	class HydrationMeta:
-		attributes = ['name', 'position', 'orientation', 'scale']
-		nodes = ['material', 'motion', 'children']
-		raw_nodes = ['vertices', 'normals', 'uvs']
 
 class Light(SceneNode):
 	light_types = ['ambient', 'directional', 'point']
@@ -129,9 +116,6 @@ class Light(SceneNode):
 		self.position = position
 		self.orientation = orientation
 		self.motion = motion
-	class HydrationMeta:
-		attributes = ['light_type', 'color', 'position', 'orientation']
-		nodes = ['motion']
 
 class Thing(SceneNode):
 	"""A node in an ADG of positioned, oriented, lit, and movable geometries."""
@@ -194,12 +178,6 @@ class Thing(SceneNode):
 				self.add_thing(child_thing)
 		#TODO hydrate the scale, motion, settings, lights, and user
 
-	class HydrationMeta:
-		attributes = ['id', 'position', 'orientation', 'scale']
-		ref_attributes = ['template', 'parent']
-		ref_by_attributes = [('user', 'username')]
-		nodes = ['settings', 'lights', 'children', 'motion']
-
 class Scene(SceneNode):
 	"""A root thing and some global values which define the visual aspects of a 3D scene for a Space."""
 	def __init__(self, space=None, background_color=Color(0.2, 0.2, 0.8)):
@@ -217,9 +195,6 @@ class Scene(SceneNode):
 			self.thing = Thing(json_data['thing']['attributes']['id'])
 			self.thing.hydrate(json_data['thing'])
 		return self
-	class HydrationMeta:
-		attributes = ['background_color']
-		nodes = ['thing']
 
 SCENE_GRAPH_CLASSES = [Color, Position, Orientation, Material, MotionFrame, Motion, Light, Geometry, Scene, Thing]
 

@@ -7,7 +7,7 @@ import traceback
 from django.conf import settings
 from django.db.models import Q
 from django.template import Context, loader
-from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResponseRedirect, HttpResponsePermanentRedirect
+from django.http import HttpRequest, HttpResponse, Http404, HttpResponseServerError, HttpResponseRedirect, HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.contrib import auth
 from django.contrib.auth.models import User
@@ -23,6 +23,10 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.template.loader import render_to_string
 
 from models import *
+
+def scene_document(request, id):
+	space = get_object_or_404(Space, pk=id)
+	return HttpResponse(space.scene_document)
 
 def template_asset(request, template_id, asset_key):
 	"""Redirect the request to this asset's file URL."""

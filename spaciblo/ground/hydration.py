@@ -28,7 +28,7 @@ class Hydration:
 
 	@classmethod
 	def dehydrate(cls, source):
-		"""Return a JSON string with four elements: a start index, an end index, a total length of the list, and a slice of the list"""
+		"""Return a JSON string generated from the source"""
 		hydrator = Hydration()
 		return hydrator.serialize(hydrator.prep(source))
 
@@ -102,6 +102,9 @@ class Hydration:
 			return result
 			
 		prepped_attributes = {}
+		
+		print self.collect_meta(source)
+		
 		meta = getattr(source, meta_name)
 		if hasattr(meta, attributes_name):
 			attributes = getattr(meta, attributes_name)
@@ -184,6 +187,18 @@ class Hydration:
 
 		if len(prepped_attributes) != 0: result['attributes'] = prepped_attributes
 		return result
+
+	def collect_meta(self, source, results={}):
+		if hasattr(source, meta_name):
+			for key in dir(getattr(source,meta_name)):
+				if key.startswith('_'): continue
+				if not results.has_key(key): results[key] = []
+				results[key].extend(getattr(getattr(source, meta_name), key))
+		
+		if not hasattr(source.__class__, 'mro'): return results
+		for cls in source.__class__.mro():
+			self.collect_meta(cls, results)
+		return results
 
 from django.contrib.auth.models import User
 class UserHydrationMeta:

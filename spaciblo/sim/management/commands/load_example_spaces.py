@@ -8,7 +8,7 @@ from django.template.defaultfilters import slugify
 from django.core.management.base import NoArgsCommand, CommandError
 from django.core.files import File
 from sim.management import *
-from ground.hydration import Hydration
+from sim.handler import to_json
 
 class Command(NoArgsCommand):
 	"""Loads the example templates and spaces."""
@@ -28,15 +28,14 @@ class Command(NoArgsCommand):
 		for template_dir in os.listdir(TEMPLATE_DIR_PATH):
 			abs_dir = os.path.join(TEMPLATE_DIR_PATH, template_dir)
 			if not os.path.isdir(abs_dir): continue
-			if not template_dir == 'Cube': continue
 			template = self.load_template_from_dir(abs_dir, admin_user)
-			print 'loaded template: ', template
+			#print 'loaded template: ', template
 		
 		for space_dir in os.listdir(SPACE_DIR_PATH):
 			abs_dir = os.path.join(SPACE_DIR_PATH, space_dir)
 			if not os.path.isdir(abs_dir): continue
 			space = self.load_space_from_dir(abs_dir, admin_user)
-			print 'loaded space: ', space
+			#print 'loaded space: ', space
 
 	def load_space_from_dir(self, space_dir_path, owner):
 		from sim.models import Space, Template
@@ -79,7 +78,7 @@ class Command(NoArgsCommand):
 			thing_id += 1
 		scene = Scene(space)
 		scene.thing = root_thing
-		space.scene_document = Hydration.dehydrate(scene)
+		space.scene_document = to_json(scene)
 		space.save()
 		return space
 
@@ -151,7 +150,7 @@ class Command(NoArgsCommand):
 			elif not os.path.isdir(app_dir_path):
 				print 'Application directory "%s" is not a directory' % app_dir_path
 			else:
-				print 'Creating app archive %s' % app_dir_path
+				#print 'Creating app archive %s' % app_dir_path
 				app_archive = self.create_app_archive(template_dir_path, application_dir)
 				asset = template.get_asset(key=Asset.APPLICATION_KEY)
 				if asset == None: asset = Asset(type='application')

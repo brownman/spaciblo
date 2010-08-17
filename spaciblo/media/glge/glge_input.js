@@ -136,6 +136,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		if(document.keyStates[key]) return true;
 			else return false;
 	};
+	var skiptimmer=null;
 	/**
 	* document keydown event used to monitor the key states
 	* @param {event} e the event being fired

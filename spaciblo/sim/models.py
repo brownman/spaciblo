@@ -12,6 +12,8 @@ from django.core.files.storage import default_storage
 from django.core.files import File
 from django.conf import settings
 
+from piston.handler import BaseHandler
+
 from scene import Scene
 from sim.loaders.obj import ObjLoader, MtlLibLoader
 from ground.hydration import Hydration
@@ -49,10 +51,6 @@ class Space(HydrateModel):
 	
 	objects = SpaceManager()
 
-	class HydrationMeta:
-		attributes = ['id', 'name', 'slug', 'state', 'max_guests']
-		nodes = ['scene_document']
-
 	def add_member(self, user, is_admin=False, is_editor=False):
 		membership, created = SpaceMember.objects.get_or_create(space=self, member=user)
 		membership.is_admin = is_admin
@@ -66,14 +64,21 @@ class Space(HydrateModel):
 	def __unicode__(self):
 		return "Space #%s: %s" % (self.id, self.name)
 
+class SpaceHandler(BaseHandler):
+	model = Space
+	fields = ('name', 'slug', ('default_body', ('id',)), 'id', 'state', 'max_guests')
+	allowed_methods = ('GET',)
+
 class SpaceMember(HydrateModel):
 	"""A member of a space which can have admin or editor rights."""
 	space = models.ForeignKey(Space, blank=False, null=False)
 	member = models.ForeignKey(User, blank=False, null=False)
 	is_admin = models.BooleanField(blank=False, default=False)
 	is_editor = models.BooleanField(blank=False, default=False)
-	class HydrationMeta:
-		attributes = ['id', 'member', 'is_admin', 'is_editor']
+
+class SpaceMemberHandler:
+	model = SpaceMember
+	attributes = ['id', 'member', 'is_admin', 'is_editor']
 
 class Asset(HydrateModel):
 	"""A chunk of typed data used by a template to instantiate a Thing in a Space."""
@@ -98,8 +103,21 @@ class Asset(HydrateModel):
 	
 	def __unicode__(self):
 		return self.file.name
-	class HydrationMeta:
-		attributes = ['id', 'type', 'file', 'prepped_file']
+
+class AssetHandler(BaseHandler):
+	model = Asset
+	fields = ('type', 'file', 'prepped_file', 'file')
+	allowed_methods = ('GET',)
+
+	@classmethod
+	def file(cls, asset):
+		if asset.file: return asset.file.url
+		return ""
+
+	@classmethod
+	def prepped_file(cls, asset):
+		if asset.prepped_file: return asset.prepped_file.url
+		return ""
 
 class TemplateAsset(HydrateModel):
 	"""A mediation record linking an asset with a template"""
@@ -108,9 +126,6 @@ class TemplateAsset(HydrateModel):
 	key = models.CharField(max_length=1000, blank=False, null=False)
 	def __unicode__(self):
 		return "TemplateAsset: %s" % self.asset
-	class HydrationMeta:
-		attributes = ['id', 'key']
-		nodes = ['asset']
 
 class TemplateSetting(HydrateModel):
 	"""A key/value tuple used to initialize a Thing's state"""
@@ -121,6 +136,9 @@ class TemplateSetting(HydrateModel):
 		text_node = 'value'
 	def __unicode__(self):
 		return "<%s|%s>" % (self.key, self.value)
+
+class TemplateSettingHandler(BaseHandler):
+	model = TemplateSetting
 
 class TemplateChild(HydrateModel):
 	"""A record of where a child template should be in relation to its parent."""
@@ -133,11 +151,11 @@ class TemplateChild(HydrateModel):
 		return "TemplateChild: %s" % self.template
 	class Meta:
 		verbose_name_plural = 'template children'
-	class HydrationMeta:
-		attributes = ['id', 'position', 'orientation']
-		ref_attributes = ['template']
-		nodes = ['settings']
-	
+
+class TemplateChildHandler(BaseHandler):
+	model = TemplateChild
+	fields = ['id', 'position', 'orientation', 'template', 'settings']
+
 class Template(HydrateModel):
 	"""A set of information used to instantiate a Thing in a Space."""
 	name = models.CharField(max_length=1000, blank=False, null=False, default="A Template")
@@ -155,16 +173,14 @@ class Template(HydrateModel):
 		mtl_assets = {}
 		app_asset = None
 		for template_asset in TemplateAsset.objects.filter(template=self):
-			print 'asset type %s' % template_asset.asset.type
 			if template_asset.asset.type == 'geometry' and template_asset.asset.file.name.endswith('.mtl'):
 				mtl_assets[template_asset.key] = template_asset.asset
 			elif template_asset.asset.type == 'geometry' and template_asset.asset.file.name.endswith('.obj'):
 				obj_assets.append(template_asset.asset)
 			elif template_asset.asset.type == 'application':
 				app_asset = template_asset.asset
-				print app_asset
-			else:
-				print 'asset type %s' % template_asset.asset.type
+			#else:
+			#	print 'asset type %s' % template_asset.asset.type
 				
 		for obj_asset in obj_assets: # try to save a prepped geometry JSON
 			try:
@@ -193,12 +209,17 @@ class Template(HydrateModel):
 				traceback.print_exc()
 		
 		if app_asset != None:
-			print 'Setting up app dir for %s' % app_asset
 			target_dir = os.path.join(settings.TEMPLATE_APPS_DIR, self.template_app_module_name)
 			if os.path.exists(target_dir): shutil.rmtree(target_dir)
 			tar = tarfile.open(app_asset.file.path)
 			tar.extractall(path=target_dir)
 			tar.close()
+
+	def get_key(self, asset):
+		try:
+			return TemplateAsset.objects.get(template=self, asset=asset).key
+		except ObjectDoesNotExist:
+			return None
 
 	def get_asset(self, key):
 		try:
@@ -211,9 +232,14 @@ class Template(HydrateModel):
 
 	def __unicode__(self):
 		return self.name
-	class HydrationMeta:
-		attributes = ['id', 'owner', 'name']
-		nodes = ['templateassets', 'settings', 'children']
+
+class TemplateHandler(BaseHandler):
+	model = Template
+	fields = ('id', 'owner', 'seat_orientation', 'seat_position', 'last_updates', 'name', 'settings', 'children', 'assets')
+	allowed_methods = ('GET',)
+
+	@classmethod
+	def assets(cls, template): return [{'asset': ta.asset, 'key': ta.key} for ta in template.templateassets.all()]
 
 class SimulatorPoolRegistration(models.Model):
 	"""A simulator pool address in this cluster"""

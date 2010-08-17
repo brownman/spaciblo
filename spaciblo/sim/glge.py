@@ -47,6 +47,16 @@ MAP_VIEW = 7
 BL_MIX = 0
 # Enumeration for mix blending mode
 BL_MUL = 1
+# Enumeration for a perspective camera
+C_PERSPECTIVE=1
+# Enumeration for a orthographic camera
+C_ORTHO = 2
+# Enumeration for no fog
+FOG_NONE=1;
+# Enumeration for linear fall off fog
+FOG_LINEAR=2;
+# Enumeration for exponential fall off fog
+FOG_QUADRATIC=3;
 
 class SceneBase(object):
 	"""The base class which all scene elements extend."""
@@ -80,8 +90,8 @@ class Placeable(SceneBase):
 		self.dScaleZ = 0
 		self.matrix = [[1,0,0,0][0,1,0,0][0,0,1,0][0,0,0,1]]
 		self.rotOrder = ROT_XYZ
-		self.lookAt = None
 		self.mode = P_EULER
+		#self.lookAt = None
 
 class BezTriple(SceneBase):
 	def __init__(self):
@@ -91,11 +101,16 @@ class BezTriple(SceneBase):
 		self.y = 0
 		self.x3 = 0
 		self.y3 = 0
+	def __unicode__(self):
+		return "%s,%s,%s,%s,%s,%s" % (self.x1, self.y1, self.x, self.y, self.x3, self.y3)
+
 
 class StepPoint(SceneBase):
 	def __init__(self):
 		self.x = 0
 		self.y = 0
+	def __unicode__(self):
+		return "%s,%s" % (self.x, self.y)
 
 class AnimationCurve(SceneBase):
 	def __init__(self):
@@ -123,28 +138,28 @@ class Animatable(SceneBase):
 class Action(SceneBase):
 	def __init__(self):
 		self.channels = []
-		self.updateListeners = []
+		#self.updateListeners = []
 
 class ActionChannel(SceneBase):
 	def __init__(self):
 		self.animation = None
-		self.updateListeners = []
+		#self.updateListeners = []
 
 class Group(Placeable, Animatable):
 	def __init__(self):
 		self.children = []
 		self.group_type = G_NODE
-	
+
 class Text(Placeable, Animatable):
 	def __init__(self):
 		self.zTrans = true
-		self.canvas = None
 		self.aspect = 1.0
 		self.color = [1,1,1]
 		self.text = ""
 		self.font = "Times"
 		self.size = 100
 		self.pickType = TEXT_TEXTPICK
+		#self.canvas = None
 
 class Mesh(SceneBase):
 	def __init__(self):
@@ -162,14 +177,14 @@ class Light(Placeable, Animatable):
 		self.spotCosCutOff = 0.95
 		self.spotPMatrix = None
 		self.spotExponent = 10
-		self.color = None 
+		self.color = [1,1,1] 
 		self.diffuse = true 
 		self.specular = true 
 		self.samples = 0 
 		self.softness = 0.01 
 		self.type = L_POINT
-		self.frameBuffer = None
-		self.renderBuffer = None
+		#self.frameBuffer = None
+		#self.renderBuffer = None
 		self.texture = None
 		self.bufferHeight = 256
 		self.bufferWidth = 256
@@ -190,10 +205,10 @@ class MultiMaterial(SceneBase):
 	def __init__(self):
 		self.mesh = None
 		self.material = None
-		self.program = None
-		self.GLShaderProgramPick = None
-		self.GLShaderProgramShadow = None
-		self.GLShaderProgram = None
+		#self.program = None
+		#self.GLShaderProgramPick = None
+		#self.GLShaderProgramShadow = None
+		#self.GLShaderProgram = None
 
 class Object(SceneBase):
 	def __init__(self):
@@ -208,8 +223,9 @@ class Object(SceneBase):
 
 class Texture(SceneBase):
 	def __init__(self):
-		self.image = None
+		#self.image = None
 		self.url = None
+	def __unicode__(self): return self.url
 
 class TextureCamera(SceneBase):
 	def __init__(self):
@@ -276,7 +292,7 @@ class Material(Animatable):
 class ObjectInstance(Placeable, Animatable):
 	def __init__(self):
 		self.object = None
-	
+
 class Scene(Group):
 	def __init__(self):
 		self.camera = Camera()

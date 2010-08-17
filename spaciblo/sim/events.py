@@ -25,23 +25,17 @@ class AuthenticationRequest(SimEvent):
 	"""An authentication request from a new WebSocket connection."""
 	def __init__(self, session_id=None):
 		self.session_id = session_id
-	class HydrationMeta:
-		attributes = ['session_id']
 
 class AuthenticationResponse(SimEvent):
 	"""An authentication response from the SimServer"""
 	def __init__(self, authenticated=False, username=None):
 		self.authenticated = smart_str(authenticated)
 		self.username = username
-	class HydrationMeta:
-		attributes = ['authenticated', 'username']
 
 class JoinSpaceRequest(SimEvent):
 	"""A request from a space client to join a space."""
 	def __init__(self, space_id=None):
 		self.space_id = space_id
-	class HydrationMeta:
-		attributes = ['space_id', ]
 
 class JoinSpaceResponse(SimEvent):
 	"""A response from the SimServer indicating whether a JoinSpaceRequest is successful and what role the client may play (e.g. member, editor, ...)."""
@@ -52,16 +46,12 @@ class JoinSpaceResponse(SimEvent):
 		self.is_editor = is_editor
 		self.is_admin = is_admin
 		self.scene_doc = scene_doc
-	class HydrationMeta:
-		attributes = ['space_id', 'joined', 'is_member', 'is_admin', 'is_editor', 'scene_doc']
 
 class UserExited(SimEvent):
 	"""An event which is generated when a user exists a space."""
 	def __init__(self, space_id=None, username=None):
 		self.space_id = space_id
 		self.username = username
-	class HydrationMeta:
-		attributes = ['space_id', 'username']
 
 class AddUserThingRequest(SimEvent):
 	"""A space client may send an AddUserThingRequest if they require a body in a space."""
@@ -70,8 +60,6 @@ class AddUserThingRequest(SimEvent):
 		self.username = username
 		self.position = position
 		self.orientation = orientation
-	class HydrationMeta:
-		attributes = ['space_id', 'username', 'position', 'orientation']
 
 class UserThingMoveRequest(SimEvent):
 	"""A space client sends this to indicate that the user has requested a motion."""
@@ -80,8 +68,6 @@ class UserThingMoveRequest(SimEvent):
 		self.username = username
 		self.position = smart_str(position)
 		self.orientation = smart_str(orientation)
-	class HydrationMeta:
-		attributes = ['space_id', 'username', 'position', 'orientation']
 
 class ThingMoved(SimEvent):
 	"""The simulator generates these to indicate that a Thing is in motion."""
@@ -90,16 +76,12 @@ class ThingMoved(SimEvent):
 		self.thing_id = thing_id;
 		self.position = smart_str(position)
 		self.orientation = smart_str(orientation)
-	class HydrationMeta:
-		attributes = ['space_id', 'thing_id', 'position', 'orientation']
 
 class ThingRemoved(SimEvent):
 	"""The simulator generates these to indicate that a Thing has been destroyed."""
 	def __init__(self, space_id=None, thing_id=None):
 		self.space_id = space_id
 		self.thing_id = thing_id
-	class HydrationMeta:
-		attributes = ['space_id', 'thing_id']
 
 class ThingAdded(SimEvent):
 	"""The simulator generates these to indicate that a Thing as been created."""
@@ -112,8 +94,6 @@ class ThingAdded(SimEvent):
 		self.position = smart_str(position)
 		self.orientation = smart_str(orientation)
 		self.scale = scale
-	class HydrationMeta:
-		attributes = ['space_id', 'username', 'thing_id', 'template_id', 'parent_id', 'position', 'orientation', 'scale']
 
 class UserMessage(SimEvent):
 	"""A user generated chat message."""
@@ -121,15 +101,11 @@ class UserMessage(SimEvent):
 		self.space_id = space_id
 		self.username = username
 		self.message = message
-	class HydrationMeta:
-		attributes = ['space_id', 'username', 'message']
 
 class Heartbeat(SimEvent):
 	"""A heartbeat event, used to test that the connection is alive and the remote client is not hung."""
 	def __init__(self):
 		self.time = datetime.datetime.now()
-	class HydrationMeta:
-		attributes = ['time']
 
 SIM_EVENTS = [Heartbeat, UserMessage, ThingMoved, AuthenticationRequest, AuthenticationResponse, JoinSpaceRequest, JoinSpaceResponse, UserThingMoveRequest, AddUserThingRequest, ThingAdded, ThingRemoved]
 

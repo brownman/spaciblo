@@ -42,11 +42,18 @@ class DummyDataThree:
 		ref_by_attributes = [('another_id_class', 'not_an_id')]
 		element_name = 'fantastico'
 
+class DummyDataFour(DummyDataThree):
+	def __init__(self):
+		self.blip = 'blat'
+	class HydrationMeta:
+		attributes = ['blip']
+
 class HydrationTest(TestCase):
 	def setUp(self):
 		self.dd1 = DummyDataOne()
 		self.dd3 = DummyDataThree('uno')
-
+		self.dd4 = DummyDataFour()
+		
 	def tearDown(self):
 		pass
 
@@ -64,5 +71,11 @@ class HydrationTest(TestCase):
 		another_dd3 = DummyDataThree()
 		Hydration.hydrate(another_dd3, dd3_json)
 		self.failUnlessEqual('uno', another_dd3.some_value)
+
+		self.dd4.blip = 'moon'
+		self.dd4.some_value = 'gronkle'
+		dd4_prepped = Hydration().prep(self.dd4)
+		self.assertEqual(dd4_prepped['attributes']['blip'], self.dd4.blip)
+		self.assertEqual(dd4_prepped['attributes']['some_value'], self.dd4.some_value) # ensure that ancestor HydrationMeta attributes are included
 
 # Copyright 2010 Trevor F. Smith (http://trevor.smith.name/) Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.

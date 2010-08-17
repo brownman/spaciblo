@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /**
  * @fileOverview
- * @name GLGE.math.js
+ * @name GLGE_math.js
  */
 
  if(!window["GLGE"]){
@@ -40,23 +40,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 (function(GLGE){
 
-
-Array.prototype.e=function(i,j){
-	if(!j){
-		return this[i-1];
-	}else{
-		return this[((i-1)*4+(j-1))];
-	}
-}
-Array.prototype["e"]=Array.prototype.e;
-
-
 GLGE.Vec=function(array) {
     return array.slice(0);
 }
 
 /**
-* @class The Vec3 Class creates a vector 
+* The Vec3 Class creates a vector 
 * @param {Array} array An array of 3 floats
 */
 GLGE.Vec3=function(x,y,z){
@@ -64,7 +53,7 @@ GLGE.Vec3=function(x,y,z){
 }
 
 /**
-* @class The Vec4 Class creates a vector 
+* The Vec4 Class creates a vector 
 * @param {Array} array An array of 4 floats
 */
 GLGE.Vec4=function(x,y,z,w){
@@ -72,7 +61,7 @@ GLGE.Vec4=function(x,y,z,w){
 }
 
 /**
-* @class Gets the nth element (1 indexed) from the array
+* Gets the nth element (1 indexed) from the array
 * @param {Array} v A vector with 4 elements
 * @param {number} i The index from one 
 */
@@ -80,7 +69,7 @@ GLGE.get1basedVec4=function(v,i){
 	return v[i-1];
 };
 /**
-* @class Gets the nth element (1 indexed) from the array
+* Gets the nth element (1 indexed) from the array
 * @param {Array} v A vector with 3 elements
 * @param {number} i The index from one 
 */
@@ -89,7 +78,7 @@ GLGE.get1basedVec3=function(v,i){
 };
 
 /**
-* @class Gets the nth element (1 indexed) from the array
+* Gets the nth element (1 indexed) from the array
 * @param {Array} v A vector with 4 elements
 * @param {number} i The index from one 
 */
@@ -97,7 +86,7 @@ GLGE.getVec4=function(v,i){
 	return v[i];
 };
 /**
-* @class Gets the nth element (1 indexed) from the array
+* Gets the nth element (1 indexed) from the array
 * @param {Array} v A vector with 3 elements
 * @param {number} i The index from one 
 */
@@ -289,14 +278,14 @@ GLGE.angleVec4=function(a,b){
 GLGE_math_use_webgl_float=false;
 
 /**
-* @class The Mat class creates a matrix from an array
+* The Mat class creates a matrix from an array
 * @param {Array} array An array of 9 or 16 floats
 */
 GLGE.Mat3=GLGE_math_use_webgl_float?function(array) {
     if (array.length==9) {
-        return new WebGLFloatArray(array);
+        return new Float32Array(array);
     }else if (array.length==16) {
-        return new WebGLFloatArray([array[0],array[1],array[2],array[4],array[5],array[6],array[8],array[9],array[10]]);        
+        return new Float32Array([array[0],array[1],array[2],array[4],array[5],array[6],array[8],array[9],array[10]]);        
     }else {
 		throw "invalid matrix length";
     }
@@ -313,7 +302,7 @@ GLGE.Mat3=GLGE_math_use_webgl_float?function(array) {
     return retval;
 };
 GLGE.Mat=GLGE_math_use_webgl_float?function(array) {
-    return new WebGLFloatArray(array);
+    return new Float32Array(array);
 }:function(array){
     var retval=array.slice(0);
     retval.get=function(i){return this[i];};
@@ -671,11 +660,11 @@ GLGE.getMat4=function(m,i,j){
 };
 /**
 * gets the a webgl float array for this Matrix, once generated it will cache it so it doesn't need to recreate everytime
-* @returns {WebGLFloatArray} the webgl array for this Matrix
+* @returns {Float32Array} the webgl array for this Matrix
 * @private
 */
 GLGE.glDataMat4=function(m) {
-    m.glArray=new WebGLFloatArray(m);
+    m.glArray=new Float32Array(m);
     return m.glArray;
 };
 /**
@@ -919,32 +908,32 @@ GLGE.matrix2Scale=function(m){
 
 
 GLGE.rotationMatrix2Quat=function(m){
-	var tr = m.e(1,1) + m.e(2,2) + m.e(3,3)+1.0;
+	var tr = m[0] + m[5] + m[10]+1.0;
 	var S,x,y,z,w;
 
 	if (tr > 0) { 
 		S = 0.5/Math.sqrt(tr); 
 		w = 0.25 / S;
-		x = (m.e(3,2) - m.e(2,3)) * S;
-		y = (m.e(1,3) - m.e(3,1)) * S; 
-		z = (m.e(2,1) - m.e(1,2)) * S; 
-	} else if ((m.e(1,1) > m.e(2,2))&&(m.e(1,1) > m.e(3,3))) { 
-		S = Math.sqrt(1.0 + m.e(1,1) - m.e(2,2) - m.e(3,3)) * 2; 
-		w = (m.e(3,2) - m.e(2,3)) / S;
+		x = (m[9] - m[6]) * S;
+		y = (m[2] - m[8]) * S; 
+		z = (m[4] - m[1]) * S; 
+	} else if ((m[0] > m[5])&&(m[0] > m[10])) { 
+		S = Math.sqrt(1.0 + m[0] - m[5] - m[10]) * 2; 
+		w = (m[9] - m[6]) / S;
 		x = 0.25 / S;
-		y = (m.e(1,2) + m.e(2,1)) / S; 
-		z = (m.e(1,3) + m.e(3,1)) / S; 
-	} else if (m.e(2,2) > m.e(3,3)) { 
-		S = Math.sqrt(1.0 + m.e(2,2) - m.e(1,1) - m.e(3,3)) * 2;
-		w = (m.e(1,3) - m.e(3,1)) / S;
-		x = (m.e(1,2) + m.e(2,1)) / S; 
+		y = (m[1] + m[4]) / S; 
+		z = (m[2] + m[8]) / S; 
+	} else if (m[5] > m[10]) { 
+		S = Math.sqrt(1.0 + m[5] - m[0] - m[10]) * 2;
+		w = (m[2] - m[8]) / S;
+		x = (m[1] + m[4]) / S; 
 		y = 0.25 / S;
-		z = (m.e(2,3) + m.e(3,2)) / S; 
+		z = (m[6] + m[9]) / S; 
 	} else { 
-		S = Math.sqrt(1.0 + m.e(3,3) - m.e(1,1) - m.e(2,2)) * 2; 
-		w = (m.e(2,1) - m.e(1,2)) / S;
-		x = (m.e(1,3) + m.e(3,1)) / S;
-		y = (m.e(2,3) + m.e(3,2)) / S;
+		S = Math.sqrt(1.0 + m[10] - m[0] - m[5]) * 2; 
+		w = (m[4] - m[1]) / S;
+		x = (m[2] + m[8]) / S;
+		y = (m[6] + m[9]) / S;
 		z = 0.25 / S;
 	}
 	var N=Math.sqrt(x*x+y*y+z*z+w*w)

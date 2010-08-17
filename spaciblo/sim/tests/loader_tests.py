@@ -7,7 +7,6 @@ from django.test import TestCase, TransactionTestCase
 from django.test.client import Client
 from django.contrib.auth.models import User
 from django.core import mail
-from django.test.client import Client
 from django.contrib.sessions.models import Session
 
 import spaciblo.settings as settings

@@ -38,7 +38,7 @@ def space(request, id):
 def thing_app(request, space_id, thing_id):
 	space = get_object_or_404(Space, pk=space_id)
 
-	template_module_name = 'template_2' # hard coded for the mo
+	template_module_name = 'template_2' # TODO hard coded for the mo
 	module_name = '%s.%s.application' % (os.path.basename(settings.TEMPLATE_APPS_DIR), template_module_name)
 	exec 'import %s as app_module' % module_name
 	app = app_module.Application()
