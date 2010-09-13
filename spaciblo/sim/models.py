@@ -16,7 +16,7 @@ from piston.handler import BaseHandler
 
 from scene import Scene
 from sim.loaders.obj import ObjLoader, MtlLibLoader
-from ground.hydration import Hydration
+from sim.handler import to_json
 
 class HydrateModel(models.Model):
 	
@@ -38,6 +38,8 @@ class SpaceManager(models.Manager):
 		if space.state == 'admin_only' and (space_member == None or not space_member.is_admin): return (False, space_member)
 		if space.max_guests > 0: return (True, space_member) #TODO respect the guest limits
 		return (space_member != None, space_member)
+
+def default_scene_doc(): return to_json(Scene())
 			
 class Space(HydrateModel):
 	"""An n-dimensional cartesian space"""
@@ -46,7 +48,7 @@ class Space(HydrateModel):
 	STATE_CHOICES = (('open', 'open'), ('admin_only', 'admin_only'), ('closed', 'closed'))
 	state = models.CharField(max_length=20, choices=STATE_CHOICES, default='admin_only', blank=False, null=False)
 	max_guests = models.IntegerField(blank=False, null=False, default=0)
-	scene_document = models.TextField(blank=False, null=False, default='{"type":"Scene", "thing":{"type":"Thing", "attributes": { "id":"0" } } }')
+	scene_document = models.TextField(blank=False, null=False, default=default_scene_doc)
 	default_body = models.ForeignKey("Template", blank=False, null=False)
 	
 	objects = SpaceManager()
@@ -131,9 +133,6 @@ class TemplateSetting(HydrateModel):
 	"""A key/value tuple used to initialize a Thing's state"""
 	key = models.CharField(max_length=1000, blank=False, null=False)
 	value = models.TextField(blank=False, null=False)
-	class HydrationMeta:
-		attributes = ['id', 'key']
-		text_node = 'value'
 	def __unicode__(self):
 		return "<%s|%s>" % (self.key, self.value)
 
@@ -198,7 +197,7 @@ class Template(HydrateModel):
 				geometry = obj.toGeometry(mtllib)
 				path = '/tmp/prepped_geo-%s' % self.id
 				json_file = file(path, 'wb')
-				json_file.write(Hydration.dehydrate(geometry))
+				json_file.write(to_json(geometry))
 				json_file.close()
 				json_file = file(path, 'r')
 				obj_asset.prepped_file.save(json_file.name, File(json_file), save=False)
@@ -245,8 +244,6 @@ class SimulatorPoolRegistration(models.Model):
 	"""A simulator pool address in this cluster"""
 	ip = models.IPAddressField()
 	port = models.IntegerField()
-	class HydrationMeta:
-		attributes = ['id', 'ip', 'port']
 
 HYDRATE_MODELS = [Template, TemplateChild, TemplateSetting, TemplateAsset, Asset, SpaceMember, Space]
 

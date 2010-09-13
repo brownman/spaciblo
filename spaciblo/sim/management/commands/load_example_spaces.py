@@ -39,7 +39,7 @@ class Command(NoArgsCommand):
 
 	def load_space_from_dir(self, space_dir_path, owner):
 		from sim.models import Space, Template
-		from sim.scene import Thing, Scene, Position, Orientation
+		from sim.glge import Object, Scene, Group
 		space_name = os.path.basename(space_dir_path)
 		things_path = os.path.join(space_dir_path, SPACE_TEMPLATE_FILE_NAME)
 		if not os.path.isfile(things_path):
@@ -64,7 +64,7 @@ class Command(NoArgsCommand):
 		space.add_member(owner, is_admin=True, is_editor=True)
 		
 		things_reader = csv.reader(open(things_path))
-		root_thing = Thing(0)
+		scene = Scene()
 		thing_id = 1
 		for thing_row in things_reader:
 			template_name = thing_row[0]
@@ -72,12 +72,17 @@ class Command(NoArgsCommand):
 				print 'things.csv references an unknown template: %s' % template_name
 				continue
 			template = Template.objects.get(name=template_name)
-			position = Position(float(thing_row[1]), float(thing_row[2]), float(thing_row[3])) 
-			orientation = Orientation(float(thing_row[4]), float(thing_row[5]), float(thing_row[6]), float(thing_row[7]))
-			root_thing.add_thing(Thing(thing_id, template, position, orientation))
+			obj = Object()
+			obj.locX = float(thing_row[1])
+			obj.locY = float(thing_row[2])
+			obj.locZ = float(thing_row[3])
+			obj.quatX = float(thing_row[4])
+			obj.quatY = float(thing_row[5])
+			obj.quatZ = float(thing_row[6])
+			obj.quatW = float(thing_row[7])
+			#TODO hook the template data and ID
+			scene.children.append(obj)
 			thing_id += 1
-		scene = Scene(space)
-		scene.thing = root_thing
 		space.scene_document = to_json(scene)
 		space.save()
 		return space
@@ -132,7 +137,7 @@ class Command(NoArgsCommand):
 			if asset_name == TEMPLATE_PROPERTIES_FILE_NAME:
 				continue
 			if file_type == None:
-				print 'Ignoring %s asset: %s' % (template_name, asset_name)
+				#print 'Ignoring %s asset: %s' % (template_name, asset_name)
 				continue
 			asset_file = file(asset_path, 'r')
 			asset = template.get_asset(key=asset_name)

@@ -3,16 +3,16 @@ The hydration code assumes that these event objects have only string attributes 
 """
 
 import datetime
-from ground.hydration import Hydration
+from sim.handler import to_json
 import simplejson
 
 class SimEvent:
 	"""The base class which all simulation events extend"""
-	def hydrate(self, json_string):
+	def from_json(self, json_string):
 		Hydration.hydrate(self, json_string)
 		return self
-	def dehydrate(self):
-		return Hydration.dehydrate(self)
+	def to_json(self):
+		return to_json(self)
 	@classmethod
 	def event_name(cls):
 		return cls.__name__
@@ -114,7 +114,7 @@ def parse_event_json(json_string):
 	for class_object in SIM_EVENTS:
 		if json_data['type'] == str(class_object.__name__):
 			event = class_object(json_data['attributes'])
-			event.hydrate(json_string)
+			event.from_json(json_string)
 			return event
 	return None
 

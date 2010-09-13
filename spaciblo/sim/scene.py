@@ -168,12 +168,12 @@ class Thing(SceneNode):
 	def hydrate(self, json_data):
 		from sim.models import Template
 		if json_data.has_key('attributes'):
-			if json_data['attributes'].has_key('position'): self.position.hydrate(json_data['attributes']['position'])
-			if json_data['attributes'].has_key('orientation'): self.orientation.hydrate(json_data['attributes']['orientation'])
-			if json_data['attributes'].has_key('template'): self.template = Template.objects.get(pk=json_data['attributes']['template'])
+			if json_data.has_key('position'): self.position.hydrate(json_data['position'])
+			if json_data.has_key('orientation'): self.orientation.hydrate(json_data['orientation'])
+			if json_data.has_key('template'): self.template = Template.objects.get(pk=json_data['template'])
 		if json_data.has_key('children'):
 			for thing_element in json_data['children']:
-				child_thing = Thing(thing_element['attributes']['id'])
+				child_thing = Thing(thing_element['id'])
 				child_thing.hydrate(thing_element)
 				self.add_thing(child_thing)
 		#TODO hydrate the scale, motion, settings, lights, and user
@@ -191,8 +191,9 @@ class Scene(SceneNode):
 		self.thing.add_thing(user_thing)
 		return user_thing
 	def hydrate(self, json_data):
+		print json_data
 		if json_data.has_key('thing'):
-			self.thing = Thing(json_data['thing']['attributes']['id'])
+			self.thing = Thing(json_data['thing']['id'])
 			self.thing.hydrate(json_data['thing'])
 		return self
 

@@ -9,25 +9,7 @@ from piston.resource import Resource
 from models import *
 from handler import *
 
-class UserHandler(BaseHandler):
-	"""The Piston handler for Django's user accounts"""
-	model = User
-	fields = ('username', 'first_name', 'last_name')
-	allowed_methods = ('GET',)
-
-class Thing(object):
-	def __init__(self, name, rank):
-		self.name = name
-		self.rank = rank
-		self.dink = []
-		
-t = Thing('foo', 'bar')
-t.dink.append(Thing('dwong', 'dwink'))
-t.dink.append([(u.username, u.first_name, u.last_name) for u in User.objects.all()])
-t.dink.append({'moo':'cow'})
-
 urlpatterns = patterns('',
-	(r'^test/$', Resource(handler=PlainObjectHandler), {'obj':t }),
 	(r'^template/$', Resource(handler=TemplateHandler)),
 	(r'^template/(?P<id>[^/]+)/$', Resource(handler=TemplateHandler)),
 	(r'^template/(?P<template_id>[\d]+)/asset/(?P<asset_key>[^/]+)$', 'sim.api_views.template_asset'),

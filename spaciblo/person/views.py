@@ -168,7 +168,7 @@ def password_reset(request):
 			if not user.is_active:
 				error_message = "That account is unavailable."
 			elif user.password.split("$")[2] != request.GET[PASSWORD_RESET_SECRET_PARAMETER]:
-				print "%s versus %s" % (user.password.split('$')[2], request.GET[PASSWORD_RESET_SECRET_PARAMETER])
+				#print "%s versus %s" % (user.password.split('$')[2], request.GET[PASSWORD_RESET_SECRET_PARAMETER])
 				error_message = "That account has a different secret.  Perhaps this reset link has expired or has been used already?"
 			else:
 				password = User.objects.make_random_password()

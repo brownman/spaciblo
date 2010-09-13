@@ -4,7 +4,7 @@ NOTE: These data structures use 0-based indexing (like the rest of python), even
 
 """
 
-from sim.scene import Geometry, Material
+from sim.glge import Group, Object, Material, Mesh
 
 class Loader:
 	def prep_line(self, line):
@@ -132,21 +132,22 @@ class Obj:
 		self.smoothing_groups = [] # an array of arrays of form [start_face_index, num_faces]
 
 	def toGeometry(self, mtllib):
+		"""Returns a GLGE object (either a Group or an Object) representing this Obj file"""
 		materials = self.genMaterials(mtllib)
 
 		if len(self.object_groups) == 0: return self.genGeometry(None, 0, len(self.faces), materials)
 
-		root_geo = Geometry()
+		root_group = Group()
 		for object_group in self.object_groups:
 			mat_groups = []
 			for mg in self.material_groups:
 				if mg[1] >= object_group[1] and mg[1] < (object_group[1] + object_group[2]): mat_groups.append(mg)
 			if len(mat_groups) == 0:
-				root_geo.children.append(self.genGeometry(object_group[0], object_group[1], object_group[1] + object_group[2]), materials)
+				root_group.children.append(self.genGeometry(object_group[0], object_group[1], object_group[1] + object_group[2]), materials)
 			else:
 				for mg in mat_groups:
-					root_geo.children.append(self.genGeometry(mg[0], mg[1], mg[1] + mg[2], materials))
-		return root_geo
+					root_group.children.append(self.genGeometry(mg[0], mg[1], mg[1] + mg[2], materials))
+		return root_group
 
 	def objMaterialForFace(self, face_index):
 		for mg in self.material_groups:
@@ -157,35 +158,36 @@ class Obj:
 		if not mtllib: return {}
 		materials = {}
 		for obj_mat in mtllib.materials:
-			materials[obj_mat.name] = Material(name=obj_mat.name, specular=obj_mat.specular, ambient=obj_mat.ambient, diffuse=obj_mat.diffuse, alpha=obj_mat.alpha, phong_specular=obj_mat.phong_specular, illumination=obj_mat.illumination, ambient_map=obj_mat.ambient_map, diffuse_map=obj_mat.diffuse_map, specular_map=obj_mat.specular_map, alpha_map=obj_mat.alpha_map, bump_map=obj_mat.bump_map)
+			mat = Material()
+			mat.color = obj_mat.diffuse
+			mat.specColor = obj_mat.specular
+			mat.alpha = obj_mat.alpha
+			#TODO use the other obj material attributes			
+			materials[obj_mat.name] = mat
 		return materials
 	
 	def genGeometry(self, name, face_start, face_end, materials):
-		group_vertices = []
-		group_normals = []
-		group_uvs = []
+		obj = Object()
+		obj.mesh = Mesh()
 		obj_mat = self.objMaterialForFace(face_start)
 		if obj_mat and materials.has_key(obj_mat[0]):
-			material = materials[obj_mat[0]]
+			obj.material = materials[obj_mat[0]]
 		else:
-			material = None
+			obj.material = None
 		for face in self.faces[face_start:face_end]:
 			for point in face[0:3]: # TODO This is treating all faces like they are triangles, which is wrong
 				vertex_offset = point[0] * 3
-				group_vertices.extend([self.vertices[vertex_offset], self.vertices[vertex_offset + 1], self.vertices[vertex_offset + 2]])
+				obj.mesh.positions.extend([self.vertices[vertex_offset], self.vertices[vertex_offset + 1], self.vertices[vertex_offset + 2]])
 
 				if point[1]:
 					uv_offset = point[1] * 2
-					group_uvs.extend([self.uvs[uv_offset], self.uvs[uv_offset + 1]])
+					obj.mesh.UV.extend([self.uvs[uv_offset], self.uvs[uv_offset + 1]])
 					
 				if point[2]:
 					normal_offset = point[2] * 3
-					group_normals.extend([self.normals[normal_offset], self.normals[normal_offset + 1], self.normals[normal_offset + 2]])
-
-		return Geometry(name=name, vertices=group_vertices, uvs=group_uvs, normals=group_normals, material=material)
-	class HydrationMeta:
-		attributes = ['mtllib']
-		raw_nodes = ['vertices', 'normals', 'uvs', 'faces', 'object_groups', 'polygon_groups', 'material_groups', 'smoothing_groups']
+					obj.mesh.normals.extend([self.normals[normal_offset], self.normals[normal_offset + 1], self.normals[normal_offset + 2]])
+		obj.mesh.faces = range(len(obj.mesh.positions) / 3)
+		return obj
 
 class ObjLoader(Loader):
 	def __init__(self):

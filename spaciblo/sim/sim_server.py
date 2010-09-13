@@ -12,7 +12,7 @@ from django.contrib.auth.models import AnonymousUser
 import sim_pool
 import events
 from websocket import WebSocketServer, receive_web_socket_message
-from ground.hydration import Hydration
+from sim.handler import to_json
 from sim.models import Space
 
 class WebSocketConnection:
@@ -36,10 +36,10 @@ class WebSocketConnection:
 				event = self.outgoing_events.get(block=True, timeout=5)
 			except Queue.Empty:
 				continue
-			#print 'Outgoing from queue: ', Hydration.dehydrate(event)
+			#print 'Outgoing from queue: ', to_json(event)
 			try:
 				self.client_socket.send('\x00')
-				self.client_socket.send(Hydration.dehydrate(event))
+				self.client_socket.send(to_json(event))
 				self.client_socket.send('\xff')
 			except (IOError):
 				#traceback.print_exc()
@@ -81,7 +81,7 @@ class WebSocketConnection:
 						if allow_join:
 							self.space_id = space.id
 							try:
-								response_event.scene_doc = Hydration.dehydrate(sim.scene)
+								response_event.scene_doc = to_json(sim.scene)
 							except:
 								print "Could not log in: %s" % pprint.pformat(traceback.format_exc())
 						else:
@@ -104,9 +104,9 @@ class WebSocketConnection:
 				print "Received unhandled event %s" % event
 
 			if response_event:
-				#print 'Outgoing: ', Hydration.dehydrate(response_event)
+				#print 'Outgoing: ', to_json(response_event)
 				self.client_socket.send('\x00')
-				self.client_socket.send(Hydration.dehydrate(response_event))
+				self.client_socket.send(to_json(response_event))
 				self.client_socket.send('\xff')
 		self.finish()
 

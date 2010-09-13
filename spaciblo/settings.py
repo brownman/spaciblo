@@ -52,7 +52,6 @@ INSTALLED_APPS = (
     'django.contrib.sites',
 	'django.contrib.admin',
 	'south',
-	'spaciblo.ground',
 	'spaciblo.sim',
 	'spaciblo.person',
 	'spaciblo.front',

@@ -11,7 +11,7 @@ from django.contrib.sessions.models import Session
 
 import spaciblo.settings as settings
 from sim.loaders.obj import ObjLoader, MtlLibLoader
-from ground.hydration import Hydration
+from sim.glge import Object, Group, Mesh
 
 class ObjTest(TransactionTestCase): 
 	"""A test suite for the loading Obj files."""
@@ -39,10 +39,10 @@ class ObjTest(TransactionTestCase):
 		self.assertEqual([0.262127, 0.371511, 0.800000], mtl.materials[0].diffuse, 'Incorrect diffuse: %s' % mtl.materials[0].diffuse)
 		
 		geometry = obj.toGeometry(mtl)
-		self.assertTrue(len(geometry.children) == 0, "The cube geometry should have no children")
+		self.assertTrue(isinstance(geometry, Object)) # Simple obj files get no Group
 		self.assertTrue(geometry.material != None, "The cube should have one material")
-		self.assertEqual(geometry.material.name, 'Material', 'The material should be named "Material": %s' % geometry.material.name)
-		self.assertEqual(geometry.material.ambient, [0,0,0], 'The ambient material should have been 0s: %s' % geometry.material.ambient)
+		#self.assertEqual(geometry.material.name, 'Material', 'The material should be named "Material": %s' % geometry.material.name)
+		self.assertEqual(geometry.material.color, [0.262127, 0.371511, 0.800000], 'The color should have been 0.262127 0.371511 0.800000: %s' % geometry.material.color)
 		self.assertEqual(geometry.material.alpha, 0.5, 'The alph should have 0.5: %s' % 0.5)
 
 	def test_moon(self):
@@ -74,11 +74,9 @@ class ObjTest(TransactionTestCase):
 		self.assertEqual('01_-_Default', mtl.materials[1].name)
 	
 		geometry = obj.toGeometry(mtl)
-		for child in geometry.children:
-			print child
-		self.assertEqual(obj.object_groups[0][2], len(geometry.children[0].faces), 'Geometry and obj group do not have the same number of faces: %s and %s' % (obj.object_groups[0][2], len(geometry.children[0].faces)))
-		self.assertEqual(obj.object_groups[1][2], len(geometry.children[1].faces), 'Geometry and obj group do not have the same number of faces: %s and %s' % (obj.object_groups[1][2], len(geometry.children[1].faces)))
-		self.assertEqual(obj.object_groups[2][2], len(geometry.children[2].faces), 'Geometry and obj group do not have the same number of faces: %s and %s' % (obj.object_groups[2][2], len(geometry.children[2].faces)))
+		self.assertEqual(obj.object_groups[0][2], len(geometry.children[0].mesh.faces) / 3, 'Geometry and obj group do not have the same number of faces: %s and %s' % (obj.object_groups[0][2], len(geometry.children[0].mesh.faces)))
+		self.assertEqual(obj.object_groups[1][2], len(geometry.children[1].mesh.faces) / 3, 'Geometry and obj group do not have the same number of faces: %s and %s' % (obj.object_groups[1][2], len(geometry.children[1].mesh.faces)))
+		self.assertEqual(obj.object_groups[2][2], len(geometry.children[2].mesh.faces) / 3, 'Geometry and obj group do not have the same number of faces: %s and %s' % (obj.object_groups[2][2], len(geometry.children[2].mesh.faces)))
 
 	def test_beanie(self):
 		parser = ObjLoader()
@@ -87,13 +85,9 @@ class ObjTest(TransactionTestCase):
 		mtl_parser = MtlLibLoader()
 		mtl = mtl_parser.parse(open('example/template/Beanie/beanie.mtl').read())
 		geometry = obj.toGeometry(mtl)
+		self.assertTrue(isinstance(geometry, Object)) # Simple obj files get no Group
 		# Test that all of the faces point to valid indices
-		for geo in geometry.flatten():
-			if len(geo.faces) > 0:
-				for face in geo.faces:
-					for point in face:
-						self.assertTrue(point[0] < (len(geometry.vertices) / 3))
-						self.assertTrue(point[1] < (len(geometry.uvs) / 2))
-						self.assertTrue(point[2] < (len(geometry.normals) / 3))
+		for face in geometry.mesh.faces:
+			self.assertTrue(face < len(geometry.mesh.positions) / 3, 'Invalid face: %s in %s positions' % (face, len(geometry.mesh.positions) / 3))
 
 # Copyright 2010 Trevor F. Smith (http://trevor.smith.name/) Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.

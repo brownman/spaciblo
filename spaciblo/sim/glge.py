@@ -1,4 +1,5 @@
-"""A set of objects which define the visual aspects of a 3D scene: position, orientation, motion, geometry, material, lighting...
+"""
+A set of objects which define the visual aspects of a 3D scene: position, orientation, motion, geometry, material, lighting...
 """
 
 # Flag for material colour
@@ -57,9 +58,21 @@ FOG_NONE=1;
 FOG_LINEAR=2;
 # Enumeration for exponential fall off fog
 FOG_QUADRATIC=3;
+# Enumeration for node group type
+G_NODE=1;
+# Enumeration for root group type
+G_ROOT=2;
+
 
 class SceneBase(object):
 	"""The base class which all scene elements extend."""
+	def flatten(self):
+		if not hasattr(self, 'children'): return [self]
+		results = [self]
+		for child in self.children:
+			results.extend(child.flatten())
+		return results
+
 	@classmethod
 	def node_name(cls):
 		return cls.__name__
@@ -163,6 +176,8 @@ class Text(Placeable, Animatable):
 
 class Mesh(SceneBase):
 	def __init__(self):
+		self.positions = []
+		self.normals = []
 		self.faces = []
 		self.UV = []
 		self.objects = []
@@ -215,7 +230,7 @@ class Object(SceneBase):
 		self.mesh = None
 		self.skeleton = None
 		self.scene = None
-		self.transformMatrix = [[1,0,0,0][0,1,0,0][0,0,1,0][0,0,0,1]]
+		self.transformMatrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]
 		self.material = None
 		self.multimaterials = []
 		self.instances = []

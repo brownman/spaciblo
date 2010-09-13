@@ -1,8 +1,8 @@
 import traceback
 from types import *
+import simplejson
 
 from django.conf.urls.defaults import *
-from django.contrib.auth.models import User
 from django.http import HttpRequest
 from django.db.models.query import QuerySet
 
@@ -11,8 +11,6 @@ from piston.handler import BaseHandler
 from piston.resource import Resource
 from piston.emitters import JSONEmitter
 from piston.handler import typemapper, HandlerMetaClass
-
-from models import User, Template, Asset, TemplateAsset, Space
 
 def to_json(data):
 	"""Returns a string JSON representation using the same mechanism as the Piston based APIs"""
@@ -24,6 +22,12 @@ def to_json(data):
 	request = HttpRequest()
 	request.method = 'GET'
 	return emitter.render(request)
+
+def from_json(obj, json_data):
+	"""Takes all of the top level attributes from the json and tries to set them as attributes on the obj"""
+	parsed_data = simplejson.loads(json_data)
+	for key, val in parsed_data.items(): setattr(obj, key, val)
+	return obj
 
 def get_handler(model, anonymous):
 	"""Find the Piston handler for a given model"""
@@ -69,9 +73,7 @@ class PlainObjectHandler(object):
 			return self.flatten(temp_array)
 			
 		if type(obj) == ListType or type(obj) == TupleType:
-			result = []
-			for item in obj: result.append(self.flatten(item))
-			return result
+			return [self.flatten(item) for item in obj]
 		elif type(obj) == DictType:
 			result = {}
 			for key in obj.keys(): result[key] = self.flatten(obj[key])
