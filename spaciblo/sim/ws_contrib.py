@@ -33,7 +33,6 @@
 
 import codecs
 import logging
-from md5 import md5
 from optparse import OptionParser
 import random
 import re

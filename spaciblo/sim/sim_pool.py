@@ -6,7 +6,7 @@ from time import sleep
 
 from models import *
 from events import *
-from scene import *
+from glge import Scene
 
 DEFAULT_SIM_POOL = None
 
@@ -21,7 +21,7 @@ class Simulator:
 
 		self.pool = pool
 		self.space = space
-		self.scene = Scene(space)
+		self.scene = Scene()
 		
 		self.event_queue = Queue.Queue(-1)
 		self.script_engine = None

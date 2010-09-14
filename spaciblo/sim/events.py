@@ -3,21 +3,21 @@ The hydration code assumes that these event objects have only string attributes 
 """
 
 import datetime
-from sim.handler import to_json
+from sim.handler import to_json, from_json
 import simplejson
 
 class SimEvent:
 	"""The base class which all simulation events extend"""
 	def from_json(self, json_string):
-		Hydration.hydrate(self, json_string)
-		return self
+		return from_json(self, json_string)
 	def to_json(self):
+		self.type = self.__class__.__name__
 		return to_json(self)
 	@classmethod
-	def event_name(cls):
-		return cls.__name__
+	def dict(cls):
+		return cls().__dict__
 	@classmethod
-	def tag_name(cls):
+	def event_name(cls):
 		return cls.__name__
 
 		
@@ -29,7 +29,7 @@ class AuthenticationRequest(SimEvent):
 class AuthenticationResponse(SimEvent):
 	"""An authentication response from the SimServer"""
 	def __init__(self, authenticated=False, username=None):
-		self.authenticated = smart_str(authenticated)
+		self.authenticated = authenticated
 		self.username = username
 
 class JoinSpaceRequest(SimEvent):
@@ -66,16 +66,16 @@ class UserThingMoveRequest(SimEvent):
 	def __init__(self, space_id=None, username=None, position="0,0,0", orientation="1,0,0,0"):
 		self.space_id = space_id
 		self.username = username
-		self.position = smart_str(position)
-		self.orientation = smart_str(orientation)
+		self.position = position
+		self.orientation = orientation
 
 class ThingMoved(SimEvent):
 	"""The simulator generates these to indicate that a Thing is in motion."""
 	def __init__(self, space_id=None, thing_id=None, position="0,0,0", orientation="1,0,0,0"):
 		self.space_id = space_id
 		self.thing_id = thing_id;
-		self.position = smart_str(position)
-		self.orientation = smart_str(orientation)
+		self.position = position
+		self.orientation = orientation
 
 class ThingRemoved(SimEvent):
 	"""The simulator generates these to indicate that a Thing has been destroyed."""
@@ -91,8 +91,8 @@ class ThingAdded(SimEvent):
 		self.thing_id = thing_id
 		self.template_id = template_id
 		self.parent_id = parent_id
-		self.position = smart_str(position)
-		self.orientation = smart_str(orientation)
+		self.position = position
+		self.orientation = orientation
 		self.scale = scale
 
 class UserMessage(SimEvent):
@@ -113,7 +113,7 @@ def parse_event_json(json_string):
 	json_data = simplejson.loads(json_string)
 	for class_object in SIM_EVENTS:
 		if json_data['type'] == str(class_object.__name__):
-			event = class_object(json_data['attributes'])
+			event = class_object()
 			event.from_json(json_string)
 			return event
 	return None

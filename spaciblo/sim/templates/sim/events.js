@@ -10,12 +10,11 @@ SpacibloEvents = {}
 
 {% for event in events %}
 
-SpacibloEvents.{{ event.event_name }} = function({% for attr in event.HydrationMeta.attributes %}_{{ attr }}{% if not forloop.last %}, {% endif %}{% endfor %}){
+SpacibloEvents.{{ event.event_name }} = function({% for attr in event.dict %}_{{ attr }}{% if not forloop.last %}, {% endif %}{% endfor %}){
 	var self = this;
 	self.type = '{{ event.event_name }}';
-	{% for attr in event.HydrationMeta.attributes %}self.{{ attr }} = _{{ attr }};
+	{% for attr in event.dict %}self.{{ attr }} = _{{ attr }};
 	{% endfor %}
-	
 	self.toJSON = function(){ return Spaciblo.stringify(self); }
 }
 {% endfor %}
@@ -33,9 +32,8 @@ SpacibloEvents.rehydrateEvent = function(jsonData){
 		return null;
 	}
 	var spaciblo_event = new event_func(); // we'll just let all the parameters be undefined for the moment
-	var attributes = jsonData['attributes'];
-	for(var key in attributes){
-		spaciblo_event[key] = attributes[key];
+	for(var key in jsonData){
+		spaciblo_event[key] = jsonData[key];
 	}
 	return spaciblo_event;
 }

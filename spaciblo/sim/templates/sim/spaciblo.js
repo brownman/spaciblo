@@ -12,8 +12,6 @@ String.prototype.endsWith = function(str){ return (this.match(str+"$")==str) }
 
 {% include "sim/events.js" %}
 
-{% include "sim/scene.js" %}
-
 {% include "sim/models.js" %}
 
 {% include "sim/input.js" %}
@@ -29,12 +27,11 @@ String.prototype.endsWith = function(str){ return (this.match(str+"$")==str) }
 Spaciblo = {}
 
 Spaciblo.stringify = function(hydrateObj){
-	var attrs = {};
+	var data = { 'type': hydrateObj.type }
 	for(var key in hydrateObj){
 		if(key == 'type' || key == 'toJSON') continue;
-		attrs[key] = hydrateObj[key];
+		data[key] = hydrateObj[key];
 	}
-	var data = { 'type': hydrateObj.type, 'attributes':attrs };
 	return JSON.stringify(data);
 }
 
@@ -108,6 +105,8 @@ Spaciblo.SpaceClient = function(space_id, canvas) {
 				self.user_message_handler(spaciblo_event.username, spaciblo_event.message);
 				break;
 			case 'AuthenticationResponse':
+				console.log(message);
+				console.log(spaciblo_event);
 				if(spaciblo_event.authenticated){
 					self.username = spaciblo_event.username;
 				} else {
@@ -118,6 +117,7 @@ Spaciblo.SpaceClient = function(space_id, canvas) {
 				self.authentication_handler(self.username != null);
 				break;
 			case 'JoinSpaceResponse':
+				console.log(message);
 				if(spaciblo_event.joined == true){
 					self.scene = SpacibloScene.parseSceneDocument(spaciblo_event.scene_doc);
 				}		

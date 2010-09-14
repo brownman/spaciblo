@@ -23,6 +23,9 @@ class HydrateModel(models.Model):
 	@classmethod
 	def type(cls):
 		return cls.__name__
+	@classmethod
+	def dict(cls):
+		return cls().__dict__
 	
 	class Meta:
 		abstract = True

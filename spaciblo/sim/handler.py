@@ -65,6 +65,7 @@ class PlainObjectHandler(object):
 		if isinstance(obj, NoneType): return obj
 		if isinstance(obj, StringType): return obj
 		if isinstance(obj, UnicodeType): return obj
+		if isinstance(obj, BooleanType): return obj
 		if isinstance(obj, IntType): return obj
 		if isinstance(obj, FloatType): return obj
 		if isinstance(obj, QuerySet):

@@ -191,7 +191,6 @@ class Scene(SceneNode):
 		self.thing.add_thing(user_thing)
 		return user_thing
 	def hydrate(self, json_data):
-		print json_data
 		if json_data.has_key('thing'):
 			self.thing = Thing(json_data['thing']['id'])
 			self.thing.hydrate(json_data['thing'])

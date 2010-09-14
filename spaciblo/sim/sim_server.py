@@ -39,7 +39,7 @@ class WebSocketConnection:
 			#print 'Outgoing from queue: ', to_json(event)
 			try:
 				self.client_socket.send('\x00')
-				self.client_socket.send(to_json(event))
+				self.client_socket.send(event.to_json())
 				self.client_socket.send('\xff')
 			except (IOError):
 				#traceback.print_exc()
@@ -106,7 +106,7 @@ class WebSocketConnection:
 			if response_event:
 				#print 'Outgoing: ', to_json(response_event)
 				self.client_socket.send('\x00')
-				self.client_socket.send(to_json(response_event))
+				self.client_socket.send(response_event.to_json())
 				self.client_socket.send('\xff')
 		self.finish()
 
