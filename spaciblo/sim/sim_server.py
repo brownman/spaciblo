@@ -126,7 +126,6 @@ class WebSocketConnection:
 			return AnonymousUser()	
 		return auth_backend.get_user(user_id)
 			
-				
 	def finish(self):
 		"""Clean up the connection, remove this connection from the sim pool, and send a UserExited event to the simulator"""
 		self.disconnected = True

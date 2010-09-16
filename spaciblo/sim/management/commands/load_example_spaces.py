@@ -65,7 +65,6 @@ class Command(NoArgsCommand):
 		
 		things_reader = csv.reader(open(things_path))
 		scene = Scene()
-		thing_id = 1
 		for thing_row in things_reader:
 			template_name = thing_row[0]
 			if Template.objects.filter(name=template_name).count() != 1:
@@ -82,7 +81,6 @@ class Command(NoArgsCommand):
 			obj.quatW = float(thing_row[7])
 			#TODO hook the template data and ID
 			scene.children.append(obj)
-			thing_id += 1
 		space.scene_document = to_json(scene)
 		space.save()
 		return space

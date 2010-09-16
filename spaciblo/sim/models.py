@@ -86,7 +86,7 @@ class SpaceMemberHandler:
 	attributes = ['id', 'member', 'is_admin', 'is_editor']
 
 class Asset(HydrateModel):
-	"""A chunk of typed data used by a template to instantiate a Thing in a Space."""
+	"""A chunk of typed data used by a template to instantiate an Object in a Space."""
 	APPLICATION_KEY = 'application'
 	TYPE_CHOICES = (('geometry', 'geometry'), ('animation', 'animation'), ('script', 'script'), ('texture', 'texture'), ('text', 'text'), ('application', 'application'))
 	type = models.CharField(max_length=20, choices=TYPE_CHOICES, blank=False, null=False, default='text')
@@ -133,7 +133,7 @@ class TemplateAsset(HydrateModel):
 		return "TemplateAsset: %s" % self.asset
 
 class TemplateSetting(HydrateModel):
-	"""A key/value tuple used to initialize a Thing's state"""
+	"""A key/value tuple used to initialize an Object's state"""
 	key = models.CharField(max_length=1000, blank=False, null=False)
 	value = models.TextField(blank=False, null=False)
 	def __unicode__(self):
@@ -159,12 +159,12 @@ class TemplateChildHandler(BaseHandler):
 	fields = ['id', 'position', 'orientation', 'template', 'settings']
 
 class Template(HydrateModel):
-	"""A set of information used to instantiate a Thing in a Space."""
+	"""A set of information used to instantiate an Object in a Space."""
 	name = models.CharField(max_length=1000, blank=False, null=False, default="A Template")
 	owner = models.ForeignKey(User, blank=False, null=False)
 	last_updated = models.DateTimeField(auto_now=True, blank=False, null=False)
 	assets = models.ManyToManyField('Asset', blank=True, null=True, through='TemplateAsset')
-	settings = models.ManyToManyField(TemplateSetting, blank=True, null=True) # used as defaults when creating a new Thing
+	settings = models.ManyToManyField(TemplateSetting, blank=True, null=True) # used as defaults when creating a new Object
 	children = models.ManyToManyField(TemplateChild, blank=True, null=True, related_name="parents")
 	#TODO make position and orientation custom tuple fields
 	seat_position = models.CharField(max_length=1000, blank=True, null=True, default="0,0,0") # px, py, pz

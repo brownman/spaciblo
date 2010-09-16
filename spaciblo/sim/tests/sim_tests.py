@@ -58,8 +58,7 @@ class SimTest(TransactionTestCase):
 		self.failUnlessEqual(space.id, event.space_id)
 		self.failUnless(event.joined)
 		self.failUnless(sim_client.scene)
-		self.failUnless(sim_client.scene.thing)
-		self.failUnless(len(sim_client.scene.thing.children) > 0)
+		self.failUnless(len(sim_client.scene.children) > 0)
 		
 		event_handler2 = EventHandler()
 		sim_client2 = SimClient(self.client2.session.session_key, '127.0.0.1', self.sim_server.ws_server.port, '127.0.0.1:8000', event_handler=event_handler2.handle_event)
@@ -81,11 +80,13 @@ class SimTest(TransactionTestCase):
 		event = event_handler2.events.get(True, 10)
 		self.failUnless(event.joined)
 		
-		sim_client.add_user_thing()
+		sim_client.add_user()
 		event = event_handler.events.get(True, 10)
-		self.failUnless(event.thing_id)
+		print event
+		self.failUnless(event.json_data)
 		event = event_handler2.events.get(True, 10)
-		self.failUnless(event.thing_id)
+		print event
+		self.failUnless(event.json_data)
 
 		sim_client.close()
 

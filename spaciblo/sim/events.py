@@ -53,15 +53,15 @@ class UserExited(SimEvent):
 		self.space_id = space_id
 		self.username = username
 
-class AddUserThingRequest(SimEvent):
-	"""A space client may send an AddUserThingRequest if they require a body in a space."""
+class AddUserRequest(SimEvent):
+	"""A space client may send an AddUserRequest if they require a body in a space."""
 	def __init__(self, space_id=None, username=None, position="0,0,0", orientation="1,0,0,0"):
 		self.space_id = space_id
 		self.username = username
 		self.position = position
 		self.orientation = orientation
 
-class UserThingMoveRequest(SimEvent):
+class UserMoveRequest(SimEvent):
 	"""A space client sends this to indicate that the user has requested a motion."""
 	def __init__(self, space_id=None, username=None, position="0,0,0", orientation="1,0,0,0"):
 		self.space_id = space_id
@@ -69,31 +69,26 @@ class UserThingMoveRequest(SimEvent):
 		self.position = position
 		self.orientation = orientation
 
-class ThingMoved(SimEvent):
-	"""The simulator generates these to indicate that a Thing is in motion."""
-	def __init__(self, space_id=None, thing_id=None, position="0,0,0", orientation="1,0,0,0"):
+class PlaceableMoved(SimEvent):
+	"""The simulator generates these to indicate that a Placeable is in motion."""
+	def __init__(self, space_id=None, uid=None, position="0,0,0", orientation="1,0,0,0"):
 		self.space_id = space_id
-		self.thing_id = thing_id;
+		self.uid = uid;
 		self.position = position
 		self.orientation = orientation
 
-class ThingRemoved(SimEvent):
-	"""The simulator generates these to indicate that a Thing has been destroyed."""
-	def __init__(self, space_id=None, thing_id=None):
+class NodeRemoved(SimEvent):
+	"""The simulator generates these to indicate that a Node has been destroyed."""
+	def __init__(self, space_id=None, uid=None):
 		self.space_id = space_id
-		self.thing_id = thing_id
+		self.uid = uid
 
-class ThingAdded(SimEvent):
-	"""The simulator generates these to indicate that a Thing as been created."""
-	def __init__(self, space_id=None, username=None, thing_id=None, template_id=None, parent_id=None, position="0,0,0", orientation="1,0,0,0", scale=1.0):
+class NodeAdded(SimEvent):
+	"""The simulator generates these to indicate that a Node as been created."""
+	def __init__(self, space_id=None, parent_id=None, json_data=None):
 		self.space_id = space_id
-		self.username = username
-		self.thing_id = thing_id
-		self.template_id = template_id
 		self.parent_id = parent_id
-		self.position = position
-		self.orientation = orientation
-		self.scale = scale
+		self.json_data = json_data
 
 class UserMessage(SimEvent):
 	"""A user generated chat message."""
@@ -107,7 +102,7 @@ class Heartbeat(SimEvent):
 	def __init__(self):
 		self.time = datetime.datetime.now()
 
-SIM_EVENTS = [Heartbeat, UserMessage, ThingMoved, AuthenticationRequest, AuthenticationResponse, JoinSpaceRequest, JoinSpaceResponse, UserThingMoveRequest, AddUserThingRequest, ThingAdded, ThingRemoved]
+SIM_EVENTS = [Heartbeat, UserMessage, PlaceableMoved, AuthenticationRequest, AuthenticationResponse, JoinSpaceRequest, JoinSpaceResponse, UserMoveRequest, AddUserRequest, NodeAdded, NodeRemoved]
 
 def parse_event_json(json_string):
 	json_data = simplejson.loads(json_string)

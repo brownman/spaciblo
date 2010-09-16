@@ -3,10 +3,11 @@ import datetime
 import threading
 import Queue
 from time import sleep
+import simplejson
 
 from models import *
 from events import *
-from glge import Scene
+from glge import Scene, Object, Group
 
 DEFAULT_SIM_POOL = None
 
@@ -21,7 +22,7 @@ class Simulator:
 
 		self.pool = pool
 		self.space = space
-		self.scene = Scene()
+		self.scene = Scene().populate(simplejson.loads(space.scene_document))
 		
 		self.event_queue = Queue.Queue(-1)
 		self.script_engine = None
@@ -56,34 +57,38 @@ class Simulator:
 			
 			if not self.should_run: return
 			
-			if event.event_name() == 'AddUserThingRequest':
-				user_thing = self.scene.thing.get_user_thing(event.username)
-				if user_thing is None:
-					thing = self.scene.add_user_thing(User.objects.get(username=event.username), Position().hydrate(event.position), Orientation().hydrate(event.orientation))
-					self.pool.sim_server.send_space_event(self.space.id, ThingAdded(self.space.id, event.username, thing.id, self.space.default_body.id, self.scene.thing.id, thing.position.__unicode__(), thing.orientation.__unicode__()))
+			if event.event_name() == 'AddUserRequest':
+				user_node = self.scene.get_user(event.username)
+				if user_node is None:
+					user_node = Group()
+					user_node.username = event.username
+					# Position().hydrate(event.position), Orientation().hydrate(event.orientation))
+					print 'Should set the user position'
+					self.pool.sim_server.send_space_event(self.space.id, NodeAdded(self.space.id, self.scene.uid, to_json(user_node)))
 				else:
-					print "Already have a user thing with id", user_thing.id
+					print "Already have a user with id", event.username
 
 			elif event.event_name() == 'UserExited':
 				print 'User exited', event.username
-				for thing in self.scene.thing.list_things():
-					if thing.user is not None and thing.user.username == event.username:
-						self.scene.thing.remove_thing(thing)
-						self.pool.sim_server.send_space_event(self.space.id, ThingRemoved(self.space.id, thing.id))
+				user_node = self.scene.get_user(event.username)
+				if user_node:
+					self.scene.remove_node(user_node)
+					self.pool.sim_server.send_space_event(self.space.uid, NodeRemoved(self.space.uid, node.uid))
 
 			elif event.event_name() == 'UserMessage':
 				if event.connection.user != None and event.username == event.connection.user.username:
 					self.pool.sim_server.send_space_event(self.space.id, event)
 
-			elif event.event_name() == 'UserThingMoveRequest':
+			elif event.event_name() == 'UserMoveRequest':
 				if event.connection.user != None and event.username == event.connection.user.username:
-					user_thing = self.scene.thing.get_user_thing(event.username)
-					if user_thing == None:
-						print "No such user thing: %s" % event.username
+					user_node = self.scene.get_user(event.username)
+					if user_node == None:
+						print "No such user node: %s" % event.username
 					else:
-						user_thing.position.hydrate(event.position)
-						user_thing.orientation.hydrate(event.orientation)
-						response = ThingMoved(self.space.id, user_thing.id, user_thing.position, user_thing.orientation)
+						print 'Need to move the user node'
+						#user_node.position = event.position
+						#user_thing.orientation = event.orientation
+						response = PlaceableMoved(self.space.id, user_node.uid, user_node.position, user_node.orientation)
 						self.pool.sim_server.send_space_event(self.space.id, response)
 			else:
 				print "Unknown event: %s" % event.event_name()
