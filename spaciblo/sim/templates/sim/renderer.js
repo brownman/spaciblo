@@ -217,7 +217,7 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 
 		self.gameScene = new GLGE.Scene();
 		self.gameScene.setAmbientColor("#555");
-		self.gameScene.setBackgroundColor(self.scene.background_color.toCSS());
+		self.gameScene.setBackgroundColor("#55F");
 		self.gameScene.setCamera(camera);
 		self.gameScene.addLight(light1);
 		self.gameRenderer.setScene(self.gameScene);

@@ -91,3 +91,7 @@ class PlainObjectHandler(object):
 				if f in handler.exclude: continue
 			results[f] = self.flatten(getattr(obj, f))
 		return results 
+
+def all_attributes(cls):
+	"""Returns a list of keys for attributes of obj, even if they are on base classes"""
+	keys = [f for f in obj.__dict__]

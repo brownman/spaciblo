@@ -119,7 +119,7 @@ Spaciblo.SpaceClient = function(space_id, canvas) {
 			case 'JoinSpaceResponse':
 				console.log(message);
 				if(spaciblo_event.joined == true){
-					self.scene = SpacibloScene.parseSceneDocument(spaciblo_event.scene_doc);
+					self.scene = JSON.parse(spaciblo_event.scene_doc);
 				}		
 				self.finished_join = true;
 				self.join_space_handler(spaciblo_event.joined);

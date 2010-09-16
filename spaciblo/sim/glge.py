@@ -62,7 +62,43 @@ FOG_QUADRATIC=3;
 G_NODE=1;
 # Enumeration for root group type
 G_ROOT=2;
+# Enum for XYZ rotation order
+ROT_XYZ=1;
+# Enum for XZY rotation order
+ROT_XZY=2;
+# Enum for YXZ rotation order
+ROT_YXZ=3;
+# Enum for YZX rotation order
+ROT_YZX=4;
+# Enum for ZXY rotation order
+ROT_ZXY=5;
+# Enum for ZYX rotation order
+ROT_ZYX=6;
+# Enumeration for euler rotaions mode
+P_EULER=1;
+# Enumeration for quaternions mode
+P_QUAT=2;
+# Enumeration for matrix rotation mode
+P_MATRIX=3;
 
+def copy_attributes(target, data, ignore=None):
+	if not ignore: ignore = []
+	for key in data:
+		if not key in ignore:
+			setattr(target, key, data[key])
+
+def populate_children(target, data):
+	for child_data in data['children']:
+		if hasattr(child_data, 'children'):
+			child = Group().populate(child_data)
+		else:
+			child = Object().populate(child_data)
+		target.children.append(child)
+
+def populate_class_array(target, data, cls, key_name):
+	target_array = getattr(target, key_name)
+	for item_data in data[key_name]:
+		target_array.append(cls().populate(item_data))
 
 class SceneBase(object):
 	"""The base class which all scene elements extend."""
@@ -70,8 +106,12 @@ class SceneBase(object):
 		if not hasattr(self, 'children'): return [self]
 		results = [self]
 		for child in self.children:
-			results.extend(child.flatten())
+			results.append(child.flatten())
 		return results
+
+	def populate(self, data):
+		"""This should return self after populating it with the data (which is probably parsed from a JSON version of a Scene)"""
+		raise NotImplementedError()
 
 	@classmethod
 	def node_name(cls):
@@ -79,6 +119,7 @@ class SceneBase(object):
 
 class Placeable(SceneBase):
 	def __init__(self):
+		print 'initing placeable'
 		self.locX = 0
 		self.locY = 0
 		self.locZ = 0
@@ -101,7 +142,7 @@ class Placeable(SceneBase):
 		self.dScaleX = 0
 		self.dScaleY = 0
 		self.dScaleZ = 0
-		self.matrix = [[1,0,0,0][0,1,0,0][0,0,1,0][0,0,0,1]]
+		self.matrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]
 		self.rotOrder = ROT_XYZ
 		self.mode = P_EULER
 		#self.lookAt = None
@@ -122,22 +163,36 @@ class StepPoint(SceneBase):
 	def __init__(self):
 		self.x = 0
 		self.y = 0
+	def populate(self, data):
+		copy_attributes(self, data)
+		return self
 	def __unicode__(self):
 		return "%s,%s" % (self.x, self.y)
 
 class AnimationCurve(SceneBase):
 	def __init__(self):
-		self.channel
+		self.channel = None
 		self.keyFrames = []
 		self.solutions = []
+
+	def populate(self, data):
+		if not data: return None
+		copy_attributes(self, data)
+		return self
 
 class AnimationVector(SceneBase):
 	def __init__(self):
 		self.curves = []
 		self.frames = 250
 
+	def populate(self, data):
+		copy_attributes(self, data, ['curves'])
+		populate_class_array(self, data, AnimationCurve, 'curves')
+		return self
+
 class Animatable(SceneBase):
 	def __init__(self):
+		print 'initing animatable'
 		self.animationStart = None
 		self.animation = None
 		self.blendStart = 0
@@ -151,28 +206,49 @@ class Animatable(SceneBase):
 class Action(SceneBase):
 	def __init__(self):
 		self.channels = []
-		#self.updateListeners = []
+
+	def populate(self, data):
+		copy_attributes(self, data)
+		populate_class_array(self, data, ActionChannel, 'channels')
+		return self
 
 class ActionChannel(SceneBase):
 	def __init__(self):
 		self.animation = None
-		#self.updateListeners = []
 
-class Group(Placeable, Animatable):
+	def populate(self, data):
+		self.animation = AnimationCurve().populate(data['animation'])
+		return self
+
+class Group(Animatable, Placeable):
 	def __init__(self):
+		Animatable.__init__(self)
+		Placeable.__init__(self)
 		self.children = []
 		self.group_type = G_NODE
 
+	def populate(self, data):
+		copy_attributes(self, data, ['children', 'animation'])
+		populate_children(self, data)
+		self.animation = AnimationCurve().populate(data['animation'])
+		return self
+		
 class Text(Placeable, Animatable):
 	def __init__(self):
-		self.zTrans = true
+		Animatable.__init__(self)
+		Placeable.__init__(self)
+		self.zTrans = True
 		self.aspect = 1.0
 		self.color = [1,1,1]
 		self.text = ""
 		self.font = "Times"
 		self.size = 100
 		self.pickType = TEXT_TEXTPICK
-		#self.canvas = None
+
+	def populate(self, data):
+		copy_attributes(self, data, ['animation'])
+		self.animation = AnimationCurve().populate(data['animation'])
+		return self
 
 class Mesh(SceneBase):
 	def __init__(self):
@@ -180,12 +256,17 @@ class Mesh(SceneBase):
 		self.normals = []
 		self.faces = []
 		self.UV = []
-		self.objects = []
 		self.joints = []
 		self.invBind = None
 
+	def populate(self, data):
+		copy_attributes(self, data)
+		return self
+
 class Light(Placeable, Animatable):
 	def __init__(self):
+		Animatable.__init__(self)
+		Placeable.__init__(self)
 		self.constantAttenuation = 1
 		self.linearAttenuation = 0.002
 		self.quadraticAttenuation = 0.0008
@@ -193,21 +274,25 @@ class Light(Placeable, Animatable):
 		self.spotPMatrix = None
 		self.spotExponent = 10
 		self.color = [1,1,1] 
-		self.diffuse = true 
-		self.specular = true 
+		self.diffuse = True 
+		self.specular = True 
 		self.samples = 0 
 		self.softness = 0.01 
 		self.type = L_POINT
-		#self.frameBuffer = None
-		#self.renderBuffer = None
 		self.texture = None
-		self.bufferHeight = 256
-		self.bufferWidth = 256
 		self.shadowBias = 2.0
-		self.castShadows = false
+		self.castShadows = False
+
+	def populate(self, data):
+		copy_attributes(self, data, ['animation', 'texture'])
+		self.texture = Texture().populate(data['texture'])
+		self.animation = AnimationCurve().populate(data['animation'])
+		return self
 
 class Camera(Placeable, Animatable):
 	def __init__(self):
+		Animatable.__init__(self)
+		Placeable.__init__(self)
 		self.fovy = 35
 		self.aspect = 1.0
 		self.near = 0.1
@@ -215,6 +300,11 @@ class Camera(Placeable, Animatable):
 		self.orthoscale = 5
 		self.camera_type = C_PERSPECTIVE
 		self.pMatrix = None
+
+	def populate(self, data):
+		copy_attributes(self, data, ['animation'])
+		self.animation = AnimationCurve().populate(data['animation'])
+		return self
 
 class MultiMaterial(SceneBase):
 	def __init__(self):
@@ -224,17 +314,26 @@ class MultiMaterial(SceneBase):
 		#self.GLShaderProgramPick = None
 		#self.GLShaderProgramShadow = None
 		#self.GLShaderProgram = None
+	def populate(self, data):
+		print data
+		self.mesh = Mesh().populate(data['mesh'])
+		self.material = Material().populate(data['material'])
+		return self
 
 class Object(SceneBase):
 	def __init__(self):
 		self.mesh = None
-		self.skeleton = None
-		self.scene = None
 		self.transformMatrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]
 		self.material = None
 		self.multimaterials = []
-		self.instances = []
 		self.zTrans = False
+
+	def populate(self, data):
+		copy_attributes(self, data, ['mesh', 'material', 'multimaterials'])
+		self.mesh = Mesh().populate(data['mesh'])
+		self.material = Material().populate(data['material'])
+		populate_class_array(self, data, MultiMaterial, 'multimaterials')
+		return self
 
 class Texture(SceneBase):
 	def __init__(self):
@@ -242,29 +341,37 @@ class Texture(SceneBase):
 		self.url = None
 	def __unicode__(self): return self.url
 
+	def populate(self, data):
+		copy_attributes(self, data)
+		return self
+
 class TextureCamera(SceneBase):
 	def __init__(self):
 		self.texture = None
 		self.object = None
 		self.camera = None
-		self.bufferHeight = 0
-		self.bufferWidth = 0
 		self.mirrorAxis = None
 		self.clipAxis = None
 
 class TextureCube(SceneBase):
 	def __init__(self):
-		self.posX = None
-		self.negX = None
-		self.posY = None
-		self.negY = None
-		self.posZ = None
-		self.negZ = None
+		self.posX = 0
+		self.negX = 0
+		self.posY = 0
+		self.negY = 0
+		self.posZ = 0
+		self.negZ = 0
 		self.texture = None
 		self.loadState = 0
 
+	def populate(self, data):
+		copy_attributes(self, data, ['texture'])
+		self.texture = Texture().populate(data['texture'])
+		return self
+
 class MaterialLayer(Animatable):
 	def __init__(self):
+		Animatable.__init__(self)
 		self.texture = None
 		self.blendMode = None
 		self.mapto = M_COLOR
@@ -290,9 +397,16 @@ class MaterialLayer(Animatable):
 		self.alpha = 1
 		self.height = 0.05
 		self.matrix = None
+		
+	def populate(self, data):
+		copy_attributes(self, data, ['blendMode', 'texture', 'animation'])
+		self.animation = AnimationCurve().populate(data['animation'])
+		self.texture = Texture().populate(data['texture'])
+		return self
 
 class Material(Animatable):
 	def __init__(self):
+		Animatable.__init__(self)
 		self.layers = []
 		self.textures = []
 		self.lights = []
@@ -304,12 +418,28 @@ class Material(Animatable):
 		self.emit = 0
 		self.alpha = 1
 
+	def populate(self, data):
+		copy_attributes(self, data, ['layers', 'textures', 'lights', 'animation'])
+		populate_class_array(self, data, Texture, 'textures')
+		populate_class_array(self, data, MaterialLayer, 'layers')
+		populate_class_array(self, data, Light, 'lights')
+		self.animation = AnimationCurve().populate(data['animation'])
+		return self
+
 class ObjectInstance(Placeable, Animatable):
 	def __init__(self):
+		Animatable.__init__(self)
+		Placeable.__init__(self)
 		self.object = None
+
+	def populate(self, data):
+		self.object = Object().populate(data['object', 'animation'])
+		self.animation = AnimationCurve().populate(data['animation'])
+		return self
 
 class Scene(Group):
 	def __init__(self):
+		Group.__init__(self)
 		self.camera = Camera()
 		self.backgroundColor = [1,1,1]
 		self.fogColor = [0.5,0.5,0.5]
@@ -317,8 +447,13 @@ class Scene(Group):
 		self.fogNear = 10
 		self.fogFar = 80
 		self.fogType = FOG_NONE
-		self.passes = []
 		self.children = []
+
+	def populate(self, data):
+		copy_attributes(self, data, ['children', 'camera'])
+		populate_children(self, data)
+		self.camera = Camera().populate(data['camera'])
+		return self
 
 SCENE_GRAPH_CLASSES = [BezTriple, StepPoint, AnimationCurve, AnimationVector, Animatable, Action, ActionChannel, Group, Text, Mesh, Light, Camera, MultiMaterial, Object, Texture, TextureCamera, TextureCube, MaterialLayer, Material, ObjectInstance, Scene]
 
