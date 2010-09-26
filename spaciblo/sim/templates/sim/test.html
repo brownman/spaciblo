@@ -3,7 +3,7 @@
 {%block sub-title%}Tests | {% endblock %}
 
 {% block style%}
-#canvas { border: solid 1px #eee; margin-top: 10px; }
+#test-canvas { border: solid 1px #eee; margin-top: 20px; }
 {% endblock %}
 
 {% block sub-head %}
@@ -19,13 +19,25 @@
 {% block script %}
 
 function runTests(){
-   module("Renderer");
-   
-   test("initialization tests", function(){
-	console.log("Need to replace these tests.");
-   });
-   
-   module("Events");
+	module("Renderer");
+
+	test("initialization tests", function(){
+		var spaceJSON = null;
+		$.ajax({ 
+			type: "GET",
+			async: false,
+			url: "/api/sim/space/1/scene/",
+			dataType: "json",
+			success: function(jsonData) { spaceJSON = jsonData; }
+		});
+		ok(spaceJSON, "Fetched the space JSON");
+		var sv_canvas = new SpacibloRenderer.Canvas('test-canvas');
+		ok(sv_canvas, "The canvas exists");
+		ok(sv_canvas.initialize(spaceJSON, 'trevor'), "Initialized the canvas");
+		sv_canvas.render();
+	});
+
+	module("Events");
    
 	test("serialization tests", function(){
 		var event = new SpacibloEvents.JoinSpaceRequest(32);
@@ -50,7 +62,6 @@ function runTests(){
 				ok(templateID == 2, "Template id: " + templateID);
 				ok(templateAssetID, "templateAssetID");
 				ok(geometry, "Geometry");
-				console.log(geometry);
 				ok(typeof geometry['children'] == 'undefined', "Cube should have no children: " + geometry['children']);
 				ok(geometry.mesh.positions.length == 54, "Cube should have 54 vertices: " + geometry.mesh.positions.length);
 				start();
@@ -70,9 +81,7 @@ function runTests(){
 				ok(geometry, "Geometry exists");
 				ok(typeof geometry['mesh'] == 'undefined', "Geometry has no mesh");
 				ok(geometry.children.length == 40, "Glass house should have 40 children.");
-				console.log(geometry.children[0].material);
 				ok(geometry.children[0].material.color[0] = 0.8, "The first material should have color: " + geometry.children[0].material.color[0]);
-				//ok(geometry.children[0].material.phong_specular == 96.078431, "The first material should have a phong specular of 96.078431: " + geometry.children[0].material.phong_specular);
 				start();
 			}
 		);
@@ -144,6 +153,6 @@ $(document).ready(runTests);
 <h2 id="qunit-banner"></h2>
 <h2 id="qunit-userAgent"></h2>
 <ol id="qunit-tests"></ol>
-<canvas id="canvas" width="400" height="150"></canvas>
+<canvas id="test-canvas" width="400" height="150"></canvas>
 
 {% endblock %}
