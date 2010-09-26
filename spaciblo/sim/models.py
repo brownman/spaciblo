@@ -83,7 +83,7 @@ class SpaceMember(HydrateModel):
 
 class SpaceMemberHandler:
 	model = SpaceMember
-	attributes = ['id', 'member', 'is_admin', 'is_editor']
+	attributes = ('id', 'member', 'is_admin', 'is_editor')
 
 class Asset(HydrateModel):
 	"""A chunk of typed data used by a template to instantiate an Object in a Space."""
@@ -111,7 +111,7 @@ class Asset(HydrateModel):
 
 class AssetHandler(BaseHandler):
 	model = Asset
-	fields = ('type', 'file', 'prepped_file', 'file')
+	fields = ('id', 'type', 'file', 'prepped_file', 'file')
 	allowed_methods = ('GET',)
 
 	@classmethod
@@ -132,6 +132,11 @@ class TemplateAsset(HydrateModel):
 	def __unicode__(self):
 		return "TemplateAsset: %s" % self.asset
 
+class TemplateAssetHandler(BaseHandler):
+	model = TemplateAsset
+	fields = ('id', 'template', 'asset', 'key')
+	allowed_methods = ('GET',)
+
 class TemplateSetting(HydrateModel):
 	"""A key/value tuple used to initialize an Object's state"""
 	key = models.CharField(max_length=1000, blank=False, null=False)
@@ -141,6 +146,8 @@ class TemplateSetting(HydrateModel):
 
 class TemplateSettingHandler(BaseHandler):
 	model = TemplateSetting
+	fields = ('id', 'key', 'value')
+	allowed_methods = ('GET',)
 
 class TemplateChild(HydrateModel):
 	"""A record of where a child template should be in relation to its parent."""
@@ -156,7 +163,7 @@ class TemplateChild(HydrateModel):
 
 class TemplateChildHandler(BaseHandler):
 	model = TemplateChild
-	fields = ['id', 'position', 'orientation', 'template', 'settings']
+	fields = ('id', 'position', 'orientation', 'template', 'settings')
 
 class Template(HydrateModel):
 	"""A set of information used to instantiate an Object in a Space."""
@@ -241,7 +248,7 @@ class TemplateHandler(BaseHandler):
 	allowed_methods = ('GET',)
 
 	@classmethod
-	def assets(cls, template): return [{'asset': ta.asset, 'key': ta.key} for ta in template.templateassets.all()]
+	def assets(cls, template): return [{'asset': ta.asset, 'id':ta.id, 'key': ta.key} for ta in template.templateassets.all()]
 
 class SimulatorPoolRegistration(models.Model):
 	"""A simulator pool address in this cluster"""

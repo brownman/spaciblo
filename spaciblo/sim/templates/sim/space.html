@@ -79,10 +79,14 @@ function handle_join_space(successful){
 	} else {
 	   console.log("Joined the space.");
 	}
-	space_client.addUserThing(Spaciblo.defaultPosition, Spaciblo.defaultOrientation);
-	sv_canvas.initialize(space_client.scene, space_client.username);
-	setupInput();
-	setInterval(tick, 25);
+	if(sv_canvas.initialize(space_client.sceneJson, space_client.username)){
+		space_client.scene = sv_canvas.scene;
+		setupInput();
+		setInterval(tick, 25);
+		//space_client.addUser(Spaciblo.defaultPosition, Spaciblo.defaultOrientation);
+	} else {
+		console.log("Could not initialize the renderer");
+	}
 }
 
 function setupInput(){

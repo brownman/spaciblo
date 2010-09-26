@@ -11,16 +11,16 @@ SpacibloInput = {}
 SpacibloInput.InputManager = function(_space_client){
 	var self = this;
 	self.space_client = _space_client;
-	self.user_thing = null;
+	self.user_node = null;
 	self.x_delta = 1;
 	self.y_delta = 1;
 	self.z_delta = 1;
 	self.y_rot_delta = Math.PI / 24.0;
 	self.getUserThing = function(){
-		if(self.user_thing == null){
-			self.user_thing = self.space_client.scene.thing.getUserThing(self.space_client.username);
+		if(self.user_node == null){
+			self.user_node = self.space_client.scene.thing.getUserThing(self.space_client.username);
 		}
-		return self.user_thing;
+		return self.user_node;
 	}
 	
 	self.relativeMove = function(x, y, z, userThing){

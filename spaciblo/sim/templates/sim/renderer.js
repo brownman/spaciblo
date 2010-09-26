@@ -38,19 +38,19 @@ SpacibloRenderer.AssetManager = function(imageCallback, templateCallback, geomet
 	}
 	
 	self.templateLoaded = function(jsonData){
-		var template = self.getTemplate(jsonData['attributes']['id']);
+		var template = self.getTemplate(jsonData['id']);
 		if(!template){
-			console.log("Received template data for an unloaded template: " + jsonData['attributes']['id']);
+			console.log("Received template data for an unloaded template: " + jsonData['id']);
 			return;
 		}
 		SpacibloModels.rehydrateModel(jsonData, template);
 		template.templateAssets = []
-		if(jsonData['templateassets']){
-			for(var i=0; i < jsonData['templateassets'].length; i++){
+		if(jsonData['assets']){
+			for(var i=0; i < jsonData['assets'].length; i++){
 				var templateAsset = new SpacibloModels.TemplateAsset();
-				SpacibloModels.rehydrateModel(jsonData['templateassets'][i], templateAsset);
+				SpacibloModels.rehydrateModel(jsonData['assets'][i], templateAsset);
 				templateAsset.asset = new SpacibloModels.Asset();
-				SpacibloModels.rehydrateModel(jsonData['templateassets'][i].asset, templateAsset.asset);
+				SpacibloModels.rehydrateModel(jsonData['assets'][i].asset, templateAsset.asset);
 				template.templateAssets[i] = templateAsset;
 			}
 		}
@@ -68,7 +68,7 @@ SpacibloRenderer.AssetManager = function(imageCallback, templateCallback, geomet
 
 	self.loadGeometry = function(templateID, templateAssetID, path){
 		if(self.geometries[templateAssetID]) return;
-		self.geometries[templateAssetID] = new SpacibloScene.Geometry();
+		self.geometries[templateAssetID] = {};
 		$.ajax({ 
 			type: "GET",
 			url: path,
@@ -84,7 +84,7 @@ SpacibloRenderer.AssetManager = function(imageCallback, templateCallback, geomet
 	}
 
 	self.geometryLoaded = function(jsonData, status, request){
-		self.geometries[request.templateAssetID].hydrate(jsonData);
+		self.geometries[request.templateAssetID] = jsonData;
 		if (self.geometryCallback) self.geometryCallback(request.templateID, request.templateAssetID, self.geometries[request.templateAssetID]);
 	}
 
@@ -176,14 +176,12 @@ SpacibloRenderer.parseArray = function(data){
 SpacibloRenderer.Canvas = function(_canvas_id){
 	var self = this;
 	self.canvas_id = _canvas_id;
-	self.scene = null;
 	self.username = null;
 	self.canvas = null;
 	self.gameRenderer = null;
-	self.gameScene = null;
+	self.scene = null;
 
-	self.initialize = function(scene, username) {
-		self.scene = scene;
+	self.initialize = function(sceneJson, username) {
 		self.username = username;
 		
 		self.canvas = document.getElementById(self.canvas_id);		
@@ -215,14 +213,14 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 		camera.setFovY(35);
 		camera.setRotX(-0.2);
 
-		self.gameScene = new GLGE.Scene();
-		self.gameScene.setAmbientColor("#555");
-		self.gameScene.setBackgroundColor("#55F");
-		self.gameScene.setCamera(camera);
-		self.gameScene.addLight(light1);
-		self.gameRenderer.setScene(self.gameScene);
+		self.scene = new GLGE.Scene();
+		self.scene.setAmbientColor("#555");
+		self.scene.setBackgroundColor("#55F");
+		self.scene.setCamera(camera);
+		self.scene.addLight(light1);
+		self.gameRenderer.setScene(self.scene);
 
-		self.requestTemplates(self.scene.thing);
+		//self.requestTemplates(self.scene.thing);
 
 	    return true;
 	}
@@ -235,11 +233,13 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 	}
 
 	self.render = function() {
+		/*
 		var userThing = self.scene.thing.getUserThing(self.username);
 		if(userThing){
-			self.gameScene.camera.setLoc(userThing.position.x, userThing.position.y, userThing.position.z);
-			self.gameScene.camera.setQuat(userThing.orientation.x, userThing.orientation.y, userThing.orientation.z, userThing.orientation.s);
+			self.scene.camera.setLoc(userThing.position.x, userThing.position.y, userThing.position.z);
+			self.scene.camera.setQuat(userThing.orientation.x, userThing.orientation.y, userThing.orientation.z, userThing.orientation.s);
 		}
+		*/
 		self.gameRenderer.render();
 	}
 
@@ -253,7 +253,8 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 	self.handleTemplateAsset = function(template){ }
 	
 	self.handleGeometryAsset = function(templateID, templateAssetID, geometry){
-
+		console.log('should load geo asset');
+		/*
 		var things = self.scene.thing.getThingsByTemplate(templateID);
 		for(var i=0; i < things.length; i++){
 			try {
@@ -262,11 +263,12 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 				renderable.init();
 				renderable.setLoc(renderable.thing.position.x, renderable.thing.position.y, renderable.thing.position.z);
 				renderable.setQuat(renderable.thing.orientation.x, renderable.thing.orientation.y, renderable.thing.orientation.z, renderable.thing.orientation.s);
-				self.gameScene.addChild(renderable);
+				self.scene.addChild(renderable);
 			} catch (err){
 				console.log(err);
 			} 
 		}
+		*/
 	}
 
 	self.assetManager = new SpacibloRenderer.AssetManager(self.handleImageAsset, self.handleTemplateAsset, self.handleGeometryAsset);

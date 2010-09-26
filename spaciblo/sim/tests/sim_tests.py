@@ -82,10 +82,8 @@ class SimTest(TransactionTestCase):
 		
 		sim_client.add_user()
 		event = event_handler.events.get(True, 10)
-		print event
 		self.failUnless(event.json_data)
 		event = event_handler2.events.get(True, 10)
-		print event
 		self.failUnless(event.json_data)
 
 		sim_client.close()

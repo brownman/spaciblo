@@ -41,7 +41,6 @@ Spaciblo.defaultPosition = "0,0,10";
 
 Spaciblo.WebSocketClient = function(_ws_port, _ws_host, _message_handler_function){
 	var self = this;
-	self.scene = null;
 	self.socket = null;
 	self.ws_port = _ws_port;
 	self.ws_host = _ws_host;
@@ -85,6 +84,7 @@ Spaciblo.SpaceClient = function(space_id, canvas) {
 	self.username = null;
 	self.finished_auth = false;
 	self.finished_join = false;
+	self.sceneJson = null;
 	self.scene = null;
 
 	// set these to receive callbacks on various events
@@ -105,8 +105,6 @@ Spaciblo.SpaceClient = function(space_id, canvas) {
 				self.user_message_handler(spaciblo_event.username, spaciblo_event.message);
 				break;
 			case 'AuthenticationResponse':
-				console.log(message);
-				console.log(spaciblo_event);
 				if(spaciblo_event.authenticated){
 					self.username = spaciblo_event.username;
 				} else {
@@ -117,14 +115,13 @@ Spaciblo.SpaceClient = function(space_id, canvas) {
 				self.authentication_handler(self.username != null);
 				break;
 			case 'JoinSpaceResponse':
-				console.log(message);
 				if(spaciblo_event.joined == true){
-					self.scene = JSON.parse(spaciblo_event.scene_doc);
+					self.sceneJson = JSON.parse(spaciblo_event.scene_doc);
 				}		
 				self.finished_join = true;
 				self.join_space_handler(spaciblo_event.joined);
 				break;
-			case 'ThingAdded':
+			case 'NodeAdded':
 				if(self.scene.thing.getThing(spaciblo_event.thing_id) != null) {
 					console.log("Tried to add a duplicate thing id: " + spaciblo_event.thing_id);
 					break;
@@ -174,10 +171,10 @@ Spaciblo.SpaceClient = function(space_id, canvas) {
 		self.sendEvent(new SpacibloEvents.JoinSpaceRequest(self.space_id));
 	}
 	
-	self.addUserThing = function(position, orientation) {
+	self.addUser = function(position, orientation) {
 		var userThing = self.scene.thing.getUserThing(self.username)
 		if(userThing == null){
-			self.sendEvent(new SpacibloEvents.AddUserThingRequest(self.space_id, self.username, position, orientation));
+			self.sendEvent(new SpacibloEvents.AddUserRequest(self.space_id, self.username, position, orientation));
 		}
 	}
 	
