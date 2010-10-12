@@ -84,6 +84,35 @@ GLGE.TRUE=1;
 */
 GLGE.FALSE=0;
 
+
+/**
+* @constant 
+* @description Enumeration for tri rendering
+*/
+GLGE.DRAW_TRIS=1;
+/**
+* @constant 
+* @description Enumeration for line rendering
+*/
+GLGE.DRAW_LINES=2;
+
+/**
+* @constant 
+* @description Enumeration for line loop rendering
+*/
+GLGE.DRAW_LINELOOPS=3;
+/**
+* @constant 
+* @description Enumeration for line loop rendering
+*/
+GLGE.DRAW_LINESTRIPS=4;
+/**
+* @constant 
+* @description Enumeration for point rendering
+*/
+GLGE.DRAW_POINTS=5;
+
+
 /**
 * @constant 
 * @description Enumeration for rendering using default shader
@@ -2920,29 +2949,29 @@ GLGE.Text.prototype.createPlane=function(gl){
 
 
 /**
-* @class Creates a new mesh/material to add to an object
-* @param {GLGE.Mesh} mesh optional mesh
-* @param {GLGE.Material} material optional material
+* @class Creates a new load for a multimaterial
 * @augments GLGE.QuickNotation
 * @augments GLGE.JSONLoader
 */
-GLGE.MultiMaterial=function(uid){
+GLGE.ObjectLod=function(uid){
 	GLGE.Assets.registerAsset(this,uid);
 }
-GLGE.augment(GLGE.QuickNotation,GLGE.MultiMaterial);
-GLGE.augment(GLGE.JSONLoader,GLGE.MultiMaterial);
-GLGE.MultiMaterial.prototype.mesh=null;
-GLGE.MultiMaterial.prototype.className="MultiMaterial";
-GLGE.MultiMaterial.prototype.material=null;
-GLGE.MultiMaterial.prototype.program=null;
-GLGE.MultiMaterial.prototype.GLShaderProgramPick=null;
-GLGE.MultiMaterial.prototype.GLShaderProgramShadow=null;
-GLGE.MultiMaterial.prototype.GLShaderProgram=null;
+GLGE.augment(GLGE.QuickNotation,GLGE.ObjectLod);
+GLGE.augment(GLGE.JSONLoader,GLGE.ObjectLod);
+GLGE.ObjectLod.prototype.mesh=null;
+GLGE.ObjectLod.prototype.className="ObjectLod";
+GLGE.ObjectLod.prototype.material=null;
+GLGE.ObjectLod.prototype.program=null;
+GLGE.ObjectLod.prototype.GLShaderProgramPick=null;
+GLGE.ObjectLod.prototype.GLShaderProgramShadow=null;
+GLGE.ObjectLod.prototype.GLShaderProgram=null;
+GLGE.ObjectLod.prototype.pixelSize=0;
+
 /**
 * sets the mesh
 * @param {GLGE.Mesh} mesh 
 */
-GLGE.MultiMaterial.prototype.setMesh=function(mesh){
+GLGE.ObjectLod.prototype.setMesh=function(mesh){
 	if(typeof mesh=="string")  mesh=GLGE.Assets.get(mesh);
 	
 	//remove event listener from current material
@@ -2964,23 +2993,23 @@ GLGE.MultiMaterial.prototype.setMesh=function(mesh){
 * gets the mesh
 * @returns {GLGE.Mesh}
 */
-GLGE.MultiMaterial.prototype.getMesh=function(){
+GLGE.ObjectLod.prototype.getMesh=function(){
 	return this.mesh;
 }
 /**
 * sets the material
 * @param {GLGE.Material} material 
 */
-GLGE.MultiMaterial.prototype.setMaterial=function(material){
+GLGE.ObjectLod.prototype.setMaterial=function(material){
 	if(typeof material=="string")  material=GLGE.Assets.get(material);
 	
 	//remove event listener from current material
 	if(this.material){
 		this.material.removeEventListener("shaderupdate",this.materialupdated);
 	}
-	var multiMaterial=this;
+	var ObjectLOD=this;
 	this.materialupdated=function(event){
-		multiMaterial.GLShaderProgram=null;
+		ObjectLOD.GLShaderProgram=null;
 	};
 	//set event listener for new material
 	material.addEventListener("shaderupdate",this.materialupdated);
@@ -2993,9 +3022,108 @@ GLGE.MultiMaterial.prototype.setMaterial=function(material){
 * gets the material
 * @returns {GLGE.Material}
 */
-GLGE.MultiMaterial.prototype.getMaterial=function(){
+GLGE.ObjectLod.prototype.getMaterial=function(){
 	return this.material;
 }
+
+/**
+* gets the pixelsize limit for this lod
+* @returns {number}
+*/
+GLGE.ObjectLod.prototype.getPixelSize=function(){
+	return this.pixelSize;
+}
+/**
+* sets the pixelsize limit for this lod
+* @returns {number}
+*/
+GLGE.ObjectLod.prototype.setPixelSize=function(value){
+	this.pixelSize=value;
+}
+
+
+/**
+* @class Creates a new mesh/material to add to an object
+* @augments GLGE.QuickNotation
+* @augments GLGE.JSONLoader
+*/
+GLGE.MultiMaterial=function(uid){
+	GLGE.Assets.registerAsset(this,uid);
+	this.lods=[new GLGE.ObjectLod]
+}
+GLGE.augment(GLGE.QuickNotation,GLGE.MultiMaterial);
+GLGE.augment(GLGE.JSONLoader,GLGE.MultiMaterial);
+GLGE.MultiMaterial.prototype.className="MultiMaterial";
+/**
+* sets the mesh
+* @param {GLGE.Mesh} mesh 
+*/
+GLGE.MultiMaterial.prototype.setMesh=function(mesh){
+	this.lods[0].setMesh(mesh);
+	return this;
+}
+/**
+* gets the mesh
+* @returns {GLGE.Mesh}
+*/
+GLGE.MultiMaterial.prototype.getMesh=function(){
+	return this.lods[0].getMesh();
+}
+/**
+* sets the material
+* @param {GLGE.Material} material 
+*/
+GLGE.MultiMaterial.prototype.setMaterial=function(material){
+	this.lods[0].setMaterial(material);
+	return this;
+}
+/**
+* gets the material
+* @returns {GLGE.Material}
+*/
+GLGE.MultiMaterial.prototype.getMaterial=function(){
+	return this.lods[0].getMaterial();
+}
+
+/**
+* returns the load for a given pixel size
+* @param {number} pixelsize the current pixel size of the object
+* @returns {GLGE.ObjectLod}
+*/
+GLGE.MultiMaterial.prototype.getLOD=function(pixelsize){
+	var currentSize=0;
+	var currentLOD=this.lods[0];
+	if(this.lods.length>1){
+		for(var i=0; i<this.lods.length;i++){
+			var size=this.lods[i].pixelSize
+			if(size>currentSize && size<pixelsize){
+				currentSize=size;
+				currentLOD=this.lods[i];
+			}
+		}
+	}
+	return currentLOD;
+}
+
+/**
+* adds a lod to this multimaterial
+* @param {GLGE.ObjectLod} lod the lod to add
+*/
+GLGE.MultiMaterial.prototype.addObjectLod=function(lod){
+	this.lods.push(lod);
+	return this;
+}
+
+/**
+* removes a lod to this multimaterial
+* @param {GLGE.ObjectLod} lod the lod to remove
+*/
+GLGE.MultiMaterial.prototype.removeObjectLod=function(lod){
+	var idx=this.lods.indexOf(lod);
+	if(idx) this.lods.splice(idx,1);
+	return this;
+}
+
 
 
 /**
@@ -3063,6 +3191,8 @@ GLGE.Object.prototype.instances=null;
 GLGE.Object.prototype.zTrans=false;
 GLGE.Object.prototype.id="";
 GLGE.Object.prototype.pickable=true;
+GLGE.Object.prototype.drawType=GLGE.DRAW_TRIS;
+GLGE.Object.prototype.pointSize=1;
 
 //shadow fragment
 var shfragStr=[];
@@ -3113,6 +3243,38 @@ pkfragStr.push("}");
 pkfragStr.push("}\n");
 GLGE.Object.prototype.pkfragStr=pkfragStr.join("");
 
+
+/**
+* Gets the objects draw type
+*/
+GLGE.Object.prototype.getDrawType=function(){
+	return this.drawType;
+}
+/**
+* Sets the objects draw type
+* @param {GLGE.number} value the draw type of this object
+*/
+GLGE.Object.prototype.setDrawType=function(value){
+	this.drawType=value;
+	return this;
+}
+
+/**
+* Gets the objects draw point size
+*/
+GLGE.Object.prototype.getPointSize=function(){
+	return this.pointSize;
+}
+/**
+* Sets the objects draw points size
+* @param {GLGE.number} value the point size to render
+*/
+GLGE.Object.prototype.setPointSize=function(value){
+	this.pointSize=parseFloat(value);
+	return this;
+}
+
+
 /**
 * Gets the objects skeleton
 * @returns GLGE.Group
@@ -3134,7 +3296,7 @@ GLGE.Object.prototype.getBoundingVolume=function(){
 	var multimaterials=this.multimaterials;
 	this.boundingVolume=new GLGE.BoundingVolume(0,0,0,0,0,0);
 	for(var i=0;i<multimaterials.length;i++){
-		this.boundingVolume.addBoundingVolume(multimaterials[i].mesh.getBoundingVolume());
+		this.boundingVolume.addBoundingVolume(multimaterials[i].lods[0].mesh.getBoundingVolume());
 	}
 	this.boundingVolume.applyMatrixScale(this.getModelMatrix());
 
@@ -3371,6 +3533,8 @@ GLGE.Object.prototype.GLGenerateShader=function(gl){
 	}
     
 	vertexStr.push("gl_Position = projection * pos;\n");
+	vertexStr.push("gl_PointSize="+(this.pointSize.toFixed(5))+";\n");
+	
 	vertexStr.push("eyevec = -pos.xyz;\n");
 	
 	vertexStr.push("t = normalize(tang);");
@@ -3662,21 +3826,50 @@ GLGE.Object.prototype.GLRender=function(gl,renderType,pickindex){
 		this.instances[n].caches={};
 	}
 	
+	//get pixel size of object
+	//TODO: only do this when it's needed!!!!
+	var camerapos=gl.scene.camera.getPosition();
+	var modelpos=this.getPosition();
+	var dist=GLGE.lengthVec3([camerapos.x-modelpos.x,camerapos.y-modelpos.y,camerapos.z-modelpos.z]);
+	dist=GLGE.mulMat4Vec4(gl.scene.camera.getProjectionMatrix(),[this.getBoundingVolume().getSphereRadius(),0,-dist,1]);
+	var pixelsize=dist[0]/dist[3]*gl.scene.renderer.canvas.width;
+
 	for(var i=0; i<this.multimaterials.length;i++){
-		if(this.multimaterials[i].mesh && this.multimaterials[i].mesh.loaded){
+		var lod=this.multimaterials[i].getLOD(pixelsize);
+
+		if(lod.mesh && lod.mesh.loaded){
 			if(renderType==GLGE.RENDER_NULL){
-				if(this.multimaterials[i].material) this.multimaterials[i].material.registerPasses(gl,this);
+				if(lod.material) lod.material.registerPasses(gl,this);
 				break;
 			}
 			if(!this.multimaterials[i].GLShaderProgram){
-				this.createShaders(this.multimaterials[i]);
+				this.createShaders(lod);
 			}else{
-				this.GLShaderProgramPick=this.multimaterials[i].GLShaderProgramPick;
-				this.GLShaderProgramShadow=this.multimaterials[i].GLShaderProgramShadow;
-				this.GLShaderProgram=this.multimaterials[i].GLShaderProgram;
+				this.GLShaderProgramPick=lod.GLShaderProgramPick;
+				this.GLShaderProgramShadow=lod.GLShaderProgramShadow;
+				this.GLShaderProgram=lod.GLShaderProgram;
 			}
-			this.mesh=this.multimaterials[i].mesh;
-			this.material=this.multimaterials[i].material;
+			this.mesh=lod.mesh;
+			this.material=lod.material;
+			
+			var drawType;
+			switch(this.drawType){
+				case GLGE.DRAW_LINES:
+					drawType=gl.LINES;
+					break;
+				case GLGE.DRAW_POINTS:
+					drawType=gl.POINTS;
+					break;
+				case GLGE.DRAW_LINELOOPS:
+					drawType=gl.LINE_LOOP;
+					break;
+				case GLGE.DRAW_LINESTRIPS:
+					drawType=gl.LINE_STRIP;
+					break;
+				default:
+					drawType=gl.TRIANGLES;
+					break;
+			}
  
 			switch(renderType){
 				case  GLGE.RENDER_DEFAULT:
@@ -3694,12 +3887,17 @@ GLGE.Object.prototype.GLRender=function(gl,renderType,pickindex){
 				case  GLGE.RENDER_PICK:
 					gl.useProgram(this.GLShaderProgramPick);
 					this.mesh.GLAttributes(gl,this.GLShaderProgramPick);
+					drawType=gl.TRIANGLES;
 					break;
 			}
 			//render the object
 			this.GLUniforms(gl,renderType,pickindex);
-			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.mesh.GLfaces);
-			gl.drawElements(gl.TRIANGLES, this.mesh.GLfaces.numItems, gl.UNSIGNED_SHORT, 0);
+			if(this.mesh.GLfaces){
+				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.mesh.GLfaces);
+				gl.drawElements(drawType, this.mesh.GLfaces.numItems, gl.UNSIGNED_SHORT, 0);
+			}else{
+				gl.drawArrays(drawType, 0, this.mesh.positions.length/3);
+			}
 				
 			var matrix=this.matrix;
 			var caches=this.caches;
@@ -3707,8 +3905,12 @@ GLGE.Object.prototype.GLRender=function(gl,renderType,pickindex){
 				this.matrix=this.instances[n].getModelMatrix();
 				this.caches=this.instances[n].caches;
 				this.GLUniforms(gl,renderType,pickindex);
-				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.mesh.GLfaces);
-				gl.drawElements(gl.TRIANGLES, this.mesh.GLfaces.numItems, gl.UNSIGNED_SHORT, 0);
+				if(this.mesh.GLfaces){
+					gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.mesh.GLfaces);
+					gl.drawElements(drawType, this.mesh.GLfaces.numItems, gl.UNSIGNED_SHORT, 0);
+				}else{
+					gl.drawArrays(drawType, 0, this.mesh.positions.length/3);
+				}
 			}
 
 			this.matrix=matrix;
@@ -3720,7 +3922,7 @@ GLGE.Object.prototype.GLRender=function(gl,renderType,pickindex){
 
 
 /**
-* @class Creates a new mesh to associate with a mesh
+* @class Creates a new mesh
 * @see GLGE.Object
 * @augments GLGE.QuickNotation
 * @augments GLGE.JSONLoader
@@ -3897,6 +4099,7 @@ GLGE.Mesh.prototype.setUV2=function(jsArray){
 * @param {Number[]} jsArray The 1 dimentional array of positions
 */
 GLGE.Mesh.prototype.setPositions=function(jsArray){
+	this.loaded=true;
 	this.positions=jsArray;
 	this.setBuffer("position",jsArray,3);
 	return this;
@@ -4010,7 +4213,6 @@ GLGE.Mesh.prototype.setFaces=function(jsArray){
 		}
 		this.setBuffer("tangent",tangentArray,3);
 	}
-	this.loaded=true;
 	return this;
 }
 /**
@@ -4048,6 +4250,10 @@ GLGE.Mesh.prototype.calcNormals=function(){
 	var normals=[];
 	var positions=this.positions;
 	var faces=this.faces.data;
+	if(!faces){
+		faces=[];
+		for(var i=0;i<positions.length/3;i++) faces[i]=i;
+	}
 	for(var i=0;i<faces.length;i=i+3){
 		var v1=[positions[faces[i]*3],positions[faces[i]*3+1],positions[faces[i]*3+2]];
 		var v2=[positions[faces[i+1]*3],positions[faces[i+1]*3+1],positions[faces[i+1]*3+2]];
@@ -4093,7 +4299,7 @@ GLGE.Mesh.prototype.GLAttributes=function(gl,shaderProgram){
 	//disable all the attribute initially arrays - do I really need this?
 	for(var i=0; i<8; i++) gl.disableVertexAttribArray(i);
 	//check if the faces have been updated
-	if(!this.faces.GL){
+	if(!this.faces.GL && this.faces.data && this.faces.data.length>0){
 		this.GLSetFaceBuffer(gl);
 		this.faces.GL=true;
 	}
@@ -4430,7 +4636,7 @@ GLGE.Light.prototype.createSpotBuffer=function(gl){
     try {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.bufferWidth, this.bufferHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
     } catch (e) {
-        var tex = new WebGLUnsignedByteArray(this.bufferWidth * this.bufferHeight * 4);
+        var tex = new Uint8Array(this.bufferWidth * this.bufferHeight * 4);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.bufferWidth, this.bufferHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, tex);
     }
     
@@ -5135,7 +5341,7 @@ GLGE.Scene.prototype.ray=function(origin,direction){
 		}
 		gl.flush();
 
-		var data = new WebGLUnsignedByteArray(8 * 1 * 4);
+		var data = new Uint8Array(8 * 1 * 4);
 		gl.readPixels(0, 0, 8, 1, gl.RGBA,gl.UNSIGNED_BYTE, data);
 		
 		
@@ -5779,7 +5985,7 @@ GLGE.TextureCamera.prototype.createFrameBuffer=function(gl){
 	if(!this.glTexture) this.glTexture=gl.createTexture();
 	gl.bindTexture(gl.TEXTURE_2D, this.glTexture);
 
-	var tex = new WebGLUnsignedByteArray(width*height*4);
+	var tex = new Uint8Array(width*height*4);
 	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width,height, 0, gl.RGBA, gl.UNSIGNED_BYTE, tex);
     
 	gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);

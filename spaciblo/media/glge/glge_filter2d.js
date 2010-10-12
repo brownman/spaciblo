@@ -69,7 +69,7 @@ GLGE.Filter2d.prototype.createBuffer=function(gl,width,height){
 	var texture = gl.createTexture();
 	gl.bindTexture(gl.TEXTURE_2D, texture);
 
-	var tex = new WebGLUnsignedByteArray(width*height*4);
+	var tex = new Uint8Array(width*height*4);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, tex);
     
 	gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
@@ -160,11 +160,16 @@ GLGE.Filter2d.prototype.getUniformType=function(name){
 	return this.uniforms[name].type;
 }
 
+GLGE.Filter2d.prototype.addPassFile=function(url){
+	var req = new XMLHttpRequest();
+	if(req) {
+		req.open("GET", url, false);
+		req.send("");
+		filter.addPass(req.responseText);
+	}	
+}
+
 GLGE.Filter2d.prototype.addPass=function(GLSL,width,height){
-
-	GLSL="float getDepth(sampler2D texture,vec2 texCoord){return dot(texture2D(texture,texCoord), vec4(0.000000059604644775390625,0.0000152587890625,0.00390625,1.0))*10000.0;}\n"+GLSL;
-
-
 	if(!this.passes) this.passes=[];
 	this.passes.push({GLSL:GLSL,height:height,width:width});
 }
@@ -276,13 +281,13 @@ GLGE.Filter2d.prototype.createPlane=function(gl){
 	//create the vertex positions
 	if(!this.posBuffer) this.posBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new WebGLFloatArray([1,1,0.5,-1,1,0.5,-1,-1,0.5,1,-1,0.5]), gl.STATIC_DRAW);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([1,1,0.5,-1,1,0.5,-1,-1,0.5,1,-1,0.5]), gl.STATIC_DRAW);
 	this.posBuffer.itemSize = 3;
 	this.posBuffer.numItems = 4;
 	//create the faces
 	if(!this.GLfaces) this.GLfaces = gl.createBuffer();
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.GLfaces);
-	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new WebGLUnsignedShortArray([0,1,2,2,3,0]), gl.STATIC_DRAW);
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0,1,2,2,3,0]), gl.STATIC_DRAW);
 	this.GLfaces.itemSize = 1;
 	this.GLfaces.numItems = 6;
 }
