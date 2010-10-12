@@ -38,8 +38,8 @@ Spaciblo.stringify = function(hydrateObj){
 }
 
 
-Spaciblo.defaultOrientation = "1,0,1,0";
-Spaciblo.defaultPosition = "0,0,10";
+Spaciblo.defaultRotation = [1.56, 0, 0];
+Spaciblo.defaultPosition = [0, 0, 0];
 
 Spaciblo.WebSocketClient = function(_ws_port, _ws_host, _message_handler_function){
 	var self = this;

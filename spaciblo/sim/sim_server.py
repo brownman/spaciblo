@@ -60,7 +60,7 @@ class WebSocketConnection:
 			if isinstance(event, events.AuthenticationRequest):
 				user = self.user_from_session_key(event.session_id)
 				if user.is_authenticated():
-					print "Authed: %s" % user.username
+					#print "Authed: %s" % user.username
 					self.user = user
 					response_event = events.AuthenticationResponse(True, user.username)
 				else:
@@ -128,7 +128,7 @@ class WebSocketConnection:
 	def finish(self):
 		"""Clean up the connection, remove this connection from the sim pool, and send a UserExited event to the simulator"""
 		self.disconnected = True
-		print self.user, 'disconnected'
+		#print self.user, 'disconnected'
 		self.server.ws_connections.remove(self)
 		# alert the space (if any) that this user has exited only if there are no other connections for that user and space
 		if self.space_id is None: return

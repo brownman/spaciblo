@@ -138,6 +138,10 @@ function handle_command_input(){
 	if(value == "/close"){
 		space_client.close();
 		return;
+	} else if(value == "/loc"){
+		var camera = space_client.scene.camera;
+		var mess = '[' + camera.locX + ', ' + camera.locY + ', ' + camera.locZ + '] [' + camera.rotX + ', ' + camera.rotY + ', ' + camera.rotZ + ']';
+		user_message_handler('system', mess);
 	} else if (value == "/scene"){
 	   console.dir(space_client.scene);
 	} else if(value.length > 0){
@@ -162,13 +166,13 @@ function mouselook(){
 		}
 
 		var inc = (mousepos.y - (canvasElement.offsetHeight / 2)) / 500;
-		var trans = GLGE.mulMat4Vec4(camera.getRotMatrix(),[0,0,-1,1]);
+		var trans = GLGE.mulMat4Vec4(camera.getRotMatrix(), [0,0,-1,1]);
 		var mag = Math.pow(Math.pow(trans[0],2) + Math.pow(trans[1],2), 0.5);
 
 		trans[0] = trans[0] / mag;
 		trans[1] = trans[1] / mag;
 
-		camera.setRotX(1.56-trans[1]*inc);
+		camera.setRotX(1.56 - trans[1]*inc);
 		camera.setRotZ(-trans[0]*inc);
 		var width = canvasElement.offsetWidth;
 		if(mousepos.x < width*0.3){
