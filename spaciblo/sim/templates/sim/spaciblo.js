@@ -16,6 +16,8 @@ String.prototype.endsWith = function(str){ return (this.match(str+"$")==str) }
 
 {% include "sim/input.js" %}
 
+{% include "sim/scene.js" %}
+
 {% include "sim/renderer.js" %}
 
 //
@@ -179,7 +181,7 @@ Spaciblo.SpaceClient = function(space_id, canvas) {
 	}
 	
 	self.sendUserMessage = function(message){
-		self.sendEvent(new SpacibloEvents.UserMessage(self.space_id, self.username, message));
+		self.sendEvent(new SpacibloEvents.UserMessage(self.username, self.space_id, message));
 	}
 	
 	self.close = function() {

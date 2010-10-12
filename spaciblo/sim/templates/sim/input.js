@@ -18,7 +18,7 @@ SpacibloInput.InputManager = function(_space_client){
 	self.y_rot_delta = Math.PI / 24.0;
 	self.getUserThing = function(){
 		if(self.user_node == null){
-			self.user_node = self.space_client.scene.thing.getUserThing(self.space_client.username);
+			self.user_node = self.space_client.scene.getUserGroup(self.space_client.username);
 		}
 		return self.user_node;
 	}

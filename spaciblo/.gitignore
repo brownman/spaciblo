@@ -1,5 +1,6 @@
 media/asset
 media/prepped
+media/glge/examples
 local_settings.py
 tapps
 pip-log.txt

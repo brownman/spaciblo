@@ -73,11 +73,11 @@ class Simulator:
 				user_node = self.scene.get_user(event.username)
 				if user_node:
 					self.scene.remove_node(user_node)
-					self.pool.sim_server.send_space_event(self.space.uid, NodeRemoved(self.space.uid, node.uid))
+					self.pool.sim_server.send_space_event(self.space.id, NodeRemoved(self.space.id, node.uid))
 
 			elif event.event_name() == 'UserMessage':
 				if event.connection.user != None and event.username == event.connection.user.username:
-					self.pool.sim_server.send_space_event(self.space.id, event)
+					self.pool.sim_server.send_space_event(self.space.id, UserMessage(self.space.id, event.username, event.message))
 
 			elif event.event_name() == 'UserMoveRequest':
 				if event.connection.user != None and event.username == event.connection.user.username:

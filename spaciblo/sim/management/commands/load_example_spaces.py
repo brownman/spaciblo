@@ -72,13 +72,9 @@ class Command(NoArgsCommand):
 				continue
 			template = Template.objects.get(name=template_name)
 			obj = Object()
-			obj.locX = float(thing_row[1])
-			obj.locY = float(thing_row[2])
-			obj.locZ = float(thing_row[3])
-			obj.quatX = float(thing_row[4])
-			obj.quatY = float(thing_row[5])
-			obj.quatZ = float(thing_row[6])
-			obj.quatW = float(thing_row[7])
+			obj.setLoc([float(thing_row[1]), float(thing_row[2]), float(thing_row[3])])
+			obj.setQuat([float(thing_row[4]), float(thing_row[5]), float(thing_row[6]), float(thing_row[7])])
+			obj.setScale([float(thing_row[8]), float(thing_row[9]), float(thing_row[10])]) 
 			#TODO hook the template data and ID
 			scene.children.append(obj)
 		space.scene_document = to_json(scene)

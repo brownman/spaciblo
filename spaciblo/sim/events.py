@@ -96,6 +96,8 @@ class UserMessage(SimEvent):
 		self.space_id = space_id
 		self.username = username
 		self.message = message
+	def __repr__(self):
+		return 'UserMessage: %s, %s, %s' % (self.space_id, self.username, self.message)
 
 class Heartbeat(SimEvent):
 	"""A heartbeat event, used to test that the connection is alive and the remote client is not hung."""

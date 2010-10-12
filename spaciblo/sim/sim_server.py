@@ -36,12 +36,11 @@ class WebSocketConnection:
 				event = self.outgoing_events.get(block=True, timeout=5)
 			except Queue.Empty:
 				continue
-			#print 'Outgoing from queue: ', to_json(event)
 			try:
 				self.client_socket.send('\x00')
 				self.client_socket.send(event.to_json())
 				self.client_socket.send('\xff')
-			except (IOError):
+			except IOError:
 				#traceback.print_exc()
 				pass
 		

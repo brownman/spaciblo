@@ -164,6 +164,28 @@ class Placeable(SceneBase):
 		self.mode = P_EULER
 		#self.lookAt = None
 
+	@property
+	def quat(self): return [self.quatX, self.quatY, self.quatZ, self.quatW]
+
+	@property
+	def loc(self): return [self.locX, self.locY, self.locZ]
+
+	def setQuat(self, vals):
+		self.quatW = vals[0]
+		self.quatX = vals[1]
+		self.quatY = vals[2]
+		self.quatZ = vals[3]
+		
+	def setLoc(self, vals):
+		self.locX = vals[0]
+		self.locY = vals[1]
+		self.locZ = vals[2]
+
+	def setScale(self, vals):
+		self.scaleX = vals[0]
+		self.scaleY = vals[1]
+		self.scaleZ = vals[2]
+
 class BezTriple(SceneBase):
 	def __init__(self):
 		SceneBase.__init__(self)
@@ -357,9 +379,10 @@ class MultiMaterial(SceneBase):
 		self.material = Material().populate(data['material'])
 		return self
 
-class Object(SceneBase):
+class Object(Placeable, Animatable):
 	def __init__(self):
-		SceneBase.__init__(self)
+		Placeable.__init__(self)
+		Animatable.__init__(self)
 		self.mesh = None
 		self.transformMatrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]
 		self.material = None
