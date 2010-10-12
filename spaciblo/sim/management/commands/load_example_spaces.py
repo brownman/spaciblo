@@ -3,6 +3,7 @@ import csv
 import ConfigParser
 import tarfile
 import tempfile
+import simplejson
 
 from django.template.defaultfilters import slugify
 from django.core.management.base import NoArgsCommand, CommandError
@@ -71,12 +72,26 @@ class Command(NoArgsCommand):
 				print 'things.csv references an unknown template: %s' % template_name
 				continue
 			template = Template.objects.get(name=template_name)
-			obj = Object()
-			obj.setLoc([float(thing_row[1]), float(thing_row[2]), float(thing_row[3])])
-			obj.setQuat([float(thing_row[4]), float(thing_row[5]), float(thing_row[6]), float(thing_row[7])])
-			obj.setScale([float(thing_row[8]), float(thing_row[9]), float(thing_row[10])]) 
+			
+			json = None
+			for asset in template.assets.all():
+				if asset.type == 'geometry' and asset.prepped_file:
+					json = simplejson.loads(asset.prepped_file.read())
+
+			if json:
+				if json.has_key('children'):
+					node = Group()
+				else:
+					node = Object()
+				node.populate(json)
+			else:
+				node = Object()
+			print node
+			node.setLoc([float(thing_row[1]), float(thing_row[2]), float(thing_row[3])])
+			node.setQuat([float(thing_row[4]), float(thing_row[5]), float(thing_row[6]), float(thing_row[7])])
+			node.setScale([float(thing_row[8]), float(thing_row[9]), float(thing_row[10])]) 
 			#TODO hook the template data and ID
-			scene.children.append(obj)
+			scene.children.append(node)
 		space.scene_document = to_json(scene)
 		space.save()
 		return space

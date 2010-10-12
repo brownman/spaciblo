@@ -69,7 +69,7 @@ class Simulator:
 					print "Already have a user with id", event.username
 
 			elif event.event_name() == 'UserExited':
-				print 'User exited', event.username
+				#print 'User exited', event.username
 				user_node = self.scene.get_user(event.username)
 				if user_node:
 					self.scene.remove_node(user_node)

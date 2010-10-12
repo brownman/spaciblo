@@ -115,6 +115,11 @@ SpacibloRenderer.AssetManager = function(imageCallback, templateCallback, geomet
 	}
 }
 
+SpacibloRenderer.DefaultMaterial = new GLGE.Material(GLGE.Assets.createUUID());
+SpacibloRenderer.DefaultMaterial.setColor("chocolate");
+SpacibloRenderer.DefaultMaterial.setSpecular(1);
+SpacibloRenderer.DefaultMaterial.setShininess(20);
+
 // 
 //
 //
@@ -130,24 +135,34 @@ SpacibloRenderer.Renderable = function(canvas, uid){
 GLGE.augment(GLGE.Group,SpacibloRenderer.Renderable);
 
 SpacibloRenderer.Renderable.prototype.init = function(nodeJson){
-	
-	var material = new GLGE.Material(GLGE.Assets.createUUID());
-	material.setColor("green");
-	material.setSpecular(1);
-	material.setShininess(20);
 
-	var mesh = new GLGE.Mesh(GLGE.Assets.createUUID());
-	mesh.setPositions(SpacibloRenderer.parseArray("-4.999998,5.000002,0.000000,5.000000,5.000000,0.000000,5.000002,4.999998,3.000000,-4.999998,5.000002,0.000000,5.000002,4.999998,3.000000,-5.000000,5.000000,3.000000,-5.000000,-4.999999,0.000000,-4.999998,5.000002,0.000000,-5.000000,5.000000,3.000000,-5.000000,-4.999999,0.000000,-5.000000,5.000000,3.000000,-5.000002,-4.999998,3.000000,5.000000,-5.000000,0.000000,-5.000000,-4.999999,0.000000,4.999997,-5.000003,3.000000,-5.000000,-4.999999,0.000000,-5.000002,-4.999998,3.000000,4.999997,-5.000003,3.000000,5.000000,5.000000,0.000000,5.000000,-5.000000,0.000000,5.000002,4.999998,3.000000,5.000000,-5.000000,0.000000,4.999997,-5.000003,3.000000,5.000002,4.999998,3.000000,5.000002,4.999998,3.000000,4.999997,-5.000003,3.000000,-5.000000,5.000000,3.000000,4.999997,-5.000003,3.000000,-5.000002,-4.999998,3.000000,-5.000000,5.000000,3.000000,5.000000,5.000000,0.000000,-4.999998,5.000002,0.000000,-5.000000,-4.999999,0.000000,5.000000,5.000000,0.000000,-5.000000,-4.999999,0.000000,5.000000,-5.000000,0.000000"));
-	mesh.setNormals(SpacibloRenderer.parseArray("-0.000000,-1.000000,-0.000001,-0.000000,-1.000000,-0.000001,-0.000000,-1.000000,-0.000001,-0.000000,-1.000000,-0.000001,-0.000000,-1.000000,-0.000001,-0.000000,-1.000000,-0.000001,1.000000,-0.000000,0.000000,1.000000,-0.000000,0.000000,1.000000,-0.000000,0.000000,1.000000,-0.000000,0.000000,1.000000,-0.000000,0.000000,1.000000,-0.000000,0.000000,0.000000,1.000000,0.000001,0.000000,1.000000,0.000001,0.000000,1.000000,0.000001,0.000000,1.000000,-0.000000,0.000000,1.000000,-0.000000,0.000000,1.000000,-0.000000,-1.000000,0.000000,0.000001,-1.000000,0.000000,0.000001,-1.000000,0.000000,0.000001,-1.000000,0.000001,-0.000001,-1.000000,0.000001,-0.000001,-1.000000,0.000001,-0.000001,0.000000,0.000000,-1.000000,0.000000,0.000000,-1.000000,0.000000,0.000000,-1.000000,0.000000,-0.000000,-1.000000,0.000000,-0.000000,-1.000000,0.000000,-0.000000,-1.000000,-0.000000,0.000000,1.000000,-0.000000,0.000000,1.000000,-0.000000,0.000000,1.000000,0.000000,-0.000000,1.000000,0.000000,-0.000000,1.000000,0.000000,-0.000000,1.000000"));
-	mesh.setUV(SpacibloRenderer.parseArray("0.000000,0.000000,1.000000,0.000000,1.000000,1.000000,0.000000,0.000000,1.000000,1.000000,0.000000,1.000000,0.000000,0.000000,1.000000,0.000000,1.000000,1.000000,0.000000,0.000000,1.000000,1.000000,0.000000,1.000000,0.000000,0.000000,1.000000,0.000000,0.000000,1.000000,1.000000,0.000000,1.000000,1.000000,0.000000,1.000000,0.000000,0.000000,1.000000,0.000000,0.000000,1.000000,1.000000,0.000000,1.000000,1.000000,0.000000,1.000000,0.000000,0.000000,1.000000,0.000000,0.000000,1.000000,1.000000,0.000000,1.000000,1.000000,0.000000,1.000000,0.000000,0.000000,1.000000,0.000000,1.000000,1.000000,0.000000,0.000000,1.000000,1.000000,0.000000,1.000000"));
-	mesh.setFaces(SpacibloRenderer.parseArray("0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35"));
+	this.setLoc(nodeJson.locX, nodeJson.locY, nodeJson.locZ);
+	this.setScale(nodeJson.scaleX, nodeJson.scaleY, nodeJson.scaleZ);
 
-	var obj = new GLGE.Object(GLGE.Assets.createUUID());
-	obj.setMesh(mesh);
-	obj.setMaterial(material);
-	obj.setLoc(nodeJson.locX, nodeJson.locY, nodeJson.locZ);
-	obj.setScale(nodeJson.scaleX, nodeJson.scaleY, nodeJson.scaleZ);
-	this.addObject(obj);
+	if(nodeJson.mesh != null){
+		var obj = new GLGE.Object(GLGE.Assets.createUUID());
+		if(nodeJson.material){
+			var material = new GLGE.Material(GLGE.Assets.createUUID());
+			material.setColor({r:nodeJson.material.specColor[0], g:nodeJson.material.specColor[1], b:nodeJson.material.specColor[2]});
+			material.setSpecular(nodeJson.material.specular);
+			material.setShininess(nodeJson.material.shine);
+			material.setAlpha(nodeJson.material.alpha);
+			obj.setMaterial(material);
+		} else {
+			obj.setMaterial(SpacibloRenderer.DefaultMaterial);
+		}
+
+		var mesh = new GLGE.Mesh(GLGE.Assets.createUUID());
+		mesh.setPositions(nodeJson.mesh.positions);
+		mesh.setFaces(nodeJson.mesh.faces);
+		if(nodeJson.mesh.normals && nodeJson.mesh.normals.length > 0) mesh.setNormals(nodeJson.mesh.normals);
+		if(nodeJson.mesh.UV && nodeJson.mesh.UV.length > 0) mesh.setUV(nodeJson.mesh.UV);
+		obj.setMesh(mesh);
+
+		this.addChild(obj);
+	} else {
+		console.log("No mesh");
+	}
 
 	if(typeof nodeJson.children == "undefined") return;
 	for(var i=0; i < nodeJson.children.length; i++){
