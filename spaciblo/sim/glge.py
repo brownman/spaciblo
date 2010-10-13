@@ -143,10 +143,10 @@ class Placeable(SceneBase):
 		self.dLocX = 0
 		self.dLocY = 0
 		self.dLocZ = 0
+		self.quatW = 1
 		self.quatX = 0
 		self.quatY = 0
 		self.quatZ = 0
-		self.quatW = 0
 		self.rotX = 0
 		self.rotY = 0
 		self.rotZ = 0
@@ -161,7 +161,7 @@ class Placeable(SceneBase):
 		self.dScaleZ = 0
 		self.matrix = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]
 		self.rotOrder = ROT_XYZ
-		self.mode = P_EULER
+		self.mode = P_QUAT
 		#self.lookAt = None
 
 	@property
@@ -170,18 +170,25 @@ class Placeable(SceneBase):
 	@property
 	def loc(self): return [self.locX, self.locY, self.locZ]
 
-	def setQuat(self, vals):
-		self.quatW = vals[0]
-		self.quatX = vals[1]
-		self.quatY = vals[2]
-		self.quatZ = vals[3]
+	def set_rot(self, vals):
+		self.mode = P_EULER
+		self.rotX = vals[0]
+		self.rotY = vals[1]
+		self.rotZ = vals[2]
+
+	def set_quat(self, vals):
+		self.mode = P_QUAT
+		self.quatX = vals[0]
+		self.quatY = vals[1]
+		self.quatZ = vals[2]
+		self.quatW = vals[3]
 		
-	def setLoc(self, vals):
+	def set_loc(self, vals):
 		self.locX = vals[0]
 		self.locY = vals[1]
 		self.locZ = vals[2]
 
-	def setScale(self, vals):
+	def set_scale(self, vals):
 		self.scaleX = vals[0]
 		self.scaleY = vals[1]
 		self.scaleZ = vals[2]
@@ -288,6 +295,16 @@ class Group(Animatable, Placeable):
 			if not isinstance(child, Group): continue
 			node = child.get_user(username)
 			if node: return node
+		return None
+
+	def remove_node(self, uid):
+		for child in self.children:
+			if child.uid == uid:
+				self.children.remove(child)
+				return child
+			if hasattr(child, 'remove_node'):
+				node = child.remove_node(uid)
+				if node: return node
 		return None
 
 	def get_node(self, uid):

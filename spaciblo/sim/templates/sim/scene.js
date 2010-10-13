@@ -14,3 +14,7 @@ GLGE.Group.prototype.getUserGroup = function(username){
 }
 
 GLGE.Scene.prototype.getUserGroup = GLGE.Group.prototype.getUserGroup;
+
+GLGE.Scene.prototype.getNode = function(uid){
+	return GLGE.Assets.get(uid);
+}

@@ -39,7 +39,7 @@ Spaciblo.stringify = function(hydrateObj){
 
 
 Spaciblo.defaultRotation = [1.56, 0, 0];
-Spaciblo.defaultPosition = [0, 0, 0];
+Spaciblo.defaultPosition = [0.1, 0.1, 0.1];
 
 Spaciblo.WebSocketClient = function(_ws_port, _ws_host, _message_handler_function){
 	var self = this;
@@ -124,27 +124,27 @@ Spaciblo.SpaceClient = function(space_id, canvas) {
 				self.join_space_handler(spaciblo_event.joined);
 				break;
 			case 'NodeAdded':
-				if(self.scene.thing.getThing(spaciblo_event.thing_id) != null) {
-					console.log("Tried to add a duplicate thing id: " + spaciblo_event.thing_id);
+				var nodeJson = JSON.parse(spaciblo_event.json_data);
+				if(self.scene.getNode(nodeJson.uid)){
+					console.log("Tried to add a duplicate node: " + nodeJson.uid);
 					break;
 				}
-				var thing = new SpacibloScene.Thing(spaciblo_event.thing_id, new SpacibloScene.Position(spaciblo_event.position), new SpacibloScene.Orientation(spaciblo_event.orientation), parseFloat(spaciblo_event.scale));
-				thing.parent = self.scene.thing.getThing(spaciblo_event.parent_id);
-				thing.parent.children[thing.parent.children.length] = thing;
-				if(spaciblo_event.username){
-					var user = self.scene.thing.getUser(spaciblo_event.username);
-					if(user == null){
-						user = new SpacibloScene.User(spaciblo_event.username);
-					}
-					thing.user = user;
-				}
-				self.suggest_render_handler();
+				var renderable = new SpacibloRenderer.Renderable(self, nodeJson.uid);
+				renderable.init(nodeJson);
+				if(nodeJson.username) renderable.username = nodeJson.username;
+				self.scene.addChild(renderable);
 				break;
-			case 'ThingMoved':
-				var thing = self.scene.thing.getThing(spaciblo_event.thing_id);
-				thing.position.hydrate(spaciblo_event.position);
-				thing.orientation.hydrate(spaciblo_event.orientation);
-				self.suggest_render_handler();
+			case 'PlaceableMoved':
+				console.log('TODO placeable moved');
+				console.log(spaciblo_event);
+				var node = self.scene.getNode(spaciblo_event.uid);
+				if(node){
+					node.setLoc(spaciblo_event.position[0], spaciblo_event.position[1], spaciblo_event.position[2]);
+					node.setQuat(spaciblo_event.orientation[0], spaciblo_event.orientation[1], spaciblo_event.orientation[2], spaciblo_event.orientation[3]);
+					console.log(node);
+				} else {
+					console.log("Tried to move an unknown node: " + spaciblo_event.uid);
+				}
 				break;
 			default:
 				console.log("Received an unknown event: " + message);
@@ -174,10 +174,8 @@ Spaciblo.SpaceClient = function(space_id, canvas) {
 	}
 	
 	self.addUser = function(position, orientation) {
-		var userThing = self.scene.thing.getUserThing(self.username)
-		if(userThing == null){
-			self.sendEvent(new SpacibloEvents.AddUserRequest(self.space_id, self.username, position, orientation));
-		}
+		if(self.scene.getUserGroup(self.username) != null) return;
+		self.sendEvent(new SpacibloEvents.AddUserRequest(self.username, position, self.space_id, orientation));
 	}
 	
 	self.sendUserMessage = function(message){
@@ -189,7 +187,7 @@ Spaciblo.SpaceClient = function(space_id, canvas) {
 	}
 	
 	self.__open = function(){
-		console.log('Space client opened');
+		//console.log('Space client opened');
 		self.open_handler();
 	}
 	self.__close = function(){

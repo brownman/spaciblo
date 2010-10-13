@@ -93,7 +93,7 @@ function handle_join_space(successful){
 		space_client.scene = sv_canvas.scene;
 		setupInput();
 		setInterval(tick, 25);
-		//space_client.addUser(Spaciblo.defaultPosition, Spaciblo.defaultOrientation);
+		space_client.addUser(Spaciblo.defaultPosition, Spaciblo.defaultOrientation);
 	} else {
 		console.log("Could not initialize the renderer");
 	}

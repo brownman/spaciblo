@@ -55,7 +55,9 @@ class UserExited(SimEvent):
 
 class AddUserRequest(SimEvent):
 	"""A space client may send an AddUserRequest if they require a body in a space."""
-	def __init__(self, space_id=None, username=None, position="0,0,0", orientation="1,0,0,0"):
+	def __init__(self, space_id=None, username=None, position=None, orientation=None):
+		if not position: position = [0,0,0]
+		if not orientation: orientation = [0,0,0,1]
 		self.space_id = space_id
 		self.username = username
 		self.position = position
@@ -63,7 +65,9 @@ class AddUserRequest(SimEvent):
 
 class UserMoveRequest(SimEvent):
 	"""A space client sends this to indicate that the user has requested a motion."""
-	def __init__(self, space_id=None, username=None, position="0,0,0", orientation="1,0,0,0"):
+	def __init__(self, space_id=None, username=None, position=None, orientation=None):
+		if not position: position = [0,0,0]
+		if not orientation: orientation = [0,0,0,1]
 		self.space_id = space_id
 		self.username = username
 		self.position = position
@@ -71,7 +75,9 @@ class UserMoveRequest(SimEvent):
 
 class PlaceableMoved(SimEvent):
 	"""The simulator generates these to indicate that a Placeable is in motion."""
-	def __init__(self, space_id=None, uid=None, position="0,0,0", orientation="1,0,0,0"):
+	def __init__(self, space_id=None, uid=None, position=None, orientation=None):
+		if not position: position = [0,0,0]
+		if not orientation: orientation = [0,0,0,1]
 		self.space_id = space_id
 		self.uid = uid;
 		self.position = position

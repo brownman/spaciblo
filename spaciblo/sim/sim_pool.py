@@ -62,8 +62,9 @@ class Simulator:
 				if user_node is None:
 					user_node = Group()
 					user_node.username = event.username
-					# Position().hydrate(event.position), Orientation().hydrate(event.orientation))
-					print 'Should set the user position'
+					user_node.set_loc(event.position)
+					user_node.set_quat(event.orientation)
+					self.scene.children.append(user_node)
 					self.pool.sim_server.send_space_event(self.space.id, NodeAdded(self.space.id, self.scene.uid, to_json(user_node)))
 				else:
 					print "Already have a user with id", event.username
@@ -72,8 +73,8 @@ class Simulator:
 				#print 'User exited', event.username
 				user_node = self.scene.get_user(event.username)
 				if user_node:
-					self.scene.remove_node(user_node)
-					self.pool.sim_server.send_space_event(self.space.id, NodeRemoved(self.space.id, node.uid))
+					self.scene.remove_node(user_node.uid)
+					self.pool.sim_server.send_space_event(self.space.id, NodeRemoved(self.space.id, user_node.uid))
 
 			elif event.event_name() == 'UserMessage':
 				if event.connection.user != None and event.username == event.connection.user.username:
@@ -85,10 +86,9 @@ class Simulator:
 					if user_node == None:
 						print "No such user node: %s" % event.username
 					else:
-						print 'Need to move the user node'
-						#user_node.position = event.position
-						#user_thing.orientation = event.orientation
-						response = PlaceableMoved(self.space.id, user_node.uid, user_node.position, user_node.orientation)
+						user_node.set_loc(event.position)
+						user_node.set_quat(event.orientation)
+						response = PlaceableMoved(self.space.id, user_node.uid, user_node.loc, user_node.quat)
 						self.pool.sim_server.send_space_event(self.space.id, response)
 			else:
 				print "Unknown event: %s" % event.event_name()

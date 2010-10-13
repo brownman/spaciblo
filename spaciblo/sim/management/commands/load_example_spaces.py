@@ -87,9 +87,9 @@ class Command(NoArgsCommand):
 			else:
 				node = Object()
 			print node
-			node.setLoc([float(thing_row[1]), float(thing_row[2]), float(thing_row[3])])
-			node.setQuat([float(thing_row[4]), float(thing_row[5]), float(thing_row[6]), float(thing_row[7])])
-			node.setScale([float(thing_row[8]), float(thing_row[9]), float(thing_row[10])]) 
+			node.set_loc([float(thing_row[1]), float(thing_row[2]), float(thing_row[3])])
+			node.set_quat([float(thing_row[4]), float(thing_row[5]), float(thing_row[6]), float(thing_row[7])])
+			node.set_scale([float(thing_row[8]), float(thing_row[9]), float(thing_row[10])]) 
 			#TODO hook the template data and ID
 			scene.children.append(node)
 		space.scene_document = to_json(scene)

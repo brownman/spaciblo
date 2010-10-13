@@ -137,6 +137,11 @@ GLGE.augment(GLGE.Group,SpacibloRenderer.Renderable);
 SpacibloRenderer.Renderable.prototype.init = function(nodeJson){
 
 	this.setLoc(nodeJson.locX, nodeJson.locY, nodeJson.locZ);
+	if(nodeJson.mode == GLGE.P_EULER){
+		this.setRot(nodeJson.rotX, nodeJson.rotY, nodeJson.rotZ);
+	} else if(nodeJson.mode == GLGE.P_QUAT){
+		this.setQuat(nodeJson.quatX, nodeJson.quatY, nodeJson.quatZ, nodeJson.quatW);
+	}
 	this.setScale(nodeJson.scaleX, nodeJson.scaleY, nodeJson.scaleZ);
 
 	if(nodeJson.mesh != null){
@@ -166,7 +171,7 @@ SpacibloRenderer.Renderable.prototype.init = function(nodeJson){
 
 	if(typeof nodeJson.children == "undefined") return;
 	for(var i=0; i < nodeJson.children.length; i++){
-		var childRenderable = new SpacibloRenderer.Renderable(self.canvas, GLGE.Assets.createUUID());
+		var childRenderable = new SpacibloRenderer.Renderable(self.canvas, nodeJson.children[i].uid);
 		childRenderable.init(nodeJson.children[i]);
 		this.addChild(childRenderable);
 	}
@@ -219,17 +224,14 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 		light2.setAttenuationConstant(1.5);
 		light2.setType(GLGE.L_POINT);
 
-		var userGroup = new GLGE.Group(GLGE.Assets.createUUID());
-		userGroup.username = self.username;
-      
 		self.scene = new GLGE.Scene();
 		self.scene.obj_name = "I am the scene";
 		self.scene.setAmbientColor("#555");
 		self.scene.setBackgroundColor("#55F");
 		self.scene.addLight(light1);
-		self.scene.addChild(userGroup);
+
 		for(var i=0; i < sceneJson.children.length; i++){
-			var renderable = new SpacibloRenderer.Renderable(self, GLGE.Assets.createUUID());
+			var renderable = new SpacibloRenderer.Renderable(self, sceneJson.children[i].uid);
 			renderable.init(sceneJson.children[i]);
 			self.scene.addChild(renderable);
 		}
