@@ -136,20 +136,25 @@ GLGE.augment(GLGE.Group,SpacibloRenderer.Renderable);
 
 SpacibloRenderer.Renderable.prototype.init = function(nodeJson){
 
+	this.name = nodeJson.name;
+
 	this.setLoc(nodeJson.locX, nodeJson.locY, nodeJson.locZ);
+	this.setScale(nodeJson.scaleX, nodeJson.scaleY, nodeJson.scaleZ);
+
 	if(nodeJson.mode == GLGE.P_EULER){
 		this.setRot(nodeJson.rotX, nodeJson.rotY, nodeJson.rotZ);
 	} else if(nodeJson.mode == GLGE.P_QUAT){
 		this.setQuat(nodeJson.quatX, nodeJson.quatY, nodeJson.quatZ, nodeJson.quatW);
+	} else {
+		console.log('unknown rot:', nodeJson.mode);
 	}
-	this.setScale(nodeJson.scaleX, nodeJson.scaleY, nodeJson.scaleZ);
-
+	
 	if(nodeJson.mesh != null){
-		var obj = new GLGE.Object(GLGE.Assets.createUUID());
+		var obj = new GLGE.Object(nodeJson.uid);
 		if(nodeJson.material){
-			var material = new GLGE.Material(GLGE.Assets.createUUID());
-			material.setColor({r:nodeJson.material.specColor[0], g:nodeJson.material.specColor[1], b:nodeJson.material.specColor[2]});
-			material.setSpecular(nodeJson.material.specular);
+			var material = new GLGE.Material(nodeJson.material.uid);
+			material.color = {r:nodeJson.material.color[0], g:nodeJson.material.color[1], b:nodeJson.material.color[2]};
+			material.specColor = {r:nodeJson.material.specColor[0], g:nodeJson.material.specColor[1], b:nodeJson.material.specColor[2]};
 			material.setShininess(nodeJson.material.shine);
 			material.setAlpha(nodeJson.material.alpha);
 			obj.setMaterial(material);
@@ -157,7 +162,8 @@ SpacibloRenderer.Renderable.prototype.init = function(nodeJson){
 			obj.setMaterial(SpacibloRenderer.DefaultMaterial);
 		}
 
-		var mesh = new GLGE.Mesh(GLGE.Assets.createUUID());
+		var mesh = new GLGE.Mesh(nodeJson.mesh.uid);
+		mesh.name = nodeJson.mesh.name;
 		mesh.setPositions(nodeJson.mesh.positions);
 		mesh.setFaces(nodeJson.mesh.faces);
 		if(nodeJson.mesh.normals && nodeJson.mesh.normals.length > 0) mesh.setNormals(nodeJson.mesh.normals);
@@ -165,8 +171,11 @@ SpacibloRenderer.Renderable.prototype.init = function(nodeJson){
 		obj.setMesh(mesh);
 
 		this.addChild(obj);
-	} else {
-		console.log("No mesh");
+		console.log(nodeJson.name);
+		console.log(nodeJson.uid);
+		console.log(mesh.name);
+		console.log(mesh.uid);
+		console.log(obj);
 	}
 
 	if(typeof nodeJson.children == "undefined") return;

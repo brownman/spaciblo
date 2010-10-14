@@ -38,8 +38,8 @@ Spaciblo.stringify = function(hydrateObj){
 }
 
 
-Spaciblo.defaultRotation = [1.56, 0, 0];
-Spaciblo.defaultPosition = [0.1, 0.1, 0.1];
+Spaciblo.defaultRotation = [1.56, 0, 0]; //1.56
+Spaciblo.defaultPosition = [0.01, 0.01, 0.01];
 
 Spaciblo.WebSocketClient = function(_ws_port, _ws_host, _message_handler_function){
 	var self = this;
@@ -135,13 +135,10 @@ Spaciblo.SpaceClient = function(space_id, canvas) {
 				self.scene.addChild(renderable);
 				break;
 			case 'PlaceableMoved':
-				console.log('TODO placeable moved');
-				console.log(spaciblo_event);
 				var node = self.scene.getNode(spaciblo_event.uid);
 				if(node){
 					node.setLoc(spaciblo_event.position[0], spaciblo_event.position[1], spaciblo_event.position[2]);
 					node.setQuat(spaciblo_event.orientation[0], spaciblo_event.orientation[1], spaciblo_event.orientation[2], spaciblo_event.orientation[3]);
-					console.log(node);
 				} else {
 					console.log("Tried to move an unknown node: " + spaciblo_event.uid);
 				}

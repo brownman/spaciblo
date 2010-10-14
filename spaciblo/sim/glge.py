@@ -105,6 +105,8 @@ class SceneBase(object):
 	def __init__(self, uid=None):
 		if not hasattr(self, 'uid'):
 			self.uid = uid or SceneBase.createUUID()
+		self.name = None #used mostly for debugging
+		
 	def flatten(self):
 		"""returns a flattened array of the entire DAG"""
 		if 'children' in self: return [self]

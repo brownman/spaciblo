@@ -86,7 +86,6 @@ class Command(NoArgsCommand):
 				node.populate(json)
 			else:
 				node = Object()
-			print node
 			node.set_loc([float(thing_row[1]), float(thing_row[2]), float(thing_row[3])])
 			node.set_quat([float(thing_row[4]), float(thing_row[5]), float(thing_row[6]), float(thing_row[7])])
 			node.set_scale([float(thing_row[8]), float(thing_row[9]), float(thing_row[10])]) 
@@ -106,7 +105,7 @@ class Command(NoArgsCommand):
 			return 'texture'
 		elif filename.endswith('.txt'):
 			return 'text'
-		elif filename.endswith('.obj') or filename.endswith('.mtl'):
+		elif filename.endswith('.obj') or filename.endswith('.mtl') or filename.endswith('.json'):
 			return 'geometry'
 		else:
 			return None

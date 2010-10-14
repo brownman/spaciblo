@@ -46,13 +46,18 @@ def flatten_scene(scene, apply_modifiers):
 	return { 'name':scene.name, 'objects':objects }
 
 def flatten_object(obj, apply_modifiers):
-	result = { 'name':obj.name, 'type':obj.type }
-	if(obj.type == 'MESH'):
-		if apply_modifiers:
-			mesh = obj.create_mesh(bpy.context.scene, True, "PREVIEW")
-		else:
-			mesh = obj.data
-		result['data'] = flatten_mesh(mesh)
+	result = {	
+				'name':obj.name, 'type':obj.type,
+				'scale':[obj.scale[0], obj.scale[1], obj.scale[2]],
+				'location':[obj.location[0], obj.location[1], obj.location[2]],
+				'rotation':[obj.rotation_euler[0], obj.rotation_euler[1], obj.rotation_euler[2]]
+				}
+	if(obj.type != 'MESH'): return result
+	if apply_modifiers:
+		mesh = obj.create_mesh(bpy.context.scene, True, "PREVIEW")
+	else:
+		mesh = obj.data
+	result['data'] = flatten_mesh(mesh)
 	return result
 
 def flatten_mesh(mesh):
@@ -73,9 +78,12 @@ def flatten_mesh(mesh):
 	return {'name': mesh.name, 'vertices':vertices, 'normals':normals, 'edges':edges, 'faces':faces, 'materials':materials }
 
 
-def write_json(filepath, scene, apply_modifiers):
+def write_json(filepath, scene, apply_modifiers=True, pretty_json=False):
 	file = open(filepath, "w")
-	file.write(json.dumps(flatten_scene(scene, apply_modifiers), indent=4))
+	if pretty_json:
+		file.write(json.dumps(flatten_scene(scene, apply_modifiers), indent=4))
+	else:
+		file.write(json.dumps(flatten_scene(scene, apply_modifiers)))
 	file.close()
 
 class SpacibloJSONExporter(bpy.types.Operator):
@@ -85,10 +93,11 @@ class SpacibloJSONExporter(bpy.types.Operator):
 	filepath = StringProperty(name="File Path", description="Filepath used for exporting the file", maxlen= 1024, default= "")
 	check_existing = BoolProperty(name="Check Existing", description="Check and warn on overwriting existing files", default=True, options={'HIDDEN'})
 	apply_modifiers = BoolProperty(name="Apply Modifiers", description="Use transformed mesh data from each object", default=True)
+	pretty_json = BoolProperty(name="Pretty JSON", description="Indent the JSON elements (increases file size)", default=False)
 
 	def execute(self, context):
-		print('apply modifiers', self.apply_modifiers)
-		write_json(self.filepath, bpy.data.scenes[0], self.apply_modifiers)
+		print('apply modifiers', self.apply_modifiers, self.pretty_json)
+		write_json(self.filepath, bpy.data.scenes[0], self.apply_modifiers, self.pretty_json)
 		return {'FINISHED'}
 
 	def invoke(self, context, event):

@@ -16,6 +16,7 @@ from piston.handler import BaseHandler
 
 from scene import Scene
 from sim.loaders.obj import ObjLoader, MtlLibLoader
+from sim.loaders.blender import JSONLoader
 from sim.handler import to_json
 
 class HydrateModel(models.Model):
@@ -180,17 +181,33 @@ class Template(HydrateModel):
 	def prep_assets(self):
 		obj_assets = []
 		mtl_assets = {}
+		json_assets = []
 		app_asset = None
 		for template_asset in TemplateAsset.objects.filter(template=self):
 			if template_asset.asset.type == 'geometry' and template_asset.asset.file.name.endswith('.mtl'):
 				mtl_assets[template_asset.key] = template_asset.asset
 			elif template_asset.asset.type == 'geometry' and template_asset.asset.file.name.endswith('.obj'):
 				obj_assets.append(template_asset.asset)
+			elif template_asset.asset.type == 'geometry' and template_asset.asset.file.name.endswith('.json'):
+				json_assets.append(template_asset.asset)
 			elif template_asset.asset.type == 'application':
 				app_asset = template_asset.asset
 			#else:
 			#	print 'asset type %s' % template_asset.asset.type
-				
+		
+		for json_asset in json_assets:
+			loader = JSONLoader()
+			geometry = loader.toGeometry(open(json_asset.file.path).read())
+			path = '/tmp/prepped_geo-%s' % self.id
+			json_file = file(path, 'wb')
+			json_file.write(to_json(geometry))
+			json_file.close()
+			json_file = file(path, 'r')
+			json_asset.prepped_file.save(json_file.name, File(json_file), save=False)
+			json_asset.save()
+			json_file.close()
+			os.unlink(path)
+		
 		for obj_asset in obj_assets: # try to save a prepped geometry JSON
 			try:
 				loader = ObjLoader()
