@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block style%}
+{% endblock %}
+
+{% block sub-head %}
+{% endblock %}
+
+{% block content%}
+<h1>Templates:</h1>
+
+<ul>
+{% for template in templates %}
+	<li>
+		<h2><a href="{{ template.get_absolute_url }}">{{ template.name }}</a></h2>
+	</li>
+{% endfor %}
+</ul>
+{% endblock %}

@@ -74,6 +74,7 @@ function handle_client_open(){
 
 function handle_client_close(){
 	if(sv_canvas != null) sv_canvas.close();
+	user_message_handler(null, 'Disconnected from the server.');
 }
 
 function handle_client_auth(successful){
@@ -139,7 +140,11 @@ function tick() {
 
 function user_message_handler(username, message){
 	var messagePanel = document.getElementById('sv-message-panel');
-	messagePanel.innerHTML = '<div class="user-message"><span class="user-message-username">' + username + '</span>: <span class="user-message-text">' + message + '</span></div>' + messagePanel.innerHTML;
+	var role = "";
+	if(username){
+		role = '<div class="user-message"><span class="user-message-username">' + username + '</span>: ';
+	}
+	messagePanel.innerHTML = role + '<span class="user-message-text">' + message + '</span></div>' + messagePanel.innerHTML;
 }
 
 function handle_command_input(){

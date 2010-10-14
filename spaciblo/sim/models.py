@@ -256,6 +256,9 @@ class Template(HydrateModel):
 	@property
 	def template_app_module_name(self): return "template_%s" % self.id
 
+	@models.permalink
+	def get_absolute_url(self): return ('sim.views.template', (), { 'id':self.id })
+
 	def __unicode__(self):
 		return self.name
 

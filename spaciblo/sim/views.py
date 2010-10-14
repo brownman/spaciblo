@@ -28,8 +28,9 @@ import scene as scene
 import spaciblo.sim.models as models
 from spaciblo.sim.models import *
 
-def index(request):
-	return render_to_response('sim/index.html', {'sim_pool': sim_pool.DEFAULT_SIM_POOL }, context_instance=RequestContext(request))
+def index(request): return render_to_response('sim/index.html', {'sim_pool': sim_pool.DEFAULT_SIM_POOL }, context_instance=RequestContext(request))
+
+def spaces(request): return render_to_response('sim/spaces.html', { 'spaces':Space.objects.all() }, context_instance=RequestContext(request))
 
 def space(request, id):
 	space = get_object_or_404(Space, pk=id)
@@ -48,6 +49,15 @@ def thing_app(request, space_id, thing_id):
 	local_path = request.path[len(base_path) - 1:]
 	view_function = resolver.resolve(local_path)
 	return view_function[0](request)
+
+@staff_member_required
+def templates(request):
+	return render_to_response('sim/templates.html', { 'templates':Template.objects.all() }, context_instance=RequestContext(request))
+
+@staff_member_required
+def template(request, id):
+	template = get_object_or_404(Template, pk=id)
+	return render_to_response('sim/template.html', { 'template':template }, context_instance=RequestContext(request))
 
 @staff_member_required
 def space_debug(request, id):

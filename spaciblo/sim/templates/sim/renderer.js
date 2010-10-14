@@ -273,8 +273,10 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 	}
 
 	self.close = function(){
-		if(self.canvas == null || self.gl == null) return;
-		//self.gl.clearColor(1.0, 1.0, 1.0, 1.0);
+		if(self.scene){
+			self.scene.children = [];
+			self.scene.setBackgroundColor("#000");
+		}
 	}
 	
 	self.handleImageAsset = function(image, path){ }

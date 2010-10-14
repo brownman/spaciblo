@@ -35,12 +35,4 @@
    </li>
 </ul>
 
-{% if request.user.is_authenticated %}
-<h2>Example Spaces:</h2>
-<ul>
-{% for space in spaces %}
-	<li><a href="{{ space.get_absolute_url }}">{{ space.name }}</a></li>
-{% endfor %}
-</ul>
-{% endif %}
 {% endblock %}

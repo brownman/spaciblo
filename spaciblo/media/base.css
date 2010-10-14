@@ -25,6 +25,9 @@ h3 { font-size: 1em; }
 h1 a, h2 a { text-decoration: none;}
 h1 a:hover, h2 a:hover { text-decoration: underline;}
 
+th { font-style: italic; }
+td, th { padding: 5px 5px 5px 0px; }
+
 p { margin-bottom: 0.5em; }
 
 ul { margin-bottom: 1em; }
