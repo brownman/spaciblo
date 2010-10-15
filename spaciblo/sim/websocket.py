@@ -35,7 +35,10 @@ class EventHandler:
 	"""A handy class for handling incoming events"""
 	def __init__(self):
 		self.events = Queue.Queue(-1)
-	def handle_event(self, event): self.events.put(event)
+	def handle_event(self, event):
+		from sim.events import Heartbeat
+		if not isinstance(event, Heartbeat):
+			self.events.put(event)
 
 class WebSocketClient:
 	def __init__(self, host, port, origin, protocol='0.01'):

@@ -96,6 +96,13 @@ class NodeAdded(SimEvent):
 		self.parent_id = parent_id
 		self.json_data = json_data
 
+class TemplateUpdated(SimEvent):
+	"""Notification that a template's data has been updated.  Renderers may choose to reload the template"""
+	def __init__(self, space_id=None, template_id=None, key=None):
+		self.space_id = space_id
+		self.template_id = template_id
+		self.key = key
+
 class UserMessage(SimEvent):
 	"""A user generated chat message."""
 	def __init__(self, space_id=None, username=None, message=None):
@@ -121,7 +128,7 @@ class PoolInfo(SimEvent):
 		if not infos: infos = []
 		self.infos = infos
 
-SIM_EVENTS = [Heartbeat, UserMessage, PlaceableMoved, AuthenticationRequest, AuthenticationResponse, JoinSpaceRequest, JoinSpaceResponse, UserMoveRequest, AddUserRequest, NodeAdded, NodeRemoved, PoolInfoRequest, PoolInfo]
+SIM_EVENTS = [Heartbeat, UserMessage, PlaceableMoved, AuthenticationRequest, AuthenticationResponse, JoinSpaceRequest, JoinSpaceResponse, UserMoveRequest, AddUserRequest, NodeAdded, NodeRemoved, TemplateUpdated, PoolInfoRequest, PoolInfo]
 
 def parse_event_json(json_string):
 	json_data = simplejson.loads(json_string)

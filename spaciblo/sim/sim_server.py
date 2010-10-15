@@ -98,6 +98,11 @@ class WebSocketConnection:
 					except:
 						traceback.print_exc()
 						response_event = events.JoinSpaceResponse(event.space_id)
+			elif isinstance(event, events.TemplateUpdated):
+				if self.user and self.user.is_staff:
+					event.connection = self
+					for simulator in self.server.sim_pool.simulators:
+						simulator.event_queue.put(event)
 			elif self.space_id:
 				simulator = self.server.sim_pool.get_simulator(self.space_id)
 				if simulator:
@@ -106,7 +111,7 @@ class WebSocketConnection:
 				else:
 					print "Received an event for an absent simulator %s" % event
 			else:
-				print "Received unhandled event %s" % event
+				print "Received unhandled event %s" % event.to_json()
 
 			if response_event:
 				#print 'Outgoing: ', to_json(response_event)

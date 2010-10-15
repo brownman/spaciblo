@@ -38,7 +38,8 @@ def simulator_pools(request):
 		reg.pool_info = reg.fetch_pool_info(request.session.session_key)
 	return render_to_response('sim/simulator_pools.html', { 'simulator_pool_regs':regs }, context_instance=RequestContext(request))
 
-def spaces(request): return render_to_response('sim/spaces.html', { 'spaces':Space.objects.all() }, context_instance=RequestContext(request))
+def spaces(request):
+	return render_to_response('sim/spaces.html', { 'spaces':Space.objects.all() }, context_instance=RequestContext(request))
 
 def space(request, id):
 	space = get_object_or_404(Space, pk=id)

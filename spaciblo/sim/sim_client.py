@@ -56,7 +56,7 @@ class SimClient:
 					print 'should set the new node position'
 					#thing.position = Position().hydrate(event.position)
 					#thing.orientation = Orientation().hydrate(event.orientation)
-			elif isinstance(event, events.PoolInfo):
+			elif isinstance(event, events.PoolInfo) or isinstance(event, events.TemplateUpdated) or isinstance(event, events.Heartbeat):
 				pass # don't care
 			else:
 				print 'Unhandled incoming space event: %s' % event
@@ -68,8 +68,12 @@ class SimClient:
 	def join_space(self, space_id): self.ws_client.send(events.JoinSpaceRequest(space_id).to_json())
 
 	def add_user(self): self.ws_client.send(events.AddUserRequest(self.space_id, self.username).to_json())
+	
+	def notify_template_updated(self, template_id, key=None): self.ws_client.send(events.TemplateUpdated(self.space_id, template_id, key).to_json())
 
 	def request_pool_info(self): self.ws_client.send(events.PoolInfoRequest().to_json())
+
+	def send_event(self, event): self.ws_client.send(event.to_json())
 
 	def close(self):
 		self.should_run = False

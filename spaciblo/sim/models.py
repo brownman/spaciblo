@@ -272,10 +272,26 @@ class TemplateHandler(BaseHandler):
 	@classmethod
 	def assets(cls, template): return [{'asset': ta.asset, 'id':ta.id, 'key': ta.key} for ta in template.templateassets.all()]
 
+class SimulatorPoolRegistrationManager(models.Manager):
+	def broadcast_event(self, session_key, event):
+		for reg in self.all(): reg.send_event(session_key, event)
+			
+
 class SimulatorPoolRegistration(models.Model):
 	"""A simulator pool address in this cluster"""
 	ip = models.IPAddressField()
 	port = models.IntegerField()
+	
+	objects = SimulatorPoolRegistrationManager()
+
+	def send_event(self, session_key, event):
+		event_handler = EventHandler()
+		sim_client = SimClient(session_key, self.ip, self.port, '%s:80' % self.ip, event_handler.handle_event)
+		sim_client.authenticate()
+		auth_event = event_handler.events.get(True, 10)
+		if not auth_event.authenticated: raise Exception('Could not authenticate against the simulator pool')
+		sim_client.send_event(event)
+		sim_client.close()
 	
 	def fetch_pool_info(self, session_key):
 		try:

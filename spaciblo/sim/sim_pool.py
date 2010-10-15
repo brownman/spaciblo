@@ -90,6 +90,11 @@ class Simulator:
 						user_node.set_quat(event.orientation)
 						response = PlaceableMoved(self.space.id, user_node.uid, user_node.loc, user_node.quat)
 						self.pool.sim_server.send_space_event(self.space.id, response)
+
+			elif event.event_name() == 'TemplateUpdated':
+				if event.connection.user != None and event.connection.user.is_staff:
+					self.pool.sim_server.send_space_event(self.space.id, TemplateUpdated(self.space.id, event.template_id, event.key))
+
 			else:
 				print "Unknown event: %s" % event.event_name()
 

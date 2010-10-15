@@ -13,7 +13,8 @@ from django.contrib.sessions.models import Session
 from sim.sim_server import *
 from sim.sim_client import *
 from sim.websocket import *
-from sim.models import Space, SpaceMember
+from sim.events import TemplateUpdated
+from sim.models import Space, SpaceMember, SimulatorPoolRegistration
 from sim.management.commands.load_example_spaces import Command
 import spaciblo.settings as settings
 
@@ -37,6 +38,9 @@ class SimTest(TransactionTestCase):
 	def test_sim_setup(self):
 		self.client.login(username='trevor', password='1234')
 		self.client2.login(username='sarah', password='1234')
+
+		self.failUnlessEqual(SimulatorPoolRegistration.objects.all().count(), 1)
+		self.failUnlessEqual(SimulatorPoolRegistration.objects.all()[0], self.sim_server.registration)
 
 		event_handler = EventHandler()
 
@@ -88,7 +92,30 @@ class SimTest(TransactionTestCase):
 		self.failUnless(event.json_data)
 		event = event_handler2.events.get(True, 10)
 		self.failUnless(event.json_data)
+		
+		sim_client.notify_template_updated(3)
+		event = event_handler.events.get(True, 10)
+		self.failUnlessEqual(event.template_id, 3)
+		event = event_handler2.events.get(True, 10)
+		self.failUnlessEqual(event.template_id, 3)
+
+		sim_client.notify_template_updated(2, 'moon')
+		event = event_handler.events.get(True, 10)
+		self.failUnlessEqual(event.template_id, 2)
+		self.failUnlessEqual(event.key, 'moon')
+		event = event_handler2.events.get(True, 10)
+		self.failUnlessEqual(event.template_id, 2)
+		self.failUnlessEqual(event.key, 'moon')
+
+		SimulatorPoolRegistration.objects.broadcast_event(self.client.session.session_key, TemplateUpdated(space.id, 23, 'dink'))
+		event = event_handler.events.get(True, 10)
+		self.failUnlessEqual(event.template_id, 23)
+		self.failUnlessEqual(event.key, 'dink')
+		event = event_handler2.events.get(True, 10)
+		self.failUnlessEqual(event.template_id, 23)
+		self.failUnlessEqual(event.key, 'dink')
 
 		sim_client.close()
-
+		sim_client2.close()
+		
 # Copyright 2010 Trevor F. Smith (http://trevor.smith.name/) Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.

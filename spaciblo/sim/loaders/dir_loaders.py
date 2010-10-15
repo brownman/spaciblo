@@ -8,8 +8,15 @@ import simplejson
 from django.contrib.auth.models import User
 from django.template.defaultfilters import slugify
 from django.core.files import File
+from django.contrib.auth import login, authenticate
+from django.http import HttpRequest
+from django.contrib.sessions.models import Session
+
+from django.conf import settings
+from django.utils.importlib import import_module
 
 from sim.handler import to_json
+from sim.events import TemplateUpdated
 from sim.models import Space, Template, Asset, TemplateAsset
 from sim.glge import Object, Scene, Group, GroupTemplate
 
@@ -28,7 +35,6 @@ SPACE_INFO_SECTION = "Space Info"
 DEFAULT_BODY_OPTION = "default-body"
 
 class SpaceDirLoader():
-
 	def load(self, space_dir_path, owner):
 		space_name = os.path.basename(space_dir_path)
 		things_path = os.path.join(space_dir_path, SPACE_TEMPLATE_FILE_NAME)
@@ -96,7 +102,7 @@ class TemplateDirLoader():
 		else:
 			print 'no properties at ', properties_path
 		
-		template, created = Template.objects.get_or_create(name=template_name, owner=owner)
+		template, template_created = Template.objects.get_or_create(name=template_name, owner=owner)
 		template.seat_position = seat_position
 		template.seat_orientation = seat_orientation
 		template.save()

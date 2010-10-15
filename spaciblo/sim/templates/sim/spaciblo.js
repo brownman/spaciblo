@@ -143,6 +143,8 @@ Spaciblo.SpaceClient = function(space_id, canvas) {
 					console.log("Tried to move an unknown node: " + spaciblo_event.uid);
 				}
 				break;
+			case 'TemplateUpdated':
+				console.log('template updated', spaciblo_event.template_id, spaciblo_event.key, spaciblo_event);
 			default:
 				console.log("Received an unknown event: " + message);
 		}
