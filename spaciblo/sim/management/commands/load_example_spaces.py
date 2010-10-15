@@ -8,8 +8,6 @@ import simplejson
 from django.template.defaultfilters import slugify
 from django.core.management.base import NoArgsCommand, CommandError
 from django.core.files import File
-from sim.management import *
-from sim.handler import to_json
 
 class Command(NoArgsCommand):
 	"""Loads the example templates and spaces."""
@@ -20,6 +18,8 @@ class Command(NoArgsCommand):
 	def handle_noargs(self, **options):
 		from django.contrib.auth.models import User
 		from sim.loaders.dir_loaders import TemplateDirLoader, SpaceDirLoader
+		from sim.management import *
+		from sim.handler import to_json
 		
 		if len(User.objects.filter(is_staff=True)) == 0:
 			print 'There must be at least one staff user before we can load templates.'

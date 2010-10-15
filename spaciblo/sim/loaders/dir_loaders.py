@@ -11,7 +11,7 @@ from django.core.files import File
 
 from sim.handler import to_json
 from sim.models import Space, Template, Asset, TemplateAsset
-from sim.glge import Object, Scene, Group
+from sim.glge import Object, Scene, Group, GroupTemplate
 
 TEMPLATE_PROPERTIES_FILE_NAME = "template.properties"
 TEMPLATE_INFO_SECTION = "Template Info"
@@ -61,20 +61,8 @@ class SpaceDirLoader():
 				print 'things.csv references an unknown template: %s' % template_name
 				continue
 			template = Template.objects.get(name=template_name)
-			
-			json = None
-			for asset in template.assets.all():
-				if asset.type == 'geometry' and asset.prepped_file:
-					json = simplejson.loads(asset.prepped_file.read())
-
-			if json:
-				if json.has_key('children'):
-					node = Group()
-				else:
-					node = Object()
-				node.populate(json)
-			else:
-				node = Object()
+			node = Group()
+			node.group_template = GroupTemplate(template_id=template.id, name=template.name)
 			node.set_loc([float(thing_row[1]), float(thing_row[2]), float(thing_row[3])])
 			node.set_quat([float(thing_row[4]), float(thing_row[5]), float(thing_row[6]), float(thing_row[7])])
 			node.set_scale([float(thing_row[8]), float(thing_row[9]), float(thing_row[10])]) 

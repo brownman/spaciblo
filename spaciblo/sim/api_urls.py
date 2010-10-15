@@ -11,7 +11,7 @@ from handler import *
 
 urlpatterns = patterns('',
 	(r'^template/$', Resource(handler=TemplateHandler)),
-	(r'^template/(?P<id>[^/]+)/$', Resource(handler=TemplateHandler)),
+	url(r'^template/(?P<id>[^/]+)/$', Resource(handler=TemplateHandler), name='template-api'),
 	(r'^template/(?P<template_id>[\d]+)/asset/(?P<asset_key>[^/]+)$', 'sim.api_views.template_asset'),
 	(r'^asset/$', Resource(handler=AssetHandler)),
 	(r'^asset/(?P<id>[^/]+)/$', Resource(handler=AssetHandler)),

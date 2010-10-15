@@ -18,17 +18,17 @@ SpacibloRenderer.AssetManager = function(imageCallback, templateCallback, geomet
 	self.templates = {};
 	self.geometries = {};
 	
-	self.getOrCreateTemplate = function(template_id){
-		var template = self.getTemplate(template_id);
+	self.getOrCreateTemplate = function(group_template){
+		var template = self.getTemplate(group_template.template_id);
 		if(template) return template;
-		self.templates[template_id] = new SpacibloModels.Template(template_id);
+		self.templates[group_template.template_id] = new SpacibloModels.Template(group_template.template_id);
 		$.ajax({ 
 			type: "GET",
-			url: "/api/sim/template/" + template_id,
+			url: group_template.url,
 			dataType: "json",
 			success: self.templateLoaded
 		});
-		return self.templates[template_id];
+		return self.templates[group_template.template_id];
 	}
 
 	self.getTemplate = function(template_id){
@@ -60,7 +60,7 @@ SpacibloRenderer.AssetManager = function(imageCallback, templateCallback, geomet
 		for(var i=0; i < template.templateAssets.length; i++){
 			if(template.templateAssets[i].asset.type == 'texture'){
 				self.loadImage('/api/sim/template/' + template.id + '/asset/' + template.templateAssets[i].key);
-			} else if (template.templateAssets[i].asset.type == 'geometry' && template.templateAssets[i].key.endsWith('.obj')){
+			} else if (template.templateAssets[i].asset.type == 'geometry' && !template.templateAssets[i].key.endsWith('.mtl')){
 				self.loadGeometry(template.id, template.templateAssets[i].id, '/api/sim/template/' + template.id + '/asset/' + template.templateAssets[i].key);
 			}
 		}
@@ -131,13 +131,14 @@ SpacibloRenderer.Renderable = function(canvas, uid){
 	GLGE.Assets.registerAsset(this,uid);
 	this.canvas = canvas;
 	this.children = [];
+	this.group_template = null;
 }	
 GLGE.augment(GLGE.Group,SpacibloRenderer.Renderable);
 
 SpacibloRenderer.Renderable.prototype.init = function(nodeJson){
-
 	this.name = nodeJson.name;
-
+	this.group_template = nodeJson.group_template;
+	
 	this.setLoc(nodeJson.locX, nodeJson.locY, nodeJson.locZ);
 	this.setScale(nodeJson.scaleX, nodeJson.scaleY, nodeJson.scaleZ);
 
@@ -149,6 +150,10 @@ SpacibloRenderer.Renderable.prototype.init = function(nodeJson){
 		console.log('unknown rot:', nodeJson.mode);
 	}
 	
+	this.setGeometry(nodeJson);
+}
+
+SpacibloRenderer.Renderable.prototype.setGeometry = function(nodeJson){
 	if(nodeJson.mesh != null){
 		var obj = new GLGE.Object(nodeJson.uid);
 		if(nodeJson.material){
@@ -171,11 +176,6 @@ SpacibloRenderer.Renderable.prototype.init = function(nodeJson){
 		obj.setMesh(mesh);
 
 		this.addChild(obj);
-		console.log(nodeJson.name);
-		console.log(nodeJson.uid);
-		console.log(mesh.name);
-		console.log(mesh.uid);
-		console.log(obj);
 	}
 
 	if(typeof nodeJson.children == "undefined") return;
@@ -249,15 +249,16 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 		self.scene.camera.setRot(Spaciblo.defaultRotation[0], Spaciblo.defaultRotation[1], Spaciblo.defaultRotation[2]);
 		self.scene.camera.setLoc(Spaciblo.defaultPosition[0], Spaciblo.defaultPosition[1], Spaciblo.defaultPosition[2]);
 
-		//self.requestTemplates(self.scene.thing);
+		self.requestTemplates(self.scene);
 
 	    return true;
 	}
 
-	self.requestTemplates = function(thing){
-		if(thing.template_id) thing.template = self.assetManager.getOrCreateTemplate(thing.template_id);
-		for(var i=0; i < thing.children.length; i++){
-			self.requestTemplates(thing.children[i]);
+	self.requestTemplates = function(node){
+		if(node.group_template) self.assetManager.getOrCreateTemplate(node.group_template);
+		if(typeof node.children == "undefined") return;
+		for(var i=0; i < node.children.length; i++){
+			self.requestTemplates(node.children[i]);
 		}
 	}
 
@@ -284,22 +285,11 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 	self.handleTemplateAsset = function(template){ }
 	
 	self.handleGeometryAsset = function(templateID, templateAssetID, geometry){
-		console.log('should load geo asset');
-		/*
-		var things = self.scene.thing.getThingsByTemplate(templateID);
-		for(var i=0; i < things.length; i++){
-			try {
-				var renderable = new SpacibloRenderer.Renderable(geometry, self, GLGE.Assets.createUUID());
-				renderable.thing = things[i];
-				renderable.init();
-				renderable.setLoc(renderable.thing.position.x, renderable.thing.position.y, renderable.thing.position.z);
-				renderable.setQuat(renderable.thing.orientation.x, renderable.thing.orientation.y, renderable.thing.orientation.z, renderable.thing.orientation.s);
-				self.scene.addChild(renderable);
-			} catch (err){
-				console.log(err);
-			} 
+		var nodes = new Array();
+		self.scene.getNodesByTemplate(templateID, nodes);
+		for(var i=0; i < nodes.length; i++){
+			nodes[i].setGeometry(geometry);
 		}
-		*/
 	}
 
 	self.assetManager = new SpacibloRenderer.AssetManager(self.handleImageAsset, self.handleTemplateAsset, self.handleGeometryAsset);

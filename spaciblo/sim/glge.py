@@ -1,5 +1,5 @@
 import random
-
+from django.core.urlresolvers import reverse
 """
 A set of objects which define the visual aspects of a 3D scene: position, orientation, motion, geometry, material, lighting...
 """
@@ -283,10 +283,26 @@ class ActionChannel(SceneBase):
 		self.animation = AnimationCurve().populate(data['animation'])
 		return self
 
+class GroupTemplate(SceneBase):
+	"""The information used to fetch geometry data (e.g. the mesh) from an HTTPd"""
+	def __init__(self, template_id=None, name=None):
+		SceneBase.__init__(self)
+		self.template_id = template_id
+		self.url = self.generate_url()
+		self.name = name
+
+	def generate_url(self): return reverse('template-api', kwargs={ 'id':self.template_id })
+		
+	def populate(self, data):
+		if not data: return None
+		copy_attributes(self, data)
+		return self
+
 class Group(Animatable, Placeable):
 	def __init__(self):
 		Animatable.__init__(self)
 		Placeable.__init__(self)
+		self.group_template = None
 		self.username = None
 		self.children = []
 		self.group_type = G_NODE
@@ -318,9 +334,10 @@ class Group(Animatable, Placeable):
 		
 	def populate(self, data):
 		if not data: return None
-		copy_attributes(self, data, ['children', 'animation'])
+		copy_attributes(self, data, ['children', 'animation', 'group_template'])
 		populate_children(self, data)
 		self.animation = AnimationCurve().populate(data['animation'])
+		self.group_template = GroupTemplate().populate(data['group_template'])
 		return self
 		
 class Text(Placeable, Animatable):
