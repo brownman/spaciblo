@@ -18,6 +18,8 @@ from scene import Scene
 from sim.loaders.obj import ObjLoader, MtlLibLoader
 from sim.loaders.blender import JSONLoader
 from sim.handler import to_json
+from sim_client import SimClient
+from websocket import EventHandler
 
 class HydrateModel(models.Model):
 	
@@ -274,6 +276,21 @@ class SimulatorPoolRegistration(models.Model):
 	"""A simulator pool address in this cluster"""
 	ip = models.IPAddressField()
 	port = models.IntegerField()
+	
+	def fetch_pool_info(self, session_key):
+		try:
+			event_handler = EventHandler()
+			sim_client = SimClient(session_key, self.ip, self.port, '%s:80' % self.ip, event_handler.handle_event)
+			sim_client.authenticate()
+			event = event_handler.events.get(True, 10)
+			if not event.authenticated: raise Exception('Could not authenticate against the simulator pool')
+			sim_client.request_pool_info()
+			event = event_handler.events.get(True, 10)
+			sim_client.close()
+			return event.infos
+		except:
+			traceback.print_exc()
+			return []
 
 HYDRATE_MODELS = [Template, TemplateChild, TemplateSetting, TemplateAsset, Asset, SpaceMember, Space]
 

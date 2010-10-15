@@ -38,10 +38,6 @@ class SimTest(TransactionTestCase):
 		self.client.login(username='trevor', password='1234')
 		self.client2.login(username='sarah', password='1234')
 
-		class EventHandler:
-			def __init__(self):
-				self.events = Queue.Queue(-1)
-			def handle_event(self, event): self.events.put(event)
 		event_handler = EventHandler()
 
 		sim_client = SimClient(self.client.session.session_key, '127.0.0.1', self.sim_server.ws_server.port, '127.0.0.1:8000', event_handler=event_handler.handle_event)

@@ -7,6 +7,7 @@ import re
 import traceback
 import struct
 import hashlib
+import Queue
 import ws_contrib
 
 def parse_request_header(header):
@@ -29,6 +30,12 @@ def receive_web_socket_message(socket):
 		if len(message) == 0: return None
 		joined = ''.join(message)
 		return joined[1:len(joined) - 1]
+
+class EventHandler:
+	"""A handy class for handling incoming events"""
+	def __init__(self):
+		self.events = Queue.Queue(-1)
+	def handle_event(self, event): self.events.put(event)
 
 class WebSocketClient:
 	def __init__(self, host, port, origin, protocol='0.01'):

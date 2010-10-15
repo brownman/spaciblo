@@ -11,7 +11,8 @@ urlpatterns = patterns('',
 	(r'^template/$', 'sim.views.templates'),
 	(r'^template/(?P<id>[\d]+)/$', 'sim.views.template'),
 	(r'^test/', 'sim.views.test'),
-	(r'^scratch/', 'sim.views.scratch'),
+	#(r'^scratch/', 'sim.views.scratch'),
+	(r'^sim-pool/$', 'sim.views.simulator_pools'),
     (r'^$', 'sim.views.index'),
 )
 

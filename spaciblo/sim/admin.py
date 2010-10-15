@@ -21,6 +21,11 @@ class AssetAdmin(admin.ModelAdmin):
 		pass
 admin.site.register(Asset, AssetAdmin)
 
+class SimulatorPoolRegistrationAdmin(admin.ModelAdmin):
+	class Media(BaseMedia):
+		pass
+admin.site.register(SimulatorPoolRegistration, SimulatorPoolRegistrationAdmin)
+
 class TemplateAssetAdmin(admin.ModelAdmin):
 	class Media(BaseMedia):
 		pass

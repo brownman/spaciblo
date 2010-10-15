@@ -13,7 +13,7 @@ import sim_pool
 import events
 from websocket import WebSocketServer, receive_web_socket_message
 from sim.handler import to_json
-from sim.models import Space
+from sim.models import Space, SimulatorPoolRegistration
 
 class WebSocketConnection:
 	"""Maintains state and an outgoing event queue for a WebSockets connection"""
@@ -66,6 +66,12 @@ class WebSocketConnection:
 				else:
 					print "Auth failure with session id %s" % event.session_id
 					response_event = events.AuthenticationResponse(False)
+			elif isinstance(event, events.PoolInfoRequest):
+				if not self.user:
+					print 'Attemped unauthed pool info request'
+				else:
+					space_infos = [{'name':sim.space.name, 'url':sim.space.get_absolute_url()} for sim in self.server.sim_pool.simulators]
+					response_event = events.PoolInfo({ 'space_infos':space_infos })
 			elif isinstance(event, events.JoinSpaceRequest):
 				if not self.user:
 					print 'Attemped unauthed join space'
@@ -146,14 +152,23 @@ class SimulationServer:
 		self.ws_server = WebSocketServer(self.ws_callback, port=settings.WEB_SOCKETS_PORT)
 		self.sim_pool = sim_pool.SimulatorPool(self)
 		self.ws_connections = []
+		self.registration = None
 		
 	def start(self):
 		self.sim_pool.start_all_spaces()
 		self.ws_server.start()
+		self.registration, created = SimulatorPoolRegistration.objects.get_or_create(ip=self.ws_server.sock.getsockname()[0], port=self.ws_server.port)
 
 	def stop(self):
+		if self.registration:
+			try:
+				self.registration.delete()
+			except:
+				traceback.print_exc()
+
 		self.sim_pool.stop_all_spaces()
 		self.ws_server.stop()
+		
 		for con in self.ws_connections:
 			try:
 				con.client_socket.shutdown(1)

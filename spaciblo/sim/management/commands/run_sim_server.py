@@ -6,8 +6,6 @@ import ConfigParser
 from django.template.defaultfilters import slugify
 from django.core.management.base import NoArgsCommand, CommandError
 from django.core.files import File
-from sim.management import *
-from sim.sim_server import *
 
 class Command(NoArgsCommand):
 	"""Runs the spaciblo simulation server."""
@@ -16,11 +14,14 @@ class Command(NoArgsCommand):
 	requires_model_validation = True
 
 	def handle_noargs(self, **options):
+		from sim.management import *
+		from sim.sim_server import *
 		sim_server = SimulationServer()
 		sim_server.start()
 		try:
 			while True: time.sleep(10000000)
 		except (KeyboardInterrupt, SystemExit):
+			sim_server.stop()
 			sys.exit()
 		
 

@@ -27,24 +27,29 @@
 {% block header %}
 <div id="header">
    <div id="top-nav">
-      [
-         <a href="{% url front.views.index %}">home</a> |
-         <a href="{% url front.views.about %}">about</a> |
-         <a href="{% url front.views.tech %}">tech</a> |
-         <a href="http://blog.spaciblo.org/">blog</a> |
-      {% if request.user.is_authenticated %}
-         <a href="{% url sim.views.spaces %}">spaces</a> |
-         {% if request.user.is_staff %}
-         <a href="{% url sim.views.templates %}">templates</a> |
-         <a href="{% url admin:index %}">admin</a> |
-         {% endif %}
-	      <a href="{% url person.views.profile request.user.username %}">profile</a> |
-         <a href="{% url django.contrib.auth.views.logout_then_login %}">logout</a>
-      {% endif %}
-      {% if not request.user.is_authenticated %}
-         <a href="{% url django.contrib.auth.views.login %}">login</a>
-      {% endif %}
-      ]
+	[
+		<a href="{% url front.views.index %}">home</a> |
+		<a href="{% url front.views.about %}">about</a> |
+		<a href="{% url front.views.tech %}">tech</a> |
+		<a href="http://blog.spaciblo.org/">blog</a> |
+		{% if request.user.is_authenticated %}
+			<a href="{% url person.views.profile request.user.username %}">profile</a> |
+			<a href="{% url django.contrib.auth.views.logout_then_login %}">logout</a>
+		{% else %}
+			<a href="{% url django.contrib.auth.views.login %}">login</a>
+		{% endif %}
+	]
+	<br/>
+	{% if request.user.is_authenticated %}
+		[
+			<a href="{% url sim.views.spaces %}">spaces</a>
+			{% if request.user.is_staff %}
+				| <a href="{% url sim.views.templates %}">templates</a> |
+				<a href="{% url sim.views.simulator_pools %}">pools</a> |
+				<a href="{% url admin:index %}">admin</a>
+			{% endif %}
+			]
+	{% endif %}
    </div>
    <a href="{% url front.views.index %}"><img src="{{MEDIA_URL}}spaciblo/Spaciblo-Logo-210x47.png" width="210" height="47" alt="Spaciblo" /></a>
 </div>

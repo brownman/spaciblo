@@ -110,7 +110,18 @@ class Heartbeat(SimEvent):
 	def __init__(self):
 		self.time = datetime.datetime.now()
 
-SIM_EVENTS = [Heartbeat, UserMessage, PlaceableMoved, AuthenticationRequest, AuthenticationResponse, JoinSpaceRequest, JoinSpaceResponse, UserMoveRequest, AddUserRequest, NodeAdded, NodeRemoved]
+class PoolInfoRequest(SimEvent):
+	"""Used to request stats information about the spaces in the pool."""
+	pass
+
+class PoolInfo(SimEvent):
+	"""Information about the spaces in the pool."""
+	def __init__(self, infos=None):
+		"""Infos MUST be maps of simple python times"""
+		if not infos: infos = []
+		self.infos = infos
+
+SIM_EVENTS = [Heartbeat, UserMessage, PlaceableMoved, AuthenticationRequest, AuthenticationResponse, JoinSpaceRequest, JoinSpaceResponse, UserMoveRequest, AddUserRequest, NodeAdded, NodeRemoved, PoolInfoRequest, PoolInfo]
 
 def parse_event_json(json_string):
 	json_data = simplejson.loads(json_string)

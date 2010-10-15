@@ -30,6 +30,15 @@ from spaciblo.sim.models import *
 
 def index(request): return render_to_response('sim/index.html', {'sim_pool': sim_pool.DEFAULT_SIM_POOL }, context_instance=RequestContext(request))
 
+@staff_member_required
+def simulator_pools(request):
+	regs = []
+	for reg in SimulatorPoolRegistration.objects.all():
+		regs.append(reg)
+		reg.pool_info = reg.fetch_pool_info(request.session.session_key)
+		print reg.pool_info
+	return render_to_response('sim/simulator_pools.html', { 'simulator_pool_regs':regs }, context_instance=RequestContext(request))
+
 def spaces(request): return render_to_response('sim/spaces.html', { 'spaces':Space.objects.all() }, context_instance=RequestContext(request))
 
 def space(request, id):

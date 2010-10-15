@@ -1,4 +1,4 @@
-"""The custom (non Ground based) API views.  User visible UI views are in the views module."""
+"""The custom API views.  User visible UI views are in the views module."""
 import datetime
 import calendar
 import pprint
