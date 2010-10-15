@@ -48,6 +48,13 @@ class SimTest(TransactionTestCase):
 		self.failUnlessEqual('trevor', event.username)
 		self.failUnlessEqual('trevor', sim_client.username)
 
+		sim_client.request_pool_info()
+		event = event_handler.events.get(True, 10)
+		self.failUnless(event.infos)
+		self.failUnless(event.infos['space_infos'])
+		self.failUnless(event.infos['space_infos'][0].has_key('name'))
+		self.failUnless(event.infos['space_infos'][0].has_key('url'))
+
 		space = Space.objects.all()[0]
 		sim_client.join_space(space.id)
 		event = event_handler.events.get(True, 10)

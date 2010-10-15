@@ -13,7 +13,7 @@
 <ul>
 {% for template in templates %}
 	<li>
-		<h2><a href="{{ template.get_absolute_url }}">{{ template.name }}</a></h2>
+		<a href="{{ template.get_absolute_url }}">{{ template.name }}</a>
 	</li>
 {% endfor %}
 </ul>
