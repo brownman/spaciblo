@@ -38,7 +38,7 @@ class Command(BaseCommand):
 		template = TemplateDirLoader().load(template_path, owner)
 		session_key = self.get_session_key(owner)
 		if session_key:
-			SimulatorPoolRegistration.objects.broadcast_event(session_key, TemplateUpdated(-1, template.id))
+			SimulatorPoolRegistration.objects.broadcast_event(session_key, TemplateUpdated(-1, template.id, template.get_api_url()))
 		else:
 			print 'Could not get a session key for', owner.username
 		sys.exit()

@@ -145,8 +145,10 @@ Spaciblo.SpaceClient = function(space_id, canvas) {
 				break;
 			case 'TemplateUpdated':
 				console.log('template updated', spaciblo_event.template_id, spaciblo_event.key, spaciblo_event);
+				if(self.canvas) self.canvas.assetManager.updateTemplate(spaciblo_event.template_id, spaciblo_event.url, spaciblo_event.key);
+				break;
 			default:
-				console.log("Received an unknown event: " + message);
+				console.log("Received an unknown event: ", message);
 		}
 	}
 

@@ -261,6 +261,9 @@ class Template(HydrateModel):
 	@models.permalink
 	def get_absolute_url(self): return ('sim.views.template', (), { 'id':self.id })
 
+	@models.permalink
+	def get_api_url(self): return ('template-api', (), { 'id':self.id })
+
 	def __unicode__(self):
 		return self.name
 

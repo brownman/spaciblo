@@ -2,6 +2,14 @@
 //
 // GLGE Extensions
 //
+
+GLGE.Group.prototype.removeAllChildren = function(){
+	while(this.getChildren().length > 0){
+		this.removeChild(this.getChildren()[0]);
+	}
+}
+GLGE.Scene.prototype.removeAllChildren = GLGE.Group.prototype.removeAllChildren;
+
 GLGE.Group.prototype.getUserGroup = function(username){
    for(var i=0; i < this.children.length; i++){
       if(username == this.children[i].username) return this.children[i];

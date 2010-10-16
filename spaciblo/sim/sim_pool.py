@@ -93,7 +93,7 @@ class Simulator:
 
 			elif event.event_name() == 'TemplateUpdated':
 				if event.connection.user != None and event.connection.user.is_staff:
-					self.pool.sim_server.send_space_event(self.space.id, TemplateUpdated(self.space.id, event.template_id, event.key))
+					self.pool.sim_server.send_space_event(self.space.id, TemplateUpdated(self.space.id, event.template_id, event.url, event.key))
 
 			else:
 				print "Unknown event: %s" % event.event_name()

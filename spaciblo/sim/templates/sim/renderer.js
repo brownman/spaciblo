@@ -31,6 +31,17 @@ SpacibloRenderer.AssetManager = function(imageCallback, templateCallback, geomet
 		return self.templates[group_template.template_id];
 	}
 
+	self.updateTemplate = function(template_id, url, key){
+		var template = self.getTemplate(template_id);
+		if(!template) return;
+		$.ajax({ 
+			type: "GET",
+			url: url,
+			dataType: "json",
+			success: self.templateLoaded
+		});
+	}
+
 	self.getTemplate = function(template_id){
 		var template = self.templates[template_id];
 		if(!template) return null;
@@ -67,7 +78,6 @@ SpacibloRenderer.AssetManager = function(imageCallback, templateCallback, geomet
 	}
 
 	self.loadGeometry = function(templateID, templateAssetID, path){
-		if(self.geometries[templateAssetID]) return;
 		self.geometries[templateAssetID] = {};
 		$.ajax({ 
 			type: "GET",
@@ -154,6 +164,7 @@ SpacibloRenderer.Renderable.prototype.init = function(nodeJson){
 }
 
 SpacibloRenderer.Renderable.prototype.setGeometry = function(nodeJson){
+	this.removeAllChildren();
 	if(nodeJson.mesh != null){
 		var obj = new GLGE.Object(nodeJson.uid);
 		if(nodeJson.material){

@@ -69,7 +69,7 @@ class SimClient:
 
 	def add_user(self): self.ws_client.send(events.AddUserRequest(self.space_id, self.username).to_json())
 	
-	def notify_template_updated(self, template_id, key=None): self.ws_client.send(events.TemplateUpdated(self.space_id, template_id, key).to_json())
+	def notify_template_updated(self, template_id, url, key=None): self.ws_client.send(events.TemplateUpdated(self.space_id, template_id, url, key).to_json())
 
 	def request_pool_info(self): self.ws_client.send(events.PoolInfoRequest().to_json())
 

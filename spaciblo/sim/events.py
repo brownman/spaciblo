@@ -98,9 +98,10 @@ class NodeAdded(SimEvent):
 
 class TemplateUpdated(SimEvent):
 	"""Notification that a template's data has been updated.  Renderers may choose to reload the template"""
-	def __init__(self, space_id=None, template_id=None, key=None):
+	def __init__(self, space_id=None, template_id=None, url=None, key=None):
 		self.space_id = space_id
 		self.template_id = template_id
+		self.url = url
 		self.key = key
 
 class UserMessage(SimEvent):
