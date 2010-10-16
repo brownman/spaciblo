@@ -34,12 +34,15 @@ from bpy.props import *
 # All of the flatten_* methods transform a Blender object into a plain jane python object for easy serialization.
 
 def flatten_material(material):
-	return {
+	results = {
 		'name': material.name, 'type':material.type, 'ambient':material.ambient, 'alpha':material.alpha,
 		'diffuse_color':[material.diffuse_color[0], material.diffuse_color[1], material.diffuse_color[2]],
 		'specular_color':[material.specular_color[0], material.specular_color[1], material.specular_color[2]],
 		'specular_alpha':material.specular_alpha
 	}
+	if material.active_texture:
+		results['active_texture'] = { 'name':material.active_texture.name, 'type':material.active_texture.type, 'repeat_x':material.active_texture.repeat_x, 'repeat_y':material.active_texture.repeat_y, 'image':material.active_texture.image.name }
+	return results
 
 def flatten_scene(scene, apply_modifiers):
 	objects = [flatten_object(obj, apply_modifiers) for obj in scene.objects]

@@ -70,7 +70,7 @@ SpacibloRenderer.AssetManager = function(imageCallback, templateCallback, geomet
 		// Now that we have notified listeners about the template, load the assets.
 		for(var i=0; i < template.templateAssets.length; i++){
 			if(template.templateAssets[i].asset.type == 'texture'){
-				self.loadImage('/api/sim/template/' + template.id + '/asset/' + template.templateAssets[i].key);
+				//self.loadImage('/api/sim/template/' + template.id + '/asset/' + template.templateAssets[i].key);
 			} else if (template.templateAssets[i].asset.type == 'geometry' && !template.templateAssets[i].key.endsWith('.mtl')){
 				self.loadGeometry(template.id, template.templateAssets[i].id, '/api/sim/template/' + template.id + '/asset/' + template.templateAssets[i].key);
 			}
@@ -145,7 +145,7 @@ SpacibloRenderer.Renderable = function(canvas, uid){
 }	
 GLGE.augment(GLGE.Group,SpacibloRenderer.Renderable);
 
-SpacibloRenderer.Renderable.prototype.init = function(nodeJson){
+SpacibloRenderer.Renderable.prototype.init = function(nodeJson, templateID){
 	this.name = nodeJson.name;
 	this.group_template = nodeJson.group_template;
 	
@@ -160,22 +160,34 @@ SpacibloRenderer.Renderable.prototype.init = function(nodeJson){
 		console.log('unknown rot:', nodeJson.mode);
 	}
 	
-	this.setGeometry(nodeJson);
+	this.setGeometry(nodeJson, templateID);
 }
 
-SpacibloRenderer.Renderable.prototype.setGeometry = function(nodeJson){
+SpacibloRenderer.Renderable.prototype.setGeometry = function(nodeJson, templateID){
+	console.log('setting', nodeJson, templateID);
 	this.removeAllChildren();
+
 	if(nodeJson.mesh != null){
-		var obj = new GLGE.Object(nodeJson.uid);
+		var node = new GLGE.Object(nodeJson.uid);
 		if(nodeJson.material){
 			var material = new GLGE.Material(nodeJson.material.uid);
-			material.color = {r:nodeJson.material.color[0], g:nodeJson.material.color[1], b:nodeJson.material.color[2]};
+			material.color = {r:1,g:0.5,b:1};//{r:nodeJson.material.color[0], g:nodeJson.material.color[1], b:nodeJson.material.color[2]};
 			material.specColor = {r:nodeJson.material.specColor[0], g:nodeJson.material.specColor[1], b:nodeJson.material.specColor[2]};
 			material.setShininess(nodeJson.material.shine);
 			material.setAlpha(nodeJson.material.alpha);
-			obj.setMaterial(material);
+			console.log('texture', nodeJson.material.texture, this);
+			if(nodeJson.material.texture){
+				var texture = new GLGE.Texture(nodeJson.material.texture.uid);
+				texture.id = nodeJson.material.texture.key;
+				texture.setSrc('/api/sim/template/' + templateID + '/asset/' + nodeJson.material.texture.key)
+				material.addTexture(texture);
+				var layer = new GLGE.MaterialLayer();
+				layer.setTexture(material.textures[0]);
+				material.addMaterialLayer(layer);
+			}
+			node.setMaterial(material);
 		} else {
-			obj.setMaterial(SpacibloRenderer.DefaultMaterial);
+			node.setMaterial(SpacibloRenderer.DefaultMaterial);
 		}
 
 		var mesh = new GLGE.Mesh(nodeJson.mesh.uid);
@@ -184,15 +196,14 @@ SpacibloRenderer.Renderable.prototype.setGeometry = function(nodeJson){
 		mesh.setFaces(nodeJson.mesh.faces);
 		if(nodeJson.mesh.normals && nodeJson.mesh.normals.length > 0) mesh.setNormals(nodeJson.mesh.normals);
 		if(nodeJson.mesh.UV && nodeJson.mesh.UV.length > 0) mesh.setUV(nodeJson.mesh.UV);
-		obj.setMesh(mesh);
-
-		this.addChild(obj);
+		node.setMesh(mesh);
+		this.addChild(node);
 	}
 
 	if(typeof nodeJson.children == "undefined") return;
 	for(var i=0; i < nodeJson.children.length; i++){
 		var childRenderable = new SpacibloRenderer.Renderable(self.canvas, nodeJson.children[i].uid);
-		childRenderable.init(nodeJson.children[i]);
+		childRenderable.init(nodeJson.children[i], templateID);
 		this.addChild(childRenderable);
 	}
 }
@@ -299,7 +310,7 @@ SpacibloRenderer.Canvas = function(_canvas_id){
 		var nodes = new Array();
 		self.scene.getNodesByTemplate(templateID, nodes);
 		for(var i=0; i < nodes.length; i++){
-			nodes[i].setGeometry(geometry);
+			nodes[i].setGeometry(geometry, templateID);
 		}
 	}
 

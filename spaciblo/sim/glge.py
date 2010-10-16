@@ -436,8 +436,8 @@ class Object(Placeable, Animatable):
 class Texture(SceneBase):
 	def __init__(self):
 		SceneBase.__init__(self)
-		self.url = None
-	def __unicode__(self): return self.url
+		self.key = None
+	def __unicode__(self): return self.key
 
 	def populate(self, data):
 		if not data: return None

@@ -2,7 +2,8 @@
 
 import simplejson
 
-from sim.glge import Group, Object, Material, Mesh
+from sim.glge import Group, Object, Material, Mesh, Texture
+from sim.handler import to_json
 
 def flatten_faces(faces):
 	"""Returns a flat array of triples from faces, making two triangles of any quads"""
@@ -33,12 +34,21 @@ class JSONLoader:
 			obj.mesh.positions = obj_data['data']['vertices']
 			obj.mesh.normals = obj_data['data']['normals']
 			obj.mesh.faces = flatten_faces(obj_data['data']['faces'])
-			obj.material = Material()
 			if len(obj_data['data']['materials']) > 0:
-				obj.material.name = obj_data['data']['materials'][0]['name']
-				obj.material.color = obj_data['data']['materials'][0]['diffuse_color']
-				obj.material.specColor = obj_data['data']['materials'][0]['specular_color']
-				obj.material.alpha = obj_data['data']['materials'][0]['alpha']
-			
+				obj.material = self.toMaterial(obj_data['data']['materials'][0])
+			else:
+				obj.material = Material()
 			root_group.children.append(obj)
 		return root_group
+
+	def toMaterial(self, matJson):
+		material = Material()
+		material.name = matJson['name']
+		material.color = matJson['diffuse_color']
+		material.specColor = matJson['specular_color']
+		material.alpha = matJson['alpha']
+		if matJson.has_key('active_texture'):
+			material.texture = Texture()
+			material.texture.name = matJson['active_texture']['name']
+			material.texture.key = matJson['active_texture']['image']
+		return material
