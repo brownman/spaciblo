@@ -10,8 +10,8 @@ from django.core import mail
 from django.contrib.sessions.models import Session
 
 import spaciblo.settings as settings
-from sim.loaders.obj import ObjLoader, MtlLibLoader
-from sim.glge import Object, Group, Mesh
+from spaciblo.sim.loaders.obj import ObjLoader, MtlLibLoader
+from spaciblo.sim.glge import Object, Group, Mesh
 
 class ObjTest(TransactionTestCase): 
 	"""A test suite for the loading Obj files."""

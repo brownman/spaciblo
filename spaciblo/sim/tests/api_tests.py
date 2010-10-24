@@ -4,8 +4,8 @@ from django.core.urlresolvers import reverse
 
 import simplejson as json
 
-from sim.models import *
-from sim.management.commands.load_example_spaces import Command
+from spaciblo.sim.models import *
+from spaciblo.sim.management.commands.load_example_spaces import Command
 
 class APITest(TestCase): 
 	"""A test suite for the web API"""

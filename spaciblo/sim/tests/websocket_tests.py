@@ -8,8 +8,8 @@ from django.test.client import Client
 from django.contrib.auth.models import User
 from django.core import mail
 
-from sim.sim_server import *
-from sim.websocket import *
+from spaciblo.sim.sim_server import *
+from spaciblo.sim.websocket import *
 
 import spaciblo.settings as settings
 

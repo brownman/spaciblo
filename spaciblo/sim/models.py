@@ -14,10 +14,10 @@ from django.conf import settings
 
 from piston.handler import BaseHandler
 
-from scene import Scene
-from sim.loaders.obj import ObjLoader, MtlLibLoader
-from sim.loaders.blender import JSONLoader
-from sim.handler import to_json
+from glge import Scene
+from loaders.obj import ObjLoader, MtlLibLoader
+from loaders.blender import JSONLoader
+from handler import to_json
 from sim_client import SimClient
 from websocket import EventHandler
 

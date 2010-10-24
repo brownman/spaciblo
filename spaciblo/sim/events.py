@@ -1,10 +1,9 @@
 """The events used in the simulators.
 The hydration code assumes that these event objects have only string attributes and has a no-param __init__.
 """
+import datetime, simplejson
 
-import datetime
-from sim.handler import to_json, from_json
-import simplejson
+from handler import to_json, from_json
 
 class SimEvent:
 	"""The base class which all simulation events extend"""

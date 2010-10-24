@@ -9,11 +9,11 @@ from django.conf import settings
 from django.contrib.auth import SESSION_KEY, BACKEND_SESSION_KEY, load_backend
 from django.contrib.auth.models import AnonymousUser
 
-import sim_pool
-import events
-from websocket import WebSocketServer, receive_web_socket_message
-from sim.handler import to_json
-from sim.models import Space, SimulatorPoolRegistration
+import spaciblo.sim.sim_pool as sim_pool
+import spaciblo.sim.events as events
+from spaciblo.sim.websocket import WebSocketServer, receive_web_socket_message
+from spaciblo.sim.handler import to_json
+from spaciblo.sim.models import Space, SimulatorPoolRegistration
 
 class WebSocketConnection:
 	"""Maintains state and an outgoing event queue for a WebSockets connection"""

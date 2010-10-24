@@ -9,9 +9,9 @@ from django.contrib.sessions.models import Session
 from django.contrib.auth import BACKEND_SESSION_KEY, SESSION_KEY, authenticate
 import django.contrib.sessions.backends.db as session_engine
 
-from websocket import WebSocketClient
-import events
-from glge import Scene, Group, Object
+from spaciblo.sim.websocket import WebSocketClient
+import spaciblo.sim.events as events
+from spaciblo.sim.glge import Scene, Group, Object
 
 class SimClient:
 	def __init__(self, session_key, ws_host, ws_port, ws_origin, event_handler=None):

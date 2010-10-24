@@ -15,10 +15,10 @@ from django.contrib.sessions.models import Session
 from django.conf import settings
 from django.utils.importlib import import_module
 
-from sim.handler import to_json
-from sim.events import TemplateUpdated
-from sim.models import Space, Template, Asset, TemplateAsset
-from sim.glge import Object, Scene, Group, GroupTemplate
+from spaciblo.sim.handler import to_json
+from spaciblo.sim.events import TemplateUpdated
+from spaciblo.sim.models import Space, Template, Asset, TemplateAsset
+from spaciblo.sim.glge import Object, Scene, Group, GroupTemplate
 
 TEMPLATE_PROPERTIES_FILE_NAME = "template.properties"
 TEMPLATE_INFO_SECTION = "Template Info"

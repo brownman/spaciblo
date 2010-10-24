@@ -4,7 +4,7 @@ NOTE: These data structures use 0-based indexing (like the rest of python), even
 
 """
 
-from sim.glge import Group, Object, Material, Mesh
+from spaciblo.sim.glge import Group, Object, Material, Mesh
 
 class Loader:
 	def prep_line(self, line):

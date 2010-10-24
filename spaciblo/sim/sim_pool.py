@@ -5,9 +5,9 @@ import Queue
 from time import sleep
 import simplejson
 
-from models import *
-from events import *
-from glge import Scene, Object, Group
+from spaciblo.sim.models import *
+from spaciblo.sim.events import *
+from spaciblo.sim.glge import Scene, Object, Group
 
 DEFAULT_SIM_POOL = None
 

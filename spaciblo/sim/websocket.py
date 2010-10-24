@@ -36,7 +36,7 @@ class EventHandler:
 	def __init__(self):
 		self.events = Queue.Queue(-1)
 	def handle_event(self, event):
-		from sim.events import Heartbeat
+		from spaciblo.sim.events import Heartbeat
 		if not isinstance(event, Heartbeat):
 			self.events.put(event)
 

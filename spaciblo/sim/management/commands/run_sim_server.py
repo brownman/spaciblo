@@ -14,8 +14,8 @@ class Command(NoArgsCommand):
 	requires_model_validation = True
 
 	def handle_noargs(self, **options):
-		from sim.management import *
-		from sim.sim_server import *
+		from spaciblo.sim.management import *
+		from spaciblo.sim.sim_server import *
 		sim_server = SimulationServer()
 		sim_server.start()
 		try:

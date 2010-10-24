@@ -1,5 +1,5 @@
 
-from sim.glge import Scene,  Object,  Mesh,  Material
+from spaciblo.sim.glge import Scene,  Object,  Mesh,  Material
 
 def create_plane(color=None):
 	"""Returns a glge.Object which is a two triangle plane"""

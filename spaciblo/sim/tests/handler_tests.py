@@ -4,8 +4,8 @@ from django.core.urlresolvers import reverse
 
 import simplejson as json
 
-from sim.handler import *
-from sim.models import *
+from spaciblo.sim.handler import *
+from spaciblo.sim.models import *
 
 class Thing(object):
 	def __init__(self, name=None, rank=None):

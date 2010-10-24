@@ -17,9 +17,9 @@ class Command(NoArgsCommand):
 
 	def handle_noargs(self, **options):
 		from django.contrib.auth.models import User
-		from sim.loaders.dir_loaders import TemplateDirLoader, SpaceDirLoader
-		from sim.management import *
-		from sim.handler import to_json
+		from spaciblo.sim.loaders.dir_loaders import TemplateDirLoader, SpaceDirLoader
+		from spaciblo.sim.management import *
+		from spaciblo.sim.handler import to_json
 		
 		if len(User.objects.filter(is_staff=True)) == 0:
 			print 'There must be at least one staff user before we can load templates.'

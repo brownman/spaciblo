@@ -10,12 +10,12 @@ from django.core import mail
 from django.test.client import Client
 from django.contrib.sessions.models import Session
 
-from sim.sim_server import *
-from sim.sim_client import *
-from sim.websocket import *
-from sim.events import TemplateUpdated
-from sim.models import Space, SpaceMember, SimulatorPoolRegistration
-from sim.management.commands.load_example_spaces import Command
+from spaciblo.sim.sim_server import *
+from spaciblo.sim.sim_client import *
+from spaciblo.sim.websocket import *
+from spaciblo.sim.events import TemplateUpdated
+from spaciblo.sim.models import Space, SpaceMember, SimulatorPoolRegistration
+from spaciblo.sim.management.commands.load_example_spaces import Command
 import spaciblo.settings as settings
 
 class SimTest(TransactionTestCase): 

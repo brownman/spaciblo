@@ -9,6 +9,7 @@ import shutil
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from django.contrib.sessions.models import Session
+
 class Command(BaseCommand):
 	help = "Creates a template using the files in a directory"
 	args = "[owner_username,template_dir_path]"
@@ -22,9 +23,9 @@ class Command(BaseCommand):
 
 	def handle(self, *labels, **options):
 		from django.contrib.auth.models import User
-		from sim.loaders.dir_loaders import TemplateDirLoader
-		from sim.models import SimulatorPoolRegistration
-		from sim.events import TemplateUpdated
+		from spaciblo.sim.loaders.dir_loaders import TemplateDirLoader
+		from spaciblo.sim.models import SimulatorPoolRegistration
+		from spaciblo.sim.events import TemplateUpdated
 		
 		if not labels or len(labels) != 2: raise CommandError('Enter two arguments, the owner username and the path to the template directory.')
 
