@@ -67,7 +67,7 @@ class Space(HydrateModel):
 
 	@models.permalink
 	def get_absolute_url(self): 
-		return ('sim.views.space', (), { 'id':self.id })
+		return ('spaciblo.sim.views.space', (), { 'id':self.id })
 
 	def __unicode__(self):
 		return "Space #%s: %s" % (self.id, self.name)
@@ -259,7 +259,7 @@ class Template(HydrateModel):
 	def template_app_module_name(self): return "template_%s" % self.id
 
 	@models.permalink
-	def get_absolute_url(self): return ('sim.views.template', (), { 'id':self.id })
+	def get_absolute_url(self): return ('spaciblo.sim.views.template', (), { 'id':self.id })
 
 	@models.permalink
 	def get_api_url(self): return ('template-api', (), { 'id':self.id })
