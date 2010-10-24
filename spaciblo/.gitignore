@@ -8,3 +8,4 @@ media/glge/jsdoc
 local_settings.py
 tapps
 pip-log.txt
+tools/blender/scratch.py

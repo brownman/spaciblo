@@ -1,9 +1,10 @@
 #!/usr/bin/python
 from setuptools import setup, find_packages
+print find_packages()
 setup(
-	name = "Spaciblo",
-	version = "0.1a1",
-	packages = find_packages(),
+	name = "spaciblo",
+	version = "0.1.0",
+	packages = ['spaciblo.sim'],
 	
 	install_requires = ['docutils>=0.3'],
 	include_package_data = True,

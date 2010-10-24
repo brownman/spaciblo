@@ -1,1 +1,0 @@
-"""A Django application for people, including profiles, invites, and account registration."""

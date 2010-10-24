@@ -1,5 +1,0 @@
-Someone, hopefully you, requested to use this e-mail address for the {{ site.name }} service. If it was you and you'd like to validate your email, click the link below or copy and paste it into your Web browser's address bar:
-
-http://{{ site.domain }}{% url person.views.email_validate user.username user.get_profile.validation_secret %}
-
-If you didn't request this, you don't need to do anything.
