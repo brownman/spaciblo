@@ -1,11 +1,2 @@
-media/asset
-media/resized_image
-media/prepped
-media/glge/examples
-media/glge/jsdoc
-*.blend1
-*.blend2
-local_settings.py
-tapps
-pip-log.txt
-tools/blender/scratch.py
+*.pyc
+
