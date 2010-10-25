@@ -59,6 +59,8 @@ class Space(HydrateModel):
 	
 	objects = SpaceManager()
 
+	def duplicate(self): return Space.objects.create(name=self.name, slug='%s 1' % self.slug, state=self.state, max_guests=self.max_guests, scene_document=self.scene_document, default_body=self.default_body)
+
 	def add_member(self, user, is_admin=False, is_editor=False):
 		membership, created = SpaceMember.objects.get_or_create(space=self, member=user)
 		membership.is_admin = is_admin
